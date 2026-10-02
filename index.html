@@ -382,15 +382,18 @@ function defaultState(){
 
 function migrateLegacyNames(state){
   const RENAME = { 'Andi': 'Andy', 'Mäcky': 'Mky', 'Mäkky': 'Mky' };
-  const renameIn = (arr) => arr.map(n => RENAME[n] || n);
+  const renameIn = (arr) => Array.isArray(arr) ? arr.map(n => RENAME[n] || n) : [];
   state.savedNames = renameIn(state.savedNames);
   state.selectedNames = renameIn(state.selectedNames);
   const migrateSessionLike = (s)=>{
+    if (!s) return;
     s.participants = renameIn(s.participants);
     const newGrid = {};
-    Object.entries(s.grid).forEach(([name, vals])=>{
-      newGrid[RENAME[name] || name] = vals;
-    });
+    if (s.grid) {
+      Object.entries(s.grid).forEach(([name, vals])=>{
+        newGrid[RENAME[name] || name] = vals;
+      });
+    }
     s.grid = newGrid;
     if(s.penalties){
       const newPenalties = {};
@@ -400,14 +403,13 @@ function migrateLegacyNames(state){
       s.penalties = newPenalties;
     }
   };
-  state.sessions.forEach(migrateSessionLike);
+  if (Array.isArray(state.sessions)) {
+    state.sessions.forEach(migrateSessionLike);
+  }
   if(state.liveDraft) migrateSessionLike(state.liveDraft);
 }
 
 function importSeedHistoryOnce(state){
-  // Checks per session id, not a single one-time flag - this way, if I ever
-  // add more historical entries to SEED_HISTORY later, they get picked up
-  // automatically on next load for everyone, without needing a fresh import.
   const existingIds = new Set(state.sessions.map(s=>s.id));
   let addedAny = false;
   SEED_HISTORY.forEach(seed=>{
@@ -435,9 +437,6 @@ function showToast(msg, durationMs){
 }
 
 function showConfirm(message, onConfirm){
-  // Custom confirmation instead of window.confirm(): native confirm()/alert()
-  // dialogs are unreliable inside sandboxed artifact iframes (can be silently
-  // blocked), which made the Löschen/Bearbeiten buttons appear to do nothing.
   const overlay = document.createElement('div');
   overlay.className = 'confirm-overlay';
   overlay.innerHTML = `<div class="confirm-box">
@@ -460,8 +459,6 @@ function formatMsToTime(ms){
   const min = Math.floor(totalMs/60000);
   const sec = Math.floor((totalMs%60000)/1000);
   const msPart = totalMs%1000;
-  // comma decimal separator (German convention) - parseTimeToMs still accepts
-  // a period too, so any older period-formatted stored times keep working.
   return `${min}:${String(sec).padStart(2,'0')},${String(msPart).padStart(3,'0')}`;
 }
 
@@ -491,8 +488,6 @@ function showTrackEditor(roundIndex){
   const currentName = (draft.trackNames && draft.trackNames[roundIndex]) || '';
   const N = draft.participants.length;
 
-  // Default "who is 1st place" from the points already entered for this
-  // track, if any - otherwise just the first participant.
   let leaderName = null;
   draft.participants.forEach(name=>{
     const pv = draft.grid[name] ? draft.grid[name][roundIndex] : null;
@@ -598,7 +593,6 @@ function showTrackEditor(roundIndex){
   overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
   document.getElementById('trackEditorCancelBtn').onclick = close;
   document.getElementById('trackEditorSaveBtn').onclick = ()=>{
-    // validate every active (non-DNF, non-empty) field before accepting anything
     let allValid = true;
     overlay.querySelectorAll('.track-time-input').forEach(inp=>{
       if(inp.disabled) return;
@@ -615,8 +609,6 @@ function showTrackEditor(roundIndex){
     draft.trackNames[roundIndex] = name;
     if(!draft.trackTimes) draft.trackTimes = {};
 
-    // capture each driver's PREVIOUS personal best on this track before we
-    // overwrite anything, so we can tell afterwards who just beat their own record
     const previousBests = {};
     if(name){
       draft.participants.forEach(pname=>{ previousBests[pname] = getPersonalBestMs(pname, name); });
@@ -647,8 +639,6 @@ function showTrackEditor(roundIndex){
     close();
     renderRennen();
 
-    // personal-best celebration: only counts as "beating a record" if they
-    // already HAD a previous time on this exact track and the new one is faster
     if(name){
       const achievers = draft.participants.filter(pname=>
         newTimesMs[pname]!==null && previousBests[pname]!==null && newTimesMs[pname] < previousBests[pname]
@@ -708,11 +698,6 @@ function showVersionHistory(){
 /* ============================================================
    PERSISTENCE LAYER - Firebase Realtime Database
    ============================================================
-   Uses the already-configured, already-working Firebase project.
-   Realtime Database's .on('value', ...) listener fires immediately
-   with the current data AND again on every future change - this
-   replaces both the old one-time load AND the old 5-second poll
-   with a single, instantly-pushed live subscription.
 */
 const firebaseConfig = {
   databaseURL: "https://trkmn-44c02-default-rtdb.europe-west1.firebasedatabase.app"
@@ -747,7 +732,6 @@ function loadState(){
     const val = snapshot.val();
     const fresh = (val && typeof val === 'object') ? val : defaultState();
 
-    // same defensive normalization as before, applied to whatever just arrived
     migrateLegacyNames(fresh);
     if(!Array.isArray(fresh.savedNames)) fresh.savedNames = [...FIXED_DRIVERS];
     if(!Array.isArray(fresh.selectedNames)) fresh.selectedNames = [...FIXED_DRIVERS];
@@ -755,7 +739,6 @@ function loadState(){
     FIXED_DRIVERS.forEach(n=>{ if(!fresh.savedNames.includes(n)) fresh.savedNames.push(n); });
     fresh.savedNames = [...new Set(fresh.savedNames)];
     fresh.selectedNames = [...new Set(fresh.selectedNames)];
-    // guard against a corrupted in-progress draft (e.g. missing grid/participants)
     if(fresh.liveDraft && (!fresh.liveDraft.grid || !fresh.liveDraft.participants)) fresh.liveDraft = null;
     const imported = importSeedHistoryOnce(fresh);
 
@@ -773,7 +756,6 @@ function loadState(){
       return;
     }
 
-    // subsequent live pushes from other devices - don't clobber an active edit
     if(isTypingNow()) return;
     if(saveInFlight > 0) return;
     if(JSON.stringify(fresh) !== JSON.stringify(state)){
@@ -785,8 +767,6 @@ function loadState(){
     console.error('Firebase sync error:', err);
     storageAvailable = false;
     showStorageBanner(err);
-    // without this, the app stayed stuck on the initial "Verbinde…" placeholder
-    // forever on a Firebase error, with no visible explanation at all
     if(!firstLoadDone){
       firstLoadDone = true;
       state = defaultState();
@@ -797,9 +777,6 @@ function loadState(){
 }
 
 function syncDraftFromState(){
-  // the in-progress race table lives in the SHARED state (state.liveDraft)
-  // instead of a personal-only key, so anyone with the link can watch the
-  // points being entered live, not just see it after it's saved.
   draft = state.liveDraft || null;
   rennenPhase = draft ? 'editing' : 'idle';
 }
@@ -843,48 +820,56 @@ function isTypingNow(){
 
 function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 function sameSet(a,b){
+  if(!Array.isArray(a) || !Array.isArray(b)) return false;
   if(a.length!==b.length) return false;
   const sa=[...a].sort(), sb=[...b].sort();
   return sa.every((v,i)=>v===sb[i]);
 }
+
+/* FIX FUER FEHLER TYPEERROR: CANNOT READ PROPERTIES OF UNDEFINED (READING 'EVERY') */
 function getStreakCrownHolder(){
-  // "streak" = consecutive sessions a driver has WON in a row, counting
-  // backwards from the most recent (complete) session they took part in.
+  if (!state || !Array.isArray(state.sessions)) return null;
+
   const complete = state.sessions
-    .filter(s=> s.participants.every(n=>s.grid[n].every(v=>v!==null && v!==undefined)))
-    .slice().sort((a,b)=> a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+    .filter(s => s && Array.isArray(s.participants) && s.grid && s.participants.every(n => Array.isArray(s.grid[n]) && s.grid[n].every(v => v !== null && v !== undefined)))
+    .slice().sort((a,b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
 
   const perDriverSeq = {};
-  complete.forEach(s=>{
+  complete.forEach(s => {
     const totals = sessionTotals(s);
-    const winner = Object.entries(totals).sort((a,b)=>a[1]-b[1])[0][0];
-    s.participants.forEach(name=>{
-      (perDriverSeq[name] = perDriverSeq[name] || []).push(name===winner);
+    const winnerEntry = Object.entries(totals).sort((a,b) => a[1] - b[1])[0];
+    if (!winnerEntry) return;
+    const winner = winnerEntry[0];
+    s.participants.forEach(name => {
+      (perDriverSeq[name] = perDriverSeq[name] || []).push(name === winner);
     });
   });
 
-  let bestName = null, bestStreak = 1; // need at least 2 in a row to count as a streak
-  Object.entries(perDriverSeq).forEach(([name,seq])=>{
+  let bestName = null, bestStreak = 1;
+  Object.entries(perDriverSeq).forEach(([name, seq]) => {
     let streak = 0;
-    for(let i=seq.length-1; i>=0; i--){ if(seq[i]) streak++; else break; }
+    for(let i = seq.length - 1; i >= 0; i--){ 
+      if(seq[i]) streak++; else break; 
+    }
     if(streak > bestStreak){ bestStreak = streak; bestName = name; }
   });
   return bestName ? { name: bestName, streak: bestStreak } : null;
 }
 
 function orderedSavedNames(){
-  // Always display drivers in this fixed order, regardless of the order
-  // they happen to be stored in - keeps the picker stable and predictable.
   const canonicalOrder = ['Max','Andy','Dani','Olly','Bär','Mky'];
-  const known = canonicalOrder.filter(n=>state.savedNames.includes(n));
-  const extra = state.savedNames.filter(n=>!canonicalOrder.includes(n));
+  const saved = Array.isArray(state?.savedNames) ? state.savedNames : [];
+  const known = canonicalOrder.filter(n=>saved.includes(n));
+  const extra = saved.filter(n=>!canonicalOrder.includes(n));
   return [...known, ...extra];
 }
+
 function formatDate(iso){
+  if (!iso) return '';
   const d = new Date(iso+'T00:00:00');
   return d.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
 }
-function cssEscape(s){ return s.replace(/(["\\])/g,'\\$1'); }
+function cssEscape(s){ return String(s).replace(/(["\\])/g,'\\$1'); }
 
 function switchView(v){
   currentView = v;
@@ -893,6 +878,7 @@ function switchView(v){
   document.querySelectorAll('nav.bottom button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
   renderCurrentView();
 }
+
 function renderCurrentView(){
   if(currentView==='rennen') renderRennen();
   else if(currentView==='archiv') renderArchiv();
@@ -900,12 +886,14 @@ function renderCurrentView(){
   else if(currentView==='statistik') renderStatistik();
   else if(currentView==='sicherung') renderSicherung();
 }
+
 function render(){
-  document.getElementById('dateInput').value = state.selectedDate;
+  const dateInput = document.getElementById('dateInput');
+  if (dateInput && state) dateInput.value = state.selectedDate;
   renderCurrentView();
 }
 
-/* ---------------- RENNEN (Fahrer + Tabelle kombiniert) ---------------- */
+/* ---------------- RENNEN ---------------- */
 function renderRennen(){
   const dateCard = document.getElementById('dateCard');
   const driversCard = document.getElementById('driversCard');
@@ -918,14 +906,13 @@ function renderRennen(){
     return;
   }
 
-  // 'idle' or 'setup' both use the date + driver picker cards
   dateCard.style.display = 'block';
   driversCard.style.display = 'block';
   const grid = document.getElementById('chipGrid');
   grid.innerHTML = '';
   const crownHolder = getStreakCrownHolder();
   orderedSavedNames().forEach(name=>{
-    const active = state.selectedNames.includes(name);
+    const active = Array.isArray(state?.selectedNames) && state.selectedNames.includes(name);
     const chip = document.createElement('div');
     chip.className = 'chip' + (active?' active':'');
     chip.textContent = name + (crownHolder && crownHolder.name===name ? ' 👑' : '');
@@ -945,7 +932,6 @@ function renderRennen(){
     return;
   }
 
-  // rennenPhase === 'setup'
   const n = state.selectedNames.length;
   area.innerHTML = `<div class="card">
     <p class="muted" style="margin:0 0 12px;">${n<2 ? 'Wähle mindestens 2 Fahrer aus.' : `${n} Fahrer ausgewählt.`}</p>
@@ -988,7 +974,7 @@ function continueToEditing(){
 
 function renderEditingPhase(area){
   const N = draft.participants.length;
-  const rounds = draft.grid[draft.participants[0]].length;
+  const rounds = draft.grid[draft.participants[0]] ? draft.grid[draft.participants[0]].length : 0;
 
   let html = '';
 
@@ -1019,7 +1005,7 @@ function renderEditingPhase(area){
 
   draft.participants.forEach(name=>{
     html += `<tr><td class="namecol">${escapeHtml(name)}</td>`;
-    const arr = draft.grid[name];
+    const arr = draft.grid[name] || [];
     for(let r=0;r<rounds;r++){
       const val = arr[r];
       const displayVal = val===null||val===undefined ? '' : val;
@@ -1085,6 +1071,7 @@ function renderEditingPhase(area){
   };
   document.getElementById('addExtraRoundBtn').onclick = ()=>{
     draft.participants.forEach(name=>{
+      if (!draft.grid[name]) draft.grid[name] = [];
       draft.grid[name].push(null);
       if(!draft.trackTimes) draft.trackTimes = {};
       if(!draft.trackTimes[name]) draft.trackTimes[name] = [];
@@ -1142,10 +1129,11 @@ document.getElementById('dateInput').addEventListener('change', e=>{
 
 function sessionTotals(session){
   const totals = {};
+  if (!session || !Array.isArray(session.participants)) return totals;
   session.participants.forEach(p=>totals[p]=0);
   const N = session.participants.length;
   session.participants.forEach(name=>{
-    const arr = session.grid[name] || [];
+    const arr = (session.grid && session.grid[name]) ? session.grid[name] : [];
     arr.forEach(val=>{
       if(val===null || val===undefined || val==='') return;
       if(val==='DNF'){ totals[name] += N+1; return; }
@@ -1159,10 +1147,10 @@ function sessionTotals(session){
 }
 
 function normalizeCellValue(raw){
-  let v = raw.trim();
+  let v = String(raw || '').trim();
   if(v === '') return null;
   if(v.toUpperCase() === 'DNF') return 'DNF';
-  if(v === '0') return 'DNF'; // shorthand for the numeric-only mobile keypad
+  if(v === '0') return 'DNF'; 
   let starred = false;
   if(v.endsWith('*')){ starred = true; v = v.slice(0,-1); }
   const n = parseInt(v, 10);
@@ -1170,11 +1158,6 @@ function normalizeCellValue(raw){
   return starred ? (n + '*') : n;
 }
 
-// A stored cell value is one of: null, 'DNF', a plain number, or a string
-// like "3*" (a starred placement - see the "letzter Tropfen Sprit" rule).
-// These two helpers give every other function a single, consistent way to
-// read a placement number and to detect a star, regardless of which shape
-// the value is in.
 function asPlacementNumber(val){
   if(typeof val === 'number') return val;
   if(typeof val === 'string' && val !== 'DNF' && val.endsWith('*')){
@@ -1191,6 +1174,7 @@ function onDraftCellChange(input){
   const name = input.dataset.name;
   const round = parseInt(input.dataset.round, 10);
   const val = normalizeCellValue(input.value);
+  if (!draft.grid[name]) draft.grid[name] = [];
   draft.grid[name][round] = val;
   input.value = val===null ? '' : val;
   input.classList.toggle('dnf', val==='DNF');
@@ -1250,7 +1234,7 @@ function showMilestoneModal(count, isBig, extraHtml){
   } else {
     const quote = RACING_QUOTES[Math.floor(Math.random()*RACING_QUOTES.length)];
     title = `🎉 ${count} Rennen! 🎉`;
-    bodyHtml = `<p style="margin:0;font-style:italic;color:var(--muted);">"${escapeHtml(quote)}"</p>`;
+    bodyHtml = `<p style="margin:0;font-style:italic;color:var(--muted);"${escapeHtml(quote)}"</p>`;
   }
 
   const titleSize = isBig ? '22px' : '18px';
@@ -1283,9 +1267,6 @@ function showFinishOverlay(session, isMilestone, sessionCount){
 }
 
 function commitDraftToArchive(){
-  // Deep-copy so the archived entry and the still-open draft are independent
-  // objects: further edits to the draft must NOT silently leak into the
-  // shared archive until the next explicit Speichern/Fertig press.
   const copy = JSON.parse(JSON.stringify(draft));
   let isNewSession = false;
   if(draft.id){
@@ -1298,11 +1279,12 @@ function commitDraftToArchive(){
     state.sessions.push(copy);
     isNewSession = true;
   }
-  saveDraft(); // persists the whole shared state (sessions + liveDraft) in one write
+  saveDraft();
   return { session: copy, isNewSession };
 }
 
 function buildSessionRecapHtml(s){
+  if (!s || !Array.isArray(s.participants)) return '';
   const N = s.participants.length;
   const totals = sessionTotals(s);
   const ranked = Object.entries(totals).sort((a,b)=>a[1]-b[1]);
@@ -1314,7 +1296,7 @@ function buildSessionRecapHtml(s){
   let anyStar = null;
   s.participants.forEach(name=>{
     winCounts[name] = 0; dnfCounts[name] = 0;
-    (s.grid[name]||[]).forEach(val=>{
+    ((s.grid && s.grid[name])||[]).forEach(val=>{
       if(val===null||val===undefined) return;
       const isDnf = val==='DNF' || (typeof val==='number' && val===N+1);
       if(isDnf){ dnfCounts[name]++; return; }
@@ -1339,9 +1321,8 @@ function buildSessionRecapHtml(s){
     lines.push(`🌟 ${escapeHtml(anyStar)} rettete sich mit dem letzten Tropfen Benzin auf Platz 1!`);
   }
 
-  // closest race: smallest real time gap between 1st and 2nd on any track
   let closest = null;
-  const rounds = s.participants.length ? (s.grid[s.participants[0]]||[]).length : 0;
+  const rounds = s.participants.length && s.grid[s.participants[0]] ? s.grid[s.participants[0]].length : 0;
   for(let r=0;r<rounds;r++){
     const times = s.participants
       .map(name=> ({ name, ms: s.trackTimes && s.trackTimes[name] ? parseTimeToMs(s.trackTimes[name][r]) : null }))
@@ -1360,8 +1341,9 @@ function buildSessionRecapHtml(s){
 }
 
 function updateSumsAndStandings(session){
+  if (!session || !Array.isArray(session.participants)) return;
   const N = session.participants.length;
-  const rounds = session.participants.length ? session.grid[session.participants[0]].length : N + 1;
+  const rounds = (N > 0 && session.grid[session.participants[0]]) ? session.grid[session.participants[0]].length : N + 1;
   const totals = sessionTotals(session);
 
   session.participants.forEach(name=>{
@@ -1371,11 +1353,7 @@ function updateSumsAndStandings(session){
 
   const warnings = [];
   for(let r=0;r<rounds;r++){
-    // DNF's numeric value (N+1) is allowed to repeat - several drivers can
-    // fail to finish the same track. Only genuine placements (1..N) count
-    // as a real duplicate-rank conflict. A starred value ("3*") still
-    // represents placement 3 for this check.
-    const vals = session.participants.map(name=>asPlacementNumber(session.grid[name][r])).filter(v=>v!==null && v !== N+1);
+    const vals = session.participants.map(name=> (session.grid[name] ? asPlacementNumber(session.grid[name][r]) : null)).filter(v=>v!==null && v !== N+1);
     const seen = new Set(); const dups = new Set();
     vals.forEach(v=>{ if(seen.has(v)) dups.add(v); seen.add(v); });
     if(dups.size>0) warnings.push(`Track ${r+1}: Platz ${[...dups].join(', ')} mehrfach vergeben`);
@@ -1420,8 +1398,6 @@ function parseTimeToMs(str){
 
   let min=0, sec=0, ms=0;
   if(s.includes(':')){
-    // whatever comes after the LAST colon is "seconds(.ms)"; everything
-    // before it is whole minute groups (e.g. "1:23.456" or "1:02:03.456")
     const afterLastColon = s.split(':').pop();
     const msParts = afterLastColon.split('.');
     sec = +msParts[0];
@@ -1430,7 +1406,6 @@ function parseTimeToMs(str){
     const minGroups = beforeLastColon.split(':').filter(p=>p!=='');
     min = minGroups.reduce((acc,p)=> acc*60 + (+p||0), 0);
   } else {
-    // no colon at all: 1 dot-group = seconds, 2 = seconds.ms, 3 = min.sec.ms
     const dotParts = s.split('.').filter(p=>p!=='');
     if(dotParts.length===1){ sec = +dotParts[0]; }
     else if(dotParts.length===2){ sec = +dotParts[0]; ms = +dotParts[1].padEnd(3,'0').slice(0,3); }
@@ -1441,7 +1416,7 @@ function parseTimeToMs(str){
 
 function getPersonalBestMs(driverName, trackNameRaw){
   const key = (trackNameRaw||'').trim().toLowerCase();
-  if(!key) return null;
+  if(!key || !state || !Array.isArray(state.sessions)) return null;
   let best = null;
   state.sessions.forEach(s=>{
     if(!s.trackNames) return;
@@ -1458,7 +1433,8 @@ function getPersonalBestMs(driverName, trackNameRaw){
 
 function renderStrecken(){
   const el = document.getElementById('streckenContent');
-  const tracks = {}; // normalizedName -> { displayName, entries: { driver -> {ms, timeStr, date} } }
+  if (!el || !state || !Array.isArray(state.sessions)) return;
+  const tracks = {}; 
   state.sessions.forEach(s=>{
     if(!s.trackNames) return;
     s.trackNames.forEach((tname, r)=>{
@@ -1471,8 +1447,6 @@ function renderStrecken(){
         if(!timeStr) return;
         const ms = parseTimeToMs(timeStr);
         const cur = tracks[key].entries[driver];
-        // if we can't parse it, still show it (sorted last) rather than
-        // silently dropping it - better to see something odd than nothing
         const sortKey = ms===null ? Infinity : ms;
         const curSortKey = cur ? (cur.ms===null ? Infinity : cur.ms) : Infinity;
         if(!cur || sortKey < curSortKey){
@@ -1514,6 +1488,9 @@ function renderStrecken(){
 }
 
 function buildReadOnlyGridHtml(s){
+  if (!s || !s.grid || !Array.isArray(s.participants) || !s.participants[0] || !s.grid[s.participants[0]]) {
+    return '<div class="empty">Keine Daten verfügbar.</div>';
+  }
   const rounds = s.grid[s.participants[0]].length;
   let html = `<div class="table-wrap"><table class="grid"><thead><tr><th class="namecol">Fahrer</th>`;
   for(let r=1;r<=rounds;r++){
@@ -1524,7 +1501,7 @@ function buildReadOnlyGridHtml(s){
   const totals = sessionTotals(s);
   s.participants.forEach(name=>{
     html += `<tr><td class="namecol">${escapeHtml(name)}</td>`;
-    const arr = s.grid[name];
+    const arr = s.grid[name] || [];
     for(let r=0;r<rounds;r++){
       const val = arr[r];
       const display = (val===null||val===undefined) ? '–' : String(val);
@@ -1533,7 +1510,7 @@ function buildReadOnlyGridHtml(s){
     }
     const penaltyVal = (s.penalties && s.penalties[name]) || 0;
     html += `<td><span class="ro-cell">${penaltyVal || '–'}</span></td>`;
-    html += `<td class="sumcol">${totals[name]}</td></tr>`;
+    html += `<td class="sumcol">${totals[name] || 0}</td></tr>`;
   });
   html += `</tbody></table></div>`;
   if(s.note){
@@ -1550,7 +1527,7 @@ function daysSince(dateStr){
 }
 
 function backupCardHtml(){
-  const days = daysSince(state.lastExportDate);
+  const days = daysSince(state?.lastExportDate);
   let reminder = '';
   if(days === null){
     reminder = `<p class="warn-note" style="margin:0 0 12px;">Noch nie exportiert – am besten gleich einmal eine Sicherung anlegen.</p>`;
@@ -1597,8 +1574,8 @@ function csvEscapeField(v){
 }
 
 function exportCsv(){
-  const sessions = state.sessions.slice().sort((a,b)=> a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
-  const maxRounds = sessions.reduce((m,s)=> Math.max(m, s.participants.length ? (s.grid[s.participants[0]]||[]).length : 0), 1);
+  const sessions = (state?.sessions || []).slice().sort((a,b)=> a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  const maxRounds = sessions.reduce((m,s)=> Math.max(m, (s.participants && s.grid && s.grid[s.participants[0]]) ? s.grid[s.participants[0]].length : 0), 1);
 
   const headers = ['Datum','Fahrer','Besetzung'];
   for(let i=1;i<=maxRounds;i++) headers.push('Track'+i);
@@ -1644,12 +1621,11 @@ function exportCsv(){
 function logBackupEvent(type, extra){
   if(!Array.isArray(state.backupHistory)) state.backupHistory = [];
   state.backupHistory.push(Object.assign({
-    type, // 'export' | 'import'
+    type, 
     date: todayStr(),
     time: new Date().toISOString(),
     version: APP_VERSION
   }, extra||{}));
-  // keep this from growing forever - last 100 events is plenty
   if(state.backupHistory.length > 100) state.backupHistory = state.backupHistory.slice(-100);
 }
 
@@ -1751,7 +1727,7 @@ function wireShareCard(){
 
 function renderSicherung(){
   const el = document.getElementById('sicherungContent');
-  const history = Array.isArray(state.backupHistory) ? state.backupHistory.slice().reverse() : [];
+  const history = Array.isArray(state?.backupHistory) ? state.backupHistory.slice().reverse() : [];
 
   let html = buildShareCardHtml() + backupCardHtml();
 
@@ -1777,7 +1753,7 @@ function renderSicherung(){
   wireShareCard();
 }
 
-let archivFilter = []; // selected driver names to filter the archive by exact combination
+let archivFilter = [];
 
 function archivFilterCardHtml(){
   const names = orderedSavedNames();
@@ -1803,10 +1779,13 @@ function wireArchivFilterChips(){
   if(resetBtn) resetBtn.onclick = ()=>{ archivFilter = []; renderArchiv(); };
 }
 
+/* FIX FUER FEHLER TYPEERROR: CANNOT READ PROPERTIES OF UNDEFINED (READING 'EVERY') IN RENDERARCHIV */
 function renderArchiv(){
   const el = document.getElementById('archivContent');
+  if (!el || !state || !Array.isArray(state.sessions)) return;
+
   const filtered = archivFilter.length
-    ? state.sessions.filter(s=> sameSet(s.participants, archivFilter))
+    ? state.sessions.filter(s=> s && sameSet(s.participants, archivFilter))
     : state.sessions;
 
   if(state.sessions.length === 0){
@@ -1818,22 +1797,25 @@ function renderArchiv(){
     wireArchivFilterChips();
     return;
   }
-  const sorted = filtered.slice().sort((a,b)=> b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  const sorted = filtered.slice().sort((a,b)=> (b.date || '').localeCompare(a.date || '') || (b.id || '').localeCompare(a.id || ''));
 
   el.innerHTML = archivFilterCardHtml() + sorted.map(s=>{
     const totals = sessionTotals(s);
     const rankedStandings = Object.entries(totals).sort((a,b)=>a[1]-b[1]);
     const winnerPts = rankedStandings.length ? rankedStandings[0][1] : null;
-    const complete = s.participants.every(n=>s.grid[n].every(v=>v!==null && v!==undefined));
+    
+    // SICHERE UEBERPRUEFUNG:
+    const complete = s && Array.isArray(s.participants) && s.grid && s.participants.every(n=> Array.isArray(s.grid[n]) && s.grid[n].every(v=>v!==null && v!==undefined));
+    
     return `<div class="card">
       <div class="session-head" data-toggle-id="${s.id}" style="cursor:pointer;">
-        <div class="info"><b>${formatDate(s.date)}</b> · ${s.participants.length} Fahrer${complete?'':' · unvollständig'}</div>
+        <div class="info"><b>${formatDate(s.date)}</b> · ${s.participants ? s.participants.length : 0} Fahrer${complete?'':' · unvollständig'}</div>
         <div style="display:flex;gap:6px;">
           <button data-edit-id="${s.id}">Bearbeiten</button>
           <button class="danger" data-delete-id="${s.id}">Löschen</button>
         </div>
       </div>
-      <div class="match-standing" data-toggle-id="${s.id}" style="cursor:pointer;">${rankedStandings.map(([n,p])=>`<span class="${p===winnerPts?'win':''}">${escapeHtml(n)} ${p}</span>`).join('')}</div>
+      <div class="match-standing" data-toggle-id="${s.id}" style="cursor:pointer;">${rankedStandings.map(([n,p])=>`<span class="${p===winnerPts?'win':''}">${escapeHtml(n)}${p}</span>`).join('')}</div>
       <div class="archiv-detail" id="detail-${s.id}" style="display:none;margin-top:12px;"></div>
     </div>`;
   }).join('');
@@ -1875,9 +1857,9 @@ function renderArchiv(){
         if(!session) return;
         const prevMatch = state.sessions
           .filter(x=>x.id!==id && sameSet(x.participants, session.participants) && x.date <= session.date)
-          .slice().sort((a,b)=> b.date.localeCompare(a.date))[0] || null;
+          .slice().sort((a,b)=> (b.date || '').localeCompare(a.date || ''))[0] || null;
         draft = JSON.parse(JSON.stringify(session));
-        const rounds = draft.grid[draft.participants[0]].length;
+        const rounds = (draft.grid && draft.participants[0] && draft.grid[draft.participants[0]]) ? draft.grid[draft.participants[0]].length : 0;
         if(!draft.penalties) draft.penalties = {};
         draft.participants.forEach(n=>{ if(!(n in draft.penalties)) draft.penalties[n] = 0; });
         if(!draft.trackNames) draft.trackNames = [];
@@ -1905,7 +1887,7 @@ function renderArchiv(){
 }
 
 /* ---------------- STATISTIK ---------------- */
-let calendarViewMonth = null; // {year, month(0-indexed)} - defaults to current month on first render
+let calendarViewMonth = null; 
 
 const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 const WEEKDAY_LABELS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
@@ -1917,10 +1899,12 @@ function buildActivityCalendarHtml(){
 
   const firstOfMonth = new Date(year, month, 1);
   const daysInMonth = new Date(year, month+1, 0).getDate();
-  const startWeekday = (firstOfMonth.getDay()+6)%7; // 0 = Monday
+  const startWeekday = (firstOfMonth.getDay()+6)%7; 
 
   const countByDate = {};
-  state.sessions.forEach(s=>{ countByDate[s.date] = (countByDate[s.date]||0) + 1; });
+  if (state && Array.isArray(state.sessions)) {
+    state.sessions.forEach(s=>{ countByDate[s.date] = (countByDate[s.date]||0) + 1; });
+  }
   let maxCount = 1;
   Object.values(countByDate).forEach(c=>{ if(c>maxCount) maxCount=c; });
 
@@ -1979,9 +1963,10 @@ function wireActivityCalendar(){
 
 function renderStatistik(){
   const el = document.getElementById('statistikContent');
+  if (!el || !state || !Array.isArray(state.sessions)) return;
 
   const earliestDate = state.sessions.length
-    ? state.sessions.reduce((min,s)=> s.date < min ? s.date : min, state.sessions[0].date)
+    ? state.sessions.reduce((min,s)=> (s.date < min ? s.date : min), state.sessions[0].date)
     : todayStr();
   const effectiveFrom = statsFilter.from || earliestDate;
   const effectiveTo = statsFilter.to || todayStr();
@@ -2001,7 +1986,7 @@ function renderStatistik(){
     ${(statsFilter.from || statsFilter.to) ? '<button class="add-toggle" id="statsResetBtn" style="margin-top:10px;">Zeitraum zurücksetzen</button>' : ''}
   </div>`;
 
-  const sessions = state.sessions.filter(s=> s.date >= effectiveFrom && s.date <= effectiveTo);
+  const sessions = state.sessions.filter(s=> s && s.date >= effectiveFrom && s.date <= effectiveTo);
   const activityCardHtml = buildActivityCalendarHtml();
 
   if(sessions.length===0){
@@ -2016,6 +2001,7 @@ function renderStatistik(){
   const comboCount = {};
 
   sessions.forEach(s=>{
+    if (!s || !Array.isArray(s.participants)) return;
     const key = [...s.participants].sort().join(' + ');
     comboCount[key] = (comboCount[key]||0) + 1;
     const N = s.participants.length;
@@ -2027,7 +2013,7 @@ function renderStatistik(){
       if(penalty){
         const p = Number(penalty) || 0;
         st.penalties += p;
-        st.points += p; // penalties must also affect the overall ranking/Ø Pkt, not just the raw display counter
+        st.points += p; 
       }
       if(s.trackTimes && s.trackTimes[name]){
         s.trackTimes[name].forEach(t=>{
@@ -2035,7 +2021,7 @@ function renderStatistik(){
           if(ms!==null) st.totalTimeMs += ms;
         });
       }
-      const arr = s.grid[name];
+      const arr = s.grid && s.grid[name] ? s.grid[name] : [];
       arr.forEach(val=>{
         if(val===null || val===undefined) return;
         st.rounds++;
@@ -2053,33 +2039,26 @@ function renderStatistik(){
       });
     });
     const totals = sessionTotals(s);
-    const complete = s.participants.every(n=>s.grid[n].every(v=>v!==null && v!==undefined));
+    const complete = s.participants.every(n=> Array.isArray(s.grid[n]) && s.grid[n].every(v=>v!==null && v!==undefined));
     if(complete){
-      const winner = Object.entries(totals).sort((a,b)=>a[1]-b[1])[0][0];
-      ensure(winner).sessionWins++;
+      const winnerEntry = Object.entries(totals).sort((a,b)=>a[1]-b[1])[0];
+      if (winnerEntry) ensure(winnerEntry[0]).sessionWins++;
     }
   });
 
   const totalSessions = sessions.length;
-  const totalRoundsPlayed = sessions.reduce((sum,s)=> sum + (s.participants.length ? Math.max(...s.participants.map(n=>s.grid[n].filter(v=>v!==null&&v!==undefined).length),0) : 0), 0);
+  const totalRoundsPlayed = sessions.reduce((sum,s)=> sum + (s.participants ? Math.max(...s.participants.map(n=>(s.grid && s.grid[n]) ? s.grid[n].filter(v=>v!==null&&v!==undefined).length : 0),0) : 0), 0);
 
   let html = `<div class="stat-grid">
     <div class="stat-box"><div class="num">${totalSessions}</div><div class="lbl">Sessions</div></div>
     <div class="stat-box"><div class="num">${totalRoundsPlayed}</div><div class="lbl">Tracks gesamt</div></div>
   </div>`;
 
-  // Fairness-adjusted score: shrink each driver's average toward the group
-  // average, weighted by how many rounds they've actually raced. Someone
-  // with only a handful of rounds gets pulled toward the group average
-  // instead of being ranked purely on a lucky small sample.
   const statEntries = Object.entries(stats).filter(([,st])=>st.rounds>0);
   const totalPointsAll = statEntries.reduce((a,[,st])=>a+st.points,0);
   const totalRoundsAll = statEntries.reduce((a,[,st])=>a+st.rounds,0);
   const groupAvg = totalRoundsAll ? totalPointsAll/totalRoundsAll : 0;
-  const C = 12; // fixed shrinkage strength (~1-2 typical race nights of rounds) —
-                // deliberately NOT scaled to the group's average round count,
-                // otherwise a large history makes C huge and over-shrinks
-                // even well-established averages back toward the group mean.
+  const C = 12;
 
   const rankedByFair = statEntries.map(([name,st])=>{
     const rawAvg = st.points/st.rounds;
@@ -2102,10 +2081,6 @@ function renderStatistik(){
   html += `</div><p class="muted" style="margin-top:10px;">
     So wird gerechnet: <b style="color:var(--text);">bereinigter Schnitt = (eigene Punktesumme + ${C} × Gruppen-Durchschnitt) ÷ (eigene Streckenanzahl + ${C})</b>.
     Der aktuelle Gruppen-Durchschnitt liegt bei ${groupAvg.toFixed(2)} Punkten pro Strecke.
-    Das rechnet so, als hätte jeder zusätzlich ${C} Strecken exakt mit diesem Gruppen-Durchschnitt gefahren:
-    Wer schon sehr viele echte Strecken gefahren ist, wird davon kaum noch beeinflusst –
-    wer erst wenige gefahren ist, wird spürbar Richtung Durchschnitt gezogen,
-    damit nicht ein einzelnes gutes Rennen jemanden unfair nach oben katapultiert.
     Niedriger = besser.</p></div>`;
 
   html += `<div class="card"><h2>Fahrer-Statistik</h2>
