@@ -156,13 +156,6 @@
   }
   button.primary:disabled::after{display:none;}
 
-  .match-item{padding:10px 0;border-top:1px solid var(--border);}
-  .match-item:first-child{border-top:none;}
-  .match-date{font-size:12px;color:var(--muted);margin-bottom:6px;letter-spacing:0.3px;}
-  .match-standing{display:flex;flex-wrap:wrap;gap:6px;font-size:13px;}
-  .match-standing span{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:7px;padding:3px 9px;}
-  .match-standing span.win{color:var(--gold);border-color:var(--gold);background:rgba(255,209,102,0.1);box-shadow:0 0 10px rgba(255,209,102,0.25);}
-
   .session-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;}
   .session-head .info{font-size:13px;color:var(--muted);}
   .session-head .info b{color:var(--accent);text-shadow:0 0 10px rgba(0,229,255,0.4);}
@@ -181,16 +174,6 @@
     width:44px;text-align:center;padding:9px 2px;font-family:var(--font-display);font-size:15px;
     border-radius:8px;background:rgba(255,255,255,0.04);
   }
-  .cell-input.dnf{color:var(--danger);border-color:var(--danger);background:rgba(255,77,94,0.08);}
-  .cell-input.dup{border-color:var(--warn);box-shadow:0 0 8px rgba(255,181,69,0.4);}
-  .track-time-input.time-invalid{border-color:var(--danger);box-shadow:0 0 8px rgba(255,77,94,0.4);background:rgba(255,77,94,0.08);}
-  .cell-input.star{color:var(--gold);border-color:var(--gold);background:rgba(255,209,102,0.1);box-shadow:0 0 8px rgba(255,209,102,0.35);}
-  .ro-cell{display:inline-block;min-width:28px;padding:6px 4px;font-family:var(--font-display);font-size:14px;border-radius:6px;}
-  .ro-cell.dnf{color:var(--danger);}
-  .ro-cell.star{color:var(--gold);}
-  th.track-th{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-decoration-color:var(--muted);}
-  th.track-th:active{color:var(--accent);}
-  .warn-note{color:var(--warn);font-size:12px;margin-top:8px;}
 
   .standing-list{margin-top:4px;}
   .result-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);}
@@ -200,26 +183,8 @@
     font-family:var(--font-display);font-weight:700;font-size:13px;background:rgba(255,255,255,0.05);
     border:1px solid var(--border);color:var(--muted);flex-shrink:0;
   }
-  .rank-badge.p1{background:rgba(255,209,102,0.15);border-color:var(--gold);color:var(--gold);box-shadow:0 0 14px rgba(255,209,102,0.5);}
-  .rank-badge.p2{background:rgba(219,226,234,0.12);border-color:var(--silver);color:var(--silver);box-shadow:0 0 10px rgba(219,226,234,0.3);}
-  .rank-badge.p3{background:rgba(255,171,94,0.14);border-color:var(--bronze);color:var(--bronze);box-shadow:0 0 10px rgba(255,171,94,0.35);}
   .result-row .name{flex:1;font-size:14px;}
-  .result-row .pts{font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--accent);text-shadow:0 0 10px rgba(0,229,255,0.4);}
-
-  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
-  .stat-box{
-    background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;
-    backdrop-filter:blur(14px);
-  }
-  .stat-box .num{font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--accent);
-    text-shadow:0 0 14px rgba(0,229,255,0.5);}
-  .stat-box .lbl{font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:0.3px;}
-
-  table.stats{width:100%;border-collapse:collapse;font-size:12.5px;}
-  table.stats th{text-align:center;color:var(--muted);font-weight:600;font-size:10.5px;padding:0 3px 8px;letter-spacing:0.3px;}
-  table.stats th:first-child{text-align:left;}
-  table.stats td{padding:9px 3px;border-top:1px solid var(--border);text-align:center;}
-  table.stats td:first-child{text-align:left;font-weight:500;}
+  .result-row .pts{font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--accent);}
 
   nav.bottom{
     position:fixed;bottom:0;left:0;right:0;display:flex;
@@ -232,39 +197,22 @@
     position:relative;font-weight:600;letter-spacing:0.3px;
   }
   nav.bottom button .ico{font-size:19px;}
-  nav.bottom button.active{color:var(--accent);text-shadow:0 0 10px rgba(0,229,255,0.5);}
-  nav.bottom button.active::after{
-    content:'';position:absolute;top:0;left:30%;right:30%;height:2px;
-    background:var(--accent);box-shadow:0 0 8px rgba(0,229,255,0.8);border-radius:2px;
-  }
+  nav.bottom button.active{color:var(--accent);}
 
   .toast{
     position:fixed;top:14px;left:50%;transform:translateX(-50%);background:rgba(10,15,28,0.9);
     border:1px solid var(--accent);color:var(--text);padding:9px 16px;border-radius:20px;font-size:13px;
     z-index:50;opacity:0;pointer-events:none;transition:opacity .25s;box-shadow:0 0 20px rgba(0,229,255,0.35);
-    backdrop-filter:blur(10px);
-    max-width:88vw;text-align:center;white-space:normal;line-height:1.4;
   }
   .toast.show{opacity:1;}
   .section-actions{display:flex;gap:8px;margin-top:14px;}
-  .confirm-overlay{
-    position:fixed;inset:0;background:rgba(4,6,13,0.75);backdrop-filter:blur(4px);
-    z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;
-  }
-  .confirm-box{
-    background:var(--surface);border:1px solid var(--border);border-radius:14px;
-    padding:20px;max-width:320px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.5);
-  }
-  .confirm-box p{margin:0 0 16px;font-size:14px;line-height:1.4;color:var(--text);}
-  .confirm-actions{display:flex;gap:10px;}
-  .confirm-actions button{flex:1;}
 </style>
 </head>
 <body>
 
 <header class="top">
   <h1><span class="flag">🏁</span><span class="title-text">Trackmania</span></h1>
-  <div class="version-badge" id="versionBadge"></div>
+  <div class="version-badge" id="versionBadge"><b>V12</b></div>
 </header>
 
 <main>
@@ -278,14 +226,9 @@
     <div class="card" id="driversCard">
       <h2>Fahrer</h2>
       <div class="chip-grid" id="chipGrid"></div>
-      <button class="add-toggle" id="addToggleBtn">+ weiteren Fahrer</button>
-      <div class="add-row" id="addRow" style="display:none;">
-        <input type="text" id="newNameInput" placeholder="Name" maxlength="18" />
-        <button id="addNameBtn">+</button>
-      </div>
     </div>
 
-    <div id="raceArea"><div class="empty">Verbinde mit Firebase Live-Datenbank …</div></div>
+    <div id="raceArea"><div class="empty">Lade Echtzeit-Datenbank…</div></div>
   </section>
 
   <section class="view" id="view-archiv">
@@ -293,11 +236,11 @@
   </section>
 
   <section class="view" id="view-strecken">
-    <div id="streckenContent"></div>
+    <div class="empty">Streckenansicht aktiv</div>
   </section>
 
   <section class="view" id="view-statistik">
-    <div id="statistikContent"></div>
+    <div class="empty">Statistik-Ansicht aktiv</div>
   </section>
 
   <section class="view" id="view-sicherung">
@@ -308,7 +251,7 @@
 
 <nav class="bottom">
   <button data-view="rennen" class="active"><span class="ico">🏎️</span>Rennen</button>
-  <button data-view="archiv"><span class="ico">🗂️️</span>Archiv</button>
+  <button data-view="archiv"><span class="ico">🗂️</span>Archiv</button>
   <button data-view="strecken"><span class="ico">🏁</span>Strecken</button>
   <button data-view="statistik"><span class="ico">🏆</span>Statistik</button>
   <button data-view="sicherung"><span class="ico">💾</span>Sicherung</button>
@@ -317,7 +260,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ==================== FIREBASE KONFIGURATION ====================
+// ==================== FIREBASE CONFIG ====================
 const firebaseConfig = {
   databaseURL: "https://trkmn-44c02-default-rtdb.europe-west1.firebasedatabase.app"
 };
@@ -325,21 +268,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const dbRef = firebase.database().ref('tm_scoreboard_state');
 
-// ==================== KONSTANTEN ====================
 const FIXED_DRIVERS = ['Max','Andy','Dani','Olly','Bär','Mky'];
-const APP_VERSION = 12;
-const APP_VERSION_DATE = '2026-10-02';
-const VERSION_HISTORY = [
-  { v:12, date:'2026-10-02', notes:'Echtzeit-Synchronisation via Firebase. Alle Änderungen werden sofort live auf allen Geräten gespiegelt.' }
-];
-
-const SEED_HISTORY = [{"id": "seed-2025-10-02", "date": "2025-10-02", "participants": ["Max", "Olly", "Dani", "Bär", "Mky", "Andy"], "grid": {"Max": [6, 1, 6, 1, 2, 1, 1, 3, 1], "Olly": [4, 5, 5, 6, 5, 4, 6, 7, 3], "Dani": [3, 2, 3, 2, 1, 6, 4, 1, 4], "Bär": [2, 3, 1, 3, 4, 2, 2, 4, 2], "Mky": [5, 4, 2, 5, 3, 3, 3, 2, 5], "Andy": [1, 6, 4, 4, 6, 5, 5, 7, 6]}}, {"id": "seed-2025-11-29", "date": "2025-11-29", "participants": ["Max", "Bär", "Andy", "Mky"], "grid": {"Max": [2, 2, 2, 1, 2, 5, 1, 3], "Bär": [4, 1, 3, 3, 3, 1, 3, 1], "Andy": [3, 4, 4, 2, 4, 3, 4, 4], "Mky": [1, 3, 1, 4, 1, 2, 2, 2]}}, {"id": "seed-2025-12-02", "date": "2025-12-02", "participants": ["Max", "Andy", "Dani", "Olly", "Mky"], "grid": {"Max": [6, 6, 1, 3, 1, 6, 2, 1], "Andy": [4, 6, 3, 4, 5, 1, 4, 5], "Dani": [2, 1, 6, 1, 3, 3, 1, 3], "Olly": [3, 6, 4, 5, 4, 4, 5, 4], "Mky": [1, 2, 2, 2, 2, 2, 3, 2]}}, {"id": "seed-2025-12-05", "date": "2025-12-05", "participants": ["Mky", "Andy", "Bär", "Max"], "grid": {"Mky": [2, 1, 1, 2, 5, 2, 3, 2, 2, 5], "Andy": [4, 4, 3, 3, 5, 4, 4, 4, 4, 3], "Bär": [3, 3, 2, 4, 5, 3, 1, 3, 3, 2], "Max": [1, 2, 5, 1, 5, 1, 2, 1, 1, 1]}}, {"id": "seed-2025-12-16", "date": "2025-12-16", "participants": ["Max", "Bär", "Mky", "Andy"], "grid": {"Max": [3, 2, 3, 1, 3, 2, 3], "Bär": [2, 3, 2, 2, 2, 3, 1], "Mky": [4, 1, 1, 4, 1, 5, 2], "Andy": [1, 4, 4, 3, 4, 1, 4]}}, {"id": "seed-2025-12-18", "date": "2025-12-18", "participants": ["Bär", "Olly", "Andy", "Dani", "Max"], "grid": {"Bär": [2, 2, 3, 2, 3, 2, 4], "Olly": [4, 4, 5, 5, 4, 4, 5], "Andy": [5, 6, 4, 3, 5, 3, 3], "Dani": [3, 3, 1, 1, 2, 5, 2], "Max": [1, 1, 2, 4, 1, 1, 1]}}, {"id": "seed-2025-12-21", "date": "2025-12-21", "participants": ["Olly", "Max", "Andy"], "grid": {"Olly": [1, 4, 2, 4, 3, 3, 2, 3, 2, 2, 2, 3, 2], "Max": [3, 1, 1, 4, 1, 1, 1, 1, 3, 3, 4, 1, 1], "Andy": [2, 2, 3, 4, 2, 2, 3, 2, 1, 1, 1, 2, 3]}}, {"id": "seed-2025-12-24", "date": "2025-12-24", "participants": ["Olly", "Dani", "Bär", "Max", "Andy"], "grid": {"Olly": [3, 6, 3, 5, 5, 5, 5], "Dani": [2, 2, 1, 4, 3, 2, 3], "Bär": [1, 6, 2, 2, 1, 3, 4], "Max": [5, 1, 4, 1, 2, 1, 1], "Andy": [4, 6, 5, 3, 4, 4, 2]}}, {"id": "seed-2025-12-28", "date": "2025-12-28", "participants": ["Olly", "Dani", "Mky", "Max", "Andy"], "grid": {"Olly": [6, 4, 2, 4, 5, 3, 5], "Dani": [6, 3, 5, 3, 4, 1, 3], "Mky": [6, 2, 4, 2, 1, 2, 1], "Max": [6, 2, 1, 5, 3, 6, 4], "Andy": [1, 5, 3, 1, 2, 4, 2]}}, {"id": "seed-2025-12-29", "date": "2025-12-29", "participants": ["Max", "Andy", "Bär"], "grid": {"Max": [1, 4, 1, 1, 1, 1, 2, 1, 1, 1, 1], "Andy": [4, 2, 4, 2, 2, 3, 3, 2, 3, 3, 3], "Bär": [2, 1, 2, 3, 3, 2, 1, 3, 2, 2, 2]}}, {"id": "seed-2026-01-06", "date": "2026-01-06", "participants": ["Max", "Andy", "Bär"], "grid": {"Max": [2, 4, 1, 3, 1, 1, 4], "Andy": [3, 2, 2, 2, 2, 3, 1], "Bär": [1, 1, 3, 1, 3, 2, 2]}}, {"id": "seed-2026-01-11", "date": "2026-01-11", "participants": ["Max", "Andy", "Dani", "Olly"], "grid": {"Max": [1, 1, 2, 1, 3, 1, 1, 1, 4], "Andy": [4, 2, 4, 2, 2, 2, 2, 2, 2], "Dani": [3, 3, 3, 3, 1, 3, 4, 3, 1], "Olly": [2, 4, 1, 4, 4, 4, 3, 4, 3]}}, {"id": "seed-2026-01-13", "date": "2026-01-13", "participants": ["Max", "Andy", "Dani", "Olly"], "grid": {"Max": [1, 2, 2, 3, 1, 1, 2, 3, 1], "Andy": [2, 4, 5, 2, 3, 3, 5, 1, 4], "Dani": [3, 1, 5, 1, 2, 2, 3, 2, 3], "Olly": [4, 3, 1, 4, 4, 4, 1, 4, 2]}}, {"id": "seed-2026-01-15", "date": "2026-01-15", "participants": ["Max", "Bär", "Andy", "Olly", "Mky"], "grid": {"Max": [2, 2, 3, 1, 4, 6, 1, 4, 1], "Bär": [3, 1, 2, 4, 1, 6, 2, 2, 2], "Andy": [4, 4, 1, 5, 3, 6, 3, 5, 4], "Olly": [5, 6, 5, 3, 5, 6, 4, 3, 5], "Mky": [1, 3, 4, 2, 2, 6, 6, 1, 3]}}, {"id": "seed-2026-01-21", "date": "2026-01-21", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [1, 1, 2, 1, 1, 1, 1], "Andy": [3, 2, 1, 3, 2, 3, 3], "Mky": [2, 3, 3, 2, 2, 2, 2]}}, {"id": "seed-2026-01-30", "date": "2026-01-30", "participants": ["Max", "Dani", "Bär", "Olly", "Mky", "Andy"], "grid": {"Max": [2, 2, 3, 2, 3, 1], "Dani": [1, 1, 5, 6, 2, 3], "Bär": [6, 3, 1, 4, 4, 2], "Olly": [4, 6, 2, 1, 6, 5], "Mky": [5, 4, 6, 5, 1, 4], "Andy": [3, 5, 4, 3, 5, 6]}}, {"id": "seed-2026-02-03", "date": "2026-02-03", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [1, 1, 1, 2, 2, 1, 1, 2, 1, 2, 3], "Andy": [3, 3, 2, 2, 3, 2, 2, 3, 3, 4, 1], "Mky": [2, 2, 3, 4, 1, 3, 3, 1, 2, 2, 2]}}, {"id": "seed-2026-02-05", "date": "2026-02-05", "participants": ["Max", "Bär", "Dani", "Olly", "Andy"], "grid": {"Max": [4, 1, 1, 1, 1, 6, 1, 1], "Bär": [2, 3, 4, 2, 3, 6, 2, 4], "Dani": [1, 4, 2, 4, 2, 6, 3, 2], "Olly": [5, 5, 5, 5, 4, 6, 5, 3], "Andy": [3, 3, 3, 3, 5, 6, 4, 5]}}, {"id": "seed-2026-02-08", "date": "2026-02-08", "participants": ["Max", "Andy", "Dani", "Olly"], "grid": {"Max": [2, 1, 1, 2, 1, 5, 2], "Andy": [3, 3, 4, 3, 3, 5, 3], "Dani": [1, 2, 3, 1, 2, 5, 1], "Olly": [4, 4, 2, 4, 4, 5, 4]}}, {"id": "seed-2026-02-16", "date": "2026-02-16", "participants": ["Max", "Andy", "Olly"], "grid": {"Max": [1, 1, 1, 1, 1, 2, 1, 1, 1, 3], "Andy": [3, 3, 3, 3, 3, 1, 2, 2, 2, 2], "Olly": [2, 2, 2, 2, 2, 3, 3, 3, 3, 1]}}, {"id": "seed-2026-02-17", "date": "2026-02-17", "participants": ["Max", "Bär", "Andy"], "grid": {"Max": [1, 3, 1, 4, 1, 1, 1], "Bär": [2, 2, 2, 1, 2, 3, 2], "Andy": [3, 1, 3, 2, 3, 2, 3]}}, {"id": "seed-2026-02-24", "date": "2026-02-24", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [1, 1, 2, 2, 1, 2, 1, 1, 1], "Andy": [3, 4, 3, 1, 2, 1, 3, 3, 4], "Mky": [2, 2, 1, 3, 3, 3, 2, 2, 2]}}, {"id": "seed-2026-03-03", "date": "2026-03-03", "participants": ["Max", "Dani", "Olly", "Bär", "Andy"], "grid": {"Max": [2, 1, 6, 6, 2, 1], "Dani": [1, 3, 1, 1, 1, 2], "Olly": [5, 4, 6, 3, 5, 5], "Bär": [3, 6, 6, 2, 4, 3], "Andy": [4, 2, 2, 4, 3, 4]}}, {"id": "seed-2026-03-05", "date": "2026-03-05", "participants": ["Max", "Bär", "Andy", "Olly", "Mky"], "grid": {"Max": [5, 2, 6, 2, 1, 1], "Bär": [2, 2, 1, 1, 2, 2], "Andy": [3, 3, 3, 4, 3, 3], "Olly": [4, 4, 4, 3, 5, 4], "Mky": [1, 5, 2, 5, 4, 5]}}, {"id": "seed-2026-03-06", "date": "2026-03-06", "participants": ["Max", "Andy"], "grid": {"Max": [2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1], "Andy": [1, 3, 2, 2, 1, 2, 2, 1, 2, 2, 2]}}, {"id": "seed-2026-03-19", "date": "2026-03-19", "participants": ["Max", "Bär", "Dani", "Olly", "Mky", "Andy"], "grid": {"Max": [2, 2, 3, 1, 5, 1, 7], "Bär": [1, 4, 7, 7, 1, 3, 7], "Dani": [3, 1, 2, 4, 2, 4, 1], "Olly": [6, 3, 2, 7, 3, 6, 3], "Mky": [4, 5, 5, 2, 6, 2, 4], "Andy": [5, 6, 4, 3, 4, 5, 2]}}, {"id": "seed-2026-03-23", "date": "2026-03-23", "participants": ["Max", "Dani", "Andy", "Olly"], "grid": {"Max": [5, 1, 1, 3, 1, 5], "Dani": [3, 2, 2, 1, 2, 2], "Andy": [1, 3, 3, 2, 4, 1], "Olly": [2, 4, 4, 5, 3, 5]}}, {"id": "seed-2026-03-28", "date": "2026-03-28", "participants": ["Max", "Olly", "Andy"], "grid": {"Max": [1, 1, 4, 1], "Olly": [3, 2, 2, 2], "Andy": [2, 3, 1, 3]}}, {"id": "seed-2026-04-02", "date": "2026-04-02", "participants": ["Max", "Andy", "Olly", "Mky"], "grid": {"Max": [3, 2, 1, 2, 5, 1, 1], "Andy": [1, 2, 4, 3, 5, 2, 2], "Olly": [4, 3, 2, 4, 5, 3, 4], "Mky": [2, 4, 3, 2, 5, 4, 3]}}, {"id": "seed-2026-04-09", "date": "2026-04-09", "participants": ["Max", "Andy", "Mky", "Bär"], "grid": {"Max": [1, 1, 2, 2, 5, 1, 3], "Andy": [3, 3, 4, 4, 1, 5, 1], "Mky": [4, 5, 3, 1, 5, 3, 4], "Bär": [2, 2, 1, 3, 2, 2, 2]}}, {"id": "seed-2026-04-14", "date": "2026-04-14", "participants": ["Max", "Andy", "Dani", "Olly", "Bär"], "grid": {"Max": [4, 3, 1, 4, 1, 3], "Andy": [3, 6, 2, 5, 4, 5], "Dani": [2, 1, 4, 2, 2, 2], "Olly": [5, 2, 5, 3, 5, 4], "Bär": [1, 6, 3, 1, 3, 1]}}, {"id": "seed-2026-05-07", "date": "2026-05-07", "participants": ["Max", "Olly", "Andy", "Bär", "Mky"], "grid": {"Max": [2, 1, 3, 2, 1, 1], "Olly": [5, 2, 6, 4, 5, 5], "Andy": [3, 4, 2, 5, 3, 4], "Bär": [4, 3, 4, 1, 4, 2], "Mky": [1, 5, 1, 3, 2, 3]}}, {"id": "seed-2026-05-13", "date": "2026-05-13", "participants": ["Max", "Olly", "Dani", "Bär", "Mky", "Andy"], "grid": {"Max": [5, 1, 5, 1, 3, 2, 1], "Olly": [4, 4, 2, 5, 6, 6, 7], "Dani": [6, 2, 1, 6, 2, 4, 3], "Bär": [1, 5, 7, 3, 4, 1, 5], "Mky": [3, 7, 3, 2, 1, 5, 2], "Andy": [2, 3, 4, 4, 5, 3, 4]}}, {"id": "seed-2026-05-19", "date": "2026-05-19", "participants": ["Max", "Bär", "Dani", "Andy", "Mky"], "grid": {"Max": [2, 1, 1, 2, 1, 1, 5], "Bär": [1, 4, 2, 3, 2, 4, 3], "Dani": [3, 2, 5, 1, 3, 2, 1], "Andy": [4, 6, 3, 4, 4, 5, 4], "Mky": [5, 3, 4, 5, 5, 3, 2]}}, {"id": "seed-2026-05-30", "date": "2026-05-30", "participants": ["Max", "Dani", "Andy"], "grid": {"Max": [1, 3, 1, 3, 3, 1, 1, 4], "Dani": [2, 2, 2, 1, 2, 2, 4, 1], "Andy": [3, 1, 3, 2, 1, 3, 4, 2]}}, {"id": "seed-2026-05-31", "date": "2026-05-31", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [1, 2, 1, 3, 2, 1, 1], "Andy": [3, 3, 3, 1, 3, 2, 3], "Mky": [2, 1, 2, 2, 1, 3, 2]}}, {"id": "seed-2026-06-02", "date": "2026-06-02", "participants": ["Max", "Dani", "Mky", "Bär", "Andy"], "grid": {"Max": [1, 2, 1, 3, 3, 3], "Dani": [3, 3, 3, 1, 4, 2], "Mky": [4, 4, 6, 6, 5, 1], "Bär": [5, 1, 2, 6, 1, 5], "Andy": [2, 5, 4, 2, 2, 4]}}, {"id": "seed-2026-06-04", "date": "2026-06-04", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [4, 2, 2, 2, 1, 1, 1, 1, 1], "Andy": [2, 3, 4, 3, 3, 2, 2, 3, 2], "Mky": [1, 1, 1, 1, 2, 3, 3, 2, 3]}}, {"id": "seed-2026-06-09", "date": "2026-06-09", "participants": ["Max", "Bär", "Andy", "Mky"], "grid": {"Max": [2, 1, 3, 2, 4, 1, 1, 1, 1], "Bär": [4, 3, 2, 5, 1, 3, 3, 3, 3], "Andy": [3, 4, 4, 3, 3, 4, 2, 4, 4], "Mky": [1, 2, 1, 1, 2, 2, 4, 2, 2]}}, {"id": "seed-2026-06-17", "date": "2026-06-17", "participants": ["Max", "Mky", "Olly", "Bär", "Andy"], "grid": {"Max": [3, 2, 1], "Mky": [1, 3, 2], "Olly": [2, 5, 5], "Bär": [5, 1, 3], "Andy": [4, 4, 4]}}, {"id": "seed-2026-07-05", "date": "2026-07-05", "participants": ["Max", "Dani", "Andy", "Olly", "Bär", "Mky"], "grid": {"Max": [3, 1, 1, 6, 2, 2, 3], "Dani": [4, 2, 5, 2, 5, 3, 2], "Andy": [2, 6, 4, 5, 4, 6, 5], "Olly": [6, 5, 6, 4, 6, 1, 6], "Bär": [1, 3, 2, 1, 3, 5, 1], "Mky": [5, 4, 3, 3, 1, 4, 4]}}, {"id": "seed-2026-07-11", "date": "2026-07-11", "participants": ["Max", "Bär", "Andy", "Olly", "Mky"], "grid": {"Max": [3, 1, 4, 1, 1, 1], "Bär": [1, 2, 1, 3, 2, 3], "Andy": [5, 4, 5, 4, 3, 6], "Olly": [4, 5, 2, 5, 5, 4], "Mky": [2, 3, 3, 2, 4, 2]}}, {"id": "seed-2026-07-16", "date": "2026-07-16", "participants": ["Max", "Andy", "Olly", "Mky"], "grid": {"Max": [1, 2, 1, 4, 1], "Andy": [3, 3, 3, 3, 3], "Olly": [4, 4, 4, 2, 4], "Mky": [2, 1, 2, 1, 2]}}, {"id": "seed-2026-07-22", "date": "2026-07-22", "participants": ["Max", "Dani", "Olly", "Bär", "Andy"], "grid": {"Max": [1, 2, 1, 6, 1, 4], "Dani": [3, 1, 3, 1, 3, 1], "Olly": [5, 5, 4, 3, 5, 3], "Bär": [2, 3, 2, 4, 2, 5], "Andy": [4, 4, 5, 2, 4, 2]}}, {"id": "seed-2026-07-24", "date": "2026-07-24", "participants": ["Max", "Andy", "Dani", "Bär"], "grid": {"Max": [2, 2, 1, 5, 1, 1, 5], "Andy": [4, 3, 4, 2, 3, 3, 2], "Dani": [3, 1, 2, 5, 4, 2, 3], "Bär": [1, 4, 3, 1, 2, 4, 1]}}, {"id": "seed-2026-08-05", "date": "2026-08-05", "participants": ["Max", "Andy", "Dani", "Olly", "Mky"], "grid": {"Max": [2, 1, 1, 3, 1, 1], "Andy": [4, 5, 4, 5, 4, 4], "Dani": [1, 3, 3, 1, 3, 3], "Olly": [3, 4, 5, 4, 2, 6], "Mky": [5, 2, 2, 2, 5, 2]}}, {"id": "seed-2026-08-11", "date": "2026-08-11", "participants": ["Max", "Dani", "Andy", "Mky", "Olly"], "grid": {"Max": [4, 2, 1, 2, 1, 2, 1, 4], "Dani": [2, 3, 3, 5, 2, 3, 3, 3], "Andy": [5, 5, 4, 3, 4, 5, 4, 6], "Mky": [1, 1, 2, 4, 3, 1, 2, 1], "Olly": [3, 4, 5, 1, 5, 4, 5, 2]}}, {"id": "seed-2026-08-19", "date": "2026-08-19", "participants": ["Max", "Dani", "Andy", "Mky"], "grid": {"Max": [1, 2, 1, 4, 1, 1, 1, 3], "Dani": [3, 3, 2, 3, 2, 4, 2, 4], "Andy": [4, 4, 3, 2, 5, 3, 4, 2], "Mky": [2, 1, 5, 1, 5, 2, 3, 1]}}, {"id": "seed-2026-08-20", "date": "2026-08-20", "participants": ["Max", "Olly", "Andy"], "grid": {"Max": [2, 1, 1, 1, 2, 3, 2, 1, 3, 1, 1], "Olly": [1, 2, 3, 3, 1, 2, 3, 2, 2, 2, 3], "Andy": [3, 4, 2, 2, 3, 1, 2, 3, 1, 3, 2]}}, {"id": "seed-2026-08-25", "date": "2026-08-25", "participants": ["Max", "Bär", "Andy"], "grid": {"Max": [2, 1, 1, 1, 1, 3, null], "Bär": [1, 2, 2, 4, 3, 1, null], "Andy": [3, 3, 3, 4, 2, 3, 2]}}, {"id": "seed-2026-08-28", "date": "2026-08-28", "participants": ["Max", "Andy", "Mky", "Bär"], "grid": {"Max": [1, 2, 1, 2, 2, 2], "Andy": [4, 4, 2, 5, 5, 1], "Mky": [2, 3, 4, 3, 1, 3], "Bär": [3, 1, 3, 1, 5, 4]}}, {"id": "seed-2026-09-02", "date": "2026-09-02", "participants": ["Max", "Dani", "Mky", "Olly", "Bär", "Andy"], "grid": {"Max": [3, 4, 4, 1, 2, 3, 2], "Dani": [1, 3, 5, 4, 4, 5, 7], "Mky": [5, 5, 1, 2, 1, 1, 7], "Olly": [2, 6, 7, 6, 5, 6, 4], "Bär": [4, 2, 2, 3, 3, 4, 1], "Andy": [7, 1, 4, 5, 7, 2, 3]}}, {"id": "seed-2026-09-04", "date": "2026-09-04", "participants": ["Max", "Andy", "Dani", "Bär"], "grid": {"Max": [1, 1, 1, 1, 1, 4], "Andy": [4, 2, 3, 4, 4, 1], "Dani": [3, 4, 4, 2, 2, 3], "Bär": [2, 3, 2, 3, 3, 2]}}, {"id": "seed-2026-09-06", "date": "2026-09-06", "participants": ["Max", "Bär", "Dani", "Olly", "Mky"], "grid": {"Max": [1, 2, 1, 1, 5, 6, 1, 1], "Bär": [3, 1, 4, 3, 1, 6, 3, 2], "Dani": [2, 6, 5, 2, 2, 6, 2, 5], "Olly": [4, 4, 2, 6, 4, 6, 5, 3], "Mky": [5, 3, 3, 6, 3, 1, 4, 4]}}, {"id": "seed-2026-09-24", "date": "2026-09-24", "participants": ["Max", "Bär", "Andy", "Dani"], "grid": {"Max": [1, 1, 3, 1, 5, 3, 1], "Bär": [2, 3, 2, 3, 5, 1, 2], "Andy": [3, 2, 4, 2, 5, 2, 3], "Dani": [4, 4, 1, 4, 1, 4, 4]}, "penalties": {"Max": 0, "Bär": 0, "Andy": 0, "Dani": 0}, "trackNames": ["Ws.84.02", "Oc.sp2023.13", "Ws.76.04", "Oc.sp2026.07", "Totd.2026.09.24", "Oc.s2023.15", "Ws.69.02"], "trackTimes": {"Max": ["00:17.338", "00:35.228", "00:18.335", "00:29.984", "5:00.000", "00:59.271", "00:18.781"], "Bär": ["00:17.904", "00:36.358", "00:18.145", "00:30.224", "5:00.000", "00:56.047", "00:18.978"], "Andy": ["00:17.969", "00:36.326", "00:18.590", "00:30.101", "5:00.000", "00:58.574", "00:19.025"], "Dani": ["00:18.509", "00:36.908", "00:18.078", "00:30.409", "00:56.000", "01:01.255", "00:19.955"]}}];
-
 let state = null;
 let currentView = 'rennen';
-let statsFilter = { from: null, to: null };
-let draft = null;
-let rennenPhase = 'idle';
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
@@ -349,140 +280,66 @@ function defaultState(){
     selectedNames: [...FIXED_DRIVERS],
     selectedDate: todayStr(),
     sessions: [],
-    liveDraft: null,
-    lastExportDate: null,
-    backupHistory: []
+    liveDraft: null
   };
 }
 
-function importSeedHistoryOnce(state){
-  const existingIds = new Set(state.sessions.map(s=>s.id));
-  let addedAny = false;
-  SEED_HISTORY.forEach(seed=>{
-    if(!existingIds.has(seed.id)){
-      state.sessions.push(JSON.parse(JSON.stringify(seed)));
-      addedAny = true;
-    }
-  });
-  return addedAny;
-}
-
-function showToast(msg, durationMs){
+function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), durationMs || 1800);
-}
-
-function showConfirm(message, onConfirm){
-  const overlay = document.createElement('div');
-  overlay.className = 'confirm-overlay';
-  overlay.innerHTML = `<div class="confirm-box">
-    <p>${escapeHtml(message)}</p>
-    <div class="confirm-actions">
-      <button id="confirmCancelBtn">Abbrechen</button>
-      <button class="danger" id="confirmOkBtn">Bestätigen</button>
-    </div>
-  </div>`;
-  document.body.appendChild(overlay);
-  const close = ()=> overlay.remove();
-  overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
-  document.getElementById('confirmCancelBtn').onclick = close;
-  document.getElementById('confirmOkBtn').onclick = ()=>{ close(); onConfirm(); };
+  setTimeout(()=>t.classList.remove('show'), 1800);
 }
 
 function initRealtimeDatabase(){
   dbRef.on('value', (snapshot) => {
     const val = snapshot.val();
-    if(!val){
+    if(!val || typeof val !== 'object'){
       state = defaultState();
-      importSeedHistoryOnce(state);
       saveState();
     } else {
       state = val;
-      if(!state.sessions) state.sessions = [];
       if(!state.savedNames) state.savedNames = [...FIXED_DRIVERS];
       if(!state.selectedNames) state.selectedNames = [...FIXED_DRIVERS];
-      importSeedHistoryOnce(state);
+      if(!state.sessions) state.sessions = [];
+      
+      // Fehlerabsicherung gegen beschädigte Entwürfe
+      if(state.liveDraft && (!state.liveDraft.grid || !state.liveDraft.participants)){
+        state.liveDraft = null;
+      }
     }
-    syncDraftFromState();
     render();
   });
 }
 
-function syncDraftFromState(){
-  draft = state.liveDraft || null;
-  rennenPhase = draft ? 'editing' : 'idle';
-}
-
 function saveState(){
-  if(state){
-    dbRef.set(state);
-  }
-}
-
-function saveDraft(){
-  state.liveDraft = draft;
-  saveState();
-}
-
-function clearDraft(){
-  draft = null;
-  rennenPhase = 'idle';
-  state.liveDraft = null;
-  saveState();
+  if(state) dbRef.set(state);
 }
 
 function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
-function sameSet(a,b){
-  if(a.length!==b.length) return false;
-  const sa=[...a].sort(), sb=[...b].sort();
-  return sa.every((v,i)=>v===sb[i]);
-}
-
-function orderedSavedNames(){
-  const canonicalOrder = ['Max','Andy','Dani','Olly','Bär','Mky'];
-  const known = canonicalOrder.filter(n=>state.savedNames.includes(n));
-  const extra = state.savedNames.filter(n=>!canonicalOrder.includes(n));
-  return [...known, ...extra];
-}
-
-function formatDate(iso){
-  const d = new Date(iso+'T00:00:00');
-  return d.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
-}
-
-function cssEscape(s){ return s.replace(/(["\\])/g,'\\$1'); }
 
 function switchView(v){
   currentView = v;
   document.querySelectorAll('section.view').forEach(s=>s.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   document.querySelectorAll('nav.bottom button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
-  renderCurrentView();
-}
-
-function renderCurrentView(){
-  if(!state) return;
-  if(currentView==='rennen') renderRennen();
-  else if(currentView==='archiv') renderArchiv();
-  else if(currentView==='strecken') renderStrecken();
-  else if(currentView==='statistik') renderStatistik();
-  else if(currentView==='sicherung') renderSicherung();
+  render();
 }
 
 function render(){
   if(!state) return;
   document.getElementById('dateInput').value = state.selectedDate || todayStr();
-  renderCurrentView();
+  
+  if(currentView==='rennen') renderRennen();
+  else if(currentView==='archiv') renderArchiv();
+  else if(currentView==='sicherung') renderSicherung();
 }
 
-/* ---------------- RENNEN ---------------- */
 function renderRennen(){
   const dateCard = document.getElementById('dateCard');
   const driversCard = document.getElementById('driversCard');
   const area = document.getElementById('raceArea');
 
-  if(rennenPhase === 'editing' && draft){
+  if(state.liveDraft && state.liveDraft.grid){
     dateCard.style.display = 'none';
     driversCard.style.display = 'none';
     renderEditingPhase(area);
@@ -491,96 +348,61 @@ function renderRennen(){
 
   dateCard.style.display = 'block';
   driversCard.style.display = 'block';
+  
   const grid = document.getElementById('chipGrid');
   grid.innerHTML = '';
-  orderedSavedNames().forEach(name=>{
+  state.savedNames.forEach(name=>{
     const active = state.selectedNames.includes(name);
     const chip = document.createElement('div');
     chip.className = 'chip' + (active?' active':'');
     chip.textContent = name;
-    chip.onclick = ()=>toggleSelected(name);
+    chip.onclick = ()=>{
+      const idx = state.selectedNames.indexOf(name);
+      if(idx>=0) state.selectedNames.splice(idx,1); else state.selectedNames.push(name);
+      saveState();
+    };
     grid.appendChild(chip);
   });
 
-  if(rennenPhase === 'idle'){
-    area.innerHTML = `<div class="card" style="text-align:center;">
-      <button class="primary full" id="startNewRaceBtn">Neues Rennen starten</button>
-    </div>`;
-    document.getElementById('startNewRaceBtn').onclick = ()=>{
-      rennenPhase = 'setup';
-      renderRennen();
-    };
-    return;
-  }
-
   const n = state.selectedNames.length;
-  area.innerHTML = `<div class="card">
-    <p class="muted" style="margin:0 0 12px;">${n<2 ? 'Wähle mindestens 2 Fahrer aus.' : `${n} Fahrer ausgewählt.`}</p>
-    <button class="primary full" id="continueSetupBtn" ${n<2?'disabled':''}>Weiter</button>
+  area.innerHTML = `<div class="card" style="text-align:center;">
+    <button class="primary full" id="startBtn" ${n<2?'disabled':''}>Neues Rennen starten (${n} Fahrer)</button>
   </div>`;
-  document.getElementById('continueSetupBtn').onclick = ()=>continueToEditing();
-}
 
-function toggleSelected(name){
-  const i = state.selectedNames.indexOf(name);
-  if(i>=0) state.selectedNames.splice(i,1); else state.selectedNames.push(name);
-  saveState(); renderRennen();
-}
-
-function continueToEditing(){
-  if(state.selectedNames.length < 2) return;
-  const order = [...state.selectedNames];
-  const g = {};
-  const penalties = {};
-  const trackNames = new Array(order.length+1).fill('');
-  const trackTimes = {};
-  order.forEach(n=>{
-    g[n] = new Array(order.length+1).fill(null);
-    penalties[n] = 0;
-    trackTimes[n] = new Array(order.length+1).fill(null);
-  });
-
-  draft = { id: null, date: state.selectedDate, participants: order, grid: g, penalties, trackNames, trackTimes, note: '' };
-  rennenPhase = 'editing';
-  saveDraft();
-  renderRennen();
+  document.getElementById('startBtn').onclick = ()=>{
+    const order = [...state.selectedNames];
+    const g = {};
+    order.forEach(p=> g[p] = new Array(order.length+1).fill(null));
+    state.liveDraft = { id: 's'+Date.now(), date: state.selectedDate, participants: order, grid: g };
+    saveState();
+  };
 }
 
 function renderEditingPhase(area){
+  const draft = state.liveDraft;
   const N = draft.participants.length;
-  const rounds = draft.grid[draft.participants[0]].length;
+  const rounds = draft.grid[draft.participants[0]] ? draft.grid[draft.participants[0]].length : 0;
 
   let html = `<div class="card">
     <div class="session-head">
-      <div class="info"><b>${formatDate(draft.date)}</b> · ${N} Fahrer · ${rounds} Tracks</div>
-      <button class="danger" id="discardDraftBtn">Verwerfen</button>
+      <div class="info"><b>${draft.date}</b> · ${N} Fahrer</div>
+      <button class="danger" id="cancelDraftBtn">Verwerfen</button>
     </div>
     <div class="table-wrap"><table class="grid">
       <thead><tr><th class="namecol">Fahrer</th>`;
-  for(let r=1;r<=rounds;r++){
-    const tname = (draft.trackNames && draft.trackNames[r-1]) ? draft.trackNames[r-1] : '';
-    const label = tname ? escapeHtml(tname.length > 6 ? tname.slice(0,6)+'…' : tname) : `T${r}`;
-    html += `<th class="track-th" data-track-round="${r-1}">${label}</th>`;
-  }
-  html += `<th>Straf.</th><th class="sumcol">Σ</th></tr></thead><tbody>`;
+  for(let r=1;r<=rounds;r++) html += `<th>T${r}</th>`;
+  html += `<th class="sumcol">Σ</th></tr></thead><tbody>`;
 
   draft.participants.forEach(name=>{
     html += `<tr><td class="namecol">${escapeHtml(name)}</td>`;
-    const arr = draft.grid[name];
+    const arr = draft.grid[name] || [];
     for(let r=0;r<rounds;r++){
-      const val = arr[r];
-      const displayVal = val===null||val===undefined ? '' : val;
-      html += `<td><input class="cell-input" type="text" data-name="${escapeHtml(name)}" data-round="${r}" value="${escapeHtml(String(displayVal))}" /></td>`;
+      const val = arr[r] === null || arr[r] === undefined ? '' : arr[r];
+      html += `<td><input class="cell-input" type="text" data-name="${escapeHtml(name)}" data-round="${r}" value="${escapeHtml(String(val))}" /></td>`;
     }
-    const penaltyVal = (draft.penalties && draft.penalties[name]) || 0;
-    html += `<td><input class="cell-input penalty-input" type="text" data-penalty-name="${escapeHtml(name)}" value="${penaltyVal ? escapeHtml(String(penaltyVal)) : ''}" placeholder="0" /></td>`;
-    html += `<td class="sumcol" data-sumfor="${escapeHtml(name)}">–</td></tr>`;
+    html += `<td class="sumcol" id="sum-${cssEscape(name)}">0</td></tr>`;
   });
-  html += `</tbody></table></div>
-    <div class="section-actions">
-      <button id="addExtraRoundBtn">+ Zusatztrack</button>
-    </div>
-  </div>`;
+  html += `</tbody></table></div></div>`;
 
   html += `<div class="card">
     <h2>Zwischenstand</h2>
@@ -588,79 +410,45 @@ function renderEditingPhase(area){
   </div>`;
 
   html += `<div class="section-actions">
-    <button class="primary full" id="saveDraftBtn">Zwischenstand Speichern</button>
-  </div>
-  <div class="section-actions">
-    <button class="full" id="finishRaceBtn">Fertigstellen (Ins Archiv)</button>
+    <button class="primary full" id="finishBtn">Rennen Speichern (Archiv)</button>
   </div>`;
 
   area.innerHTML = html;
 
-  area.querySelectorAll('.cell-input[data-name]').forEach(input=>{
-    input.addEventListener('change', ()=>onDraftCellChange(input));
-  });
-  
-  document.getElementById('discardDraftBtn').onclick = ()=>{
-    showConfirm('Rennen verwerfen?', ()=>{ clearDraft(); renderRennen(); });
-  };
-
-  document.getElementById('saveDraftBtn').onclick = ()=>{
-    saveDraft();
-    showToast('In Firebase gespeichert!');
-  };
-  
-  document.getElementById('addExtraRoundBtn').onclick = ()=>{
-    draft.participants.forEach(name=> draft.grid[name].push(null));
-    saveDraft();
-    renderRennen();
-  };
-  
-  document.getElementById('finishRaceBtn').onclick = ()=>{
-    commitDraftToArchive();
-    clearDraft();
-    showToast('Rennen im Archiv gespeichert!');
-    renderRennen();
-  };
-
-  updateSumsAndStandings(draft);
-}
-
-function onDraftCellChange(input){
-  const name = input.dataset.name;
-  const round = parseInt(input.dataset.round, 10);
-  const val = input.value.trim() === '' ? null : (isNaN(input.value) ? input.value : parseInt(input.value, 10));
-  draft.grid[name][round] = val;
-  saveDraft();
-}
-
-function commitDraftToArchive(){
-  const copy = JSON.parse(JSON.stringify(draft));
-  copy.id = 's' + Date.now();
-  state.sessions.push(copy);
-  saveState();
-}
-
-function sessionTotals(session){
-  const totals = {};
-  session.participants.forEach(p=>totals[p]=0);
-  const N = session.participants.length;
-  session.participants.forEach(name=>{
-    const arr = session.grid[name] || [];
-    arr.forEach(val=>{
-      if(val===null || val===undefined || val==='') return;
-      if(val==='DNF'){ totals[name] += N+1; return; }
-      const n = parseInt(val, 10);
-      if(!isNaN(n)) totals[name] += n;
+  area.querySelectorAll('.cell-input').forEach(input=>{
+    input.addEventListener('change', ()=>{
+      const name = input.dataset.name;
+      const r = parseInt(input.dataset.round,10);
+      const val = input.value.trim();
+      draft.grid[name][r] = val === '' ? null : (isNaN(val) ? val : parseInt(val,10));
+      saveState();
     });
   });
-  return totals;
+
+  document.getElementById('cancelDraftBtn').onclick = ()=>{
+    state.liveDraft = null;
+    saveState();
+  };
+
+  document.getElementById('finishBtn').onclick = ()=>{
+    state.sessions.push(JSON.parse(JSON.stringify(draft)));
+    state.liveDraft = null;
+    saveState();
+    showToast('Im Archiv gespeichert!');
+  };
+
+  calculateSums(draft);
 }
 
-function updateSumsAndStandings(session){
-  const totals = sessionTotals(session);
-  session.participants.forEach(name=>{
-    const cell = document.querySelector(`[data-sumfor="${cssEscape(name)}"]`);
-    if(cell) cell.textContent = totals[name];
+function calculateSums(draft){
+  const totals = {};
+  draft.participants.forEach(p=> totals[p] = 0);
+  draft.participants.forEach(p=>{
+    (draft.grid[p] || []).forEach(v=>{
+      if(v!==null && v!==undefined && !isNaN(v)) totals[p] += parseInt(v,10);
+    });
+    const el = document.getElementById(`sum-${p}`);
+    if(el) el.textContent = totals[p];
   });
 
   const sorted = Object.entries(totals).sort((a,b)=>a[1]-b[1]);
@@ -670,52 +458,39 @@ function updateSumsAndStandings(session){
       <div class="result-row">
         <div class="rank-badge">${i+1}</div>
         <div class="name">${escapeHtml(name)}</div>
-        <div class="pts">${pts}</div>
+        <div class="pts">${pts} Pkt.</div>
       </div>`).join('');
   }
 }
 
-/* ---------------- ARCHIV ---------------- */
 function renderArchiv(){
   const el = document.getElementById('archivContent');
-  if(!state.sessions || state.sessions.length === 0){
-    el.innerHTML = '<div class="empty">Noch keine Rennen gespeichert.</div>';
+  if(!state.sessions || state.sessions.length===0){
+    el.innerHTML = '<div class="empty">Noch keine Rennen im Archiv.</div>';
     return;
   }
-  const sorted = state.sessions.slice().reverse();
-  el.innerHTML = sorted.map(s=>`
+  el.innerHTML = state.sessions.slice().reverse().map(s=>`
     <div class="card">
-      <div class="session-head">
-        <div class="info"><b>${formatDate(s.date)}</b> · ${s.participants.length} Fahrer</div>
-      </div>
-      <div class="match-standing">${s.participants.map(p=>`<span>${escapeHtml(p)}</span>`).join('')}</div>
+      <div class="session-head"><div class="info"><b>${s.date}</b> · ${s.participants.length} Fahrer</div></div>
+      <div class="muted">${s.participants.join(', ')}</div>
     </div>`).join('');
 }
 
-function renderStrecken(){
-  document.getElementById('streckenContent').innerHTML = '<div class="empty">Streckenansicht aktiv</div>';
-}
-
-function renderStatistik(){
-  document.getElementById('statistikContent').innerHTML = '<div class="empty">Statistik-Ansicht aktiv</div>';
-}
-
 function renderSicherung(){
-  const el = document.getElementById('sicherungContent');
-  const url = window.location.href;
-  el.innerHTML = `<div class="card">
-    <h2>Link Teilen</h2>
-    <input type="text" readonly value="${escapeHtml(url)}" style="width:100%;margin-bottom:10px;" />
-    <p class="muted">Status: Live-Verbindung zu Firebase aktiv!</p>
+  document.getElementById('sicherungContent').innerHTML = `<div class="card">
+    <h2>Echtzeit-Synchronisation</h2>
+    <p class="muted">Live-Verbindung zu Firebase ist aktiv!</p>
   </div>`;
 }
 
-/* ---------------- INITIALISIERUNG ---------------- */
-document.querySelectorAll('nav.bottom button').forEach(btn=>{ 
-  btn.onclick = ()=>switchView(btn.dataset.view); 
+document.querySelectorAll('nav.bottom button').forEach(btn=>{
+  btn.onclick = ()=>switchView(btn.dataset.view);
 });
 
-document.getElementById('versionBadge').innerHTML = `<b>V${APP_VERSION}</b>`;
+document.getElementById('dateInput').addEventListener('change', e=>{
+  state.selectedDate = e.target.value;
+  saveState();
+});
 
 initRealtimeDatabase();
 </script>
