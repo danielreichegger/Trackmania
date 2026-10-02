@@ -50,7 +50,7 @@
     backdrop-filter:blur(10px);
     border-bottom:1px solid var(--border);
     display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
-    overflow:hidden;
+    position:sticky;overflow:hidden;
   }
   header.top::before{
     content:'';position:absolute;inset:0;pointer-events:none;
@@ -156,6 +156,13 @@
   }
   button.primary:disabled::after{display:none;}
 
+  .match-item{padding:10px 0;border-top:1px solid var(--border);}
+  .match-item:first-child{border-top:none;}
+  .match-date{font-size:12px;color:var(--muted);margin-bottom:6px;letter-spacing:0.3px;}
+  .match-standing{display:flex;flex-wrap:wrap;gap:6px;font-size:13px;}
+  .match-standing span{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:7px;padding:3px 9px;}
+  .match-standing span.win{color:var(--gold);border-color:var(--gold);background:rgba(255,209,102,0.1);box-shadow:0 0 10px rgba(255,209,102,0.25);}
+
   .session-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;}
   .session-head .info{font-size:13px;color:var(--muted);}
   .session-head .info b{color:var(--accent);text-shadow:0 0 10px rgba(0,229,255,0.4);}
@@ -174,6 +181,16 @@
     width:44px;text-align:center;padding:9px 2px;font-family:var(--font-display);font-size:15px;
     border-radius:8px;background:rgba(255,255,255,0.04);
   }
+  .cell-input.dnf{color:var(--danger);border-color:var(--danger);background:rgba(255,77,94,0.08);}
+  .cell-input.dup{border-color:var(--warn);box-shadow:0 0 8px rgba(255,181,69,0.4);}
+  .track-time-input.time-invalid{border-color:var(--danger);box-shadow:0 0 8px rgba(255,77,94,0.4);background:rgba(255,77,94,0.08);}
+  .cell-input.star{color:var(--gold);border-color:var(--gold);background:rgba(255,209,102,0.1);box-shadow:0 0 8px rgba(255,209,102,0.35);}
+  .ro-cell{display:inline-block;min-width:28px;padding:6px 4px;font-family:var(--font-display);font-size:14px;border-radius:6px;}
+  .ro-cell.dnf{color:var(--danger);}
+  .ro-cell.star{color:var(--gold);}
+  th.track-th{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-decoration-color:var(--muted);}
+  th.track-th:active{color:var(--accent);}
+  .warn-note{color:var(--warn);font-size:12px;margin-top:8px;}
 
   .standing-list{margin-top:4px;}
   .result-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);}
@@ -183,8 +200,28 @@
     font-family:var(--font-display);font-weight:700;font-size:13px;background:rgba(255,255,255,0.05);
     border:1px solid var(--border);color:var(--muted);flex-shrink:0;
   }
+  .rank-badge.p1{background:rgba(255,209,102,0.15);border-color:var(--gold);color:var(--gold);box-shadow:0 0 14px rgba(255,209,102,0.5);}
+  .rank-badge.p2{background:rgba(219,226,234,0.12);border-color:var(--silver);color:var(--silver);box-shadow:0 0 10px rgba(219,226,234,0.3);}
+  .rank-badge.p3{background:rgba(255,171,94,0.14);border-color:var(--bronze);color:var(--bronze);box-shadow:0 0 10px rgba(255,171,94,0.35);}
   .result-row .name{flex:1;font-size:14px;}
-  .result-row .pts{font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--accent);}
+  .result-row .pts{font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--accent);text-shadow:0 0 10px rgba(0,229,255,0.4);}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .stat-box{
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;
+    backdrop-filter:blur(14px);
+  }
+  .stat-box .num{font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--accent);
+    text-shadow:0 0 14px rgba(0,229,255,0.5);}
+  .stat-box .lbl{font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:0.3px;}
+  .stat-box.wide{grid-column:1 / -1;}
+  .stat-box.wide .num{font-size:16px;text-shadow:none;color:var(--text);}
+
+  table.stats{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.stats th{text-align:center;color:var(--muted);font-weight:600;font-size:10.5px;padding:0 3px 8px;letter-spacing:0.3px;}
+  table.stats th:first-child{text-align:left;}
+  table.stats td{padding:9px 3px;border-top:1px solid var(--border);text-align:center;}
+  table.stats td:first-child{text-align:left;font-weight:500;}
 
   nav.bottom{
     position:fixed;bottom:0;left:0;right:0;display:flex;
@@ -197,25 +234,48 @@
     position:relative;font-weight:600;letter-spacing:0.3px;
   }
   nav.bottom button .ico{font-size:19px;}
-  nav.bottom button.active{color:var(--accent);}
+  nav.bottom button.active{color:var(--accent);text-shadow:0 0 10px rgba(0,229,255,0.5);}
+  nav.bottom button.active::after{
+    content:'';position:absolute;top:0;left:30%;right:30%;height:2px;
+    background:var(--accent);box-shadow:0 0 8px rgba(0,229,255,0.8);border-radius:2px;
+  }
 
   .toast{
     position:fixed;top:14px;left:50%;transform:translateX(-50%);background:rgba(10,15,28,0.9);
     border:1px solid var(--accent);color:var(--text);padding:9px 16px;border-radius:20px;font-size:13px;
     z-index:50;opacity:0;pointer-events:none;transition:opacity .25s;box-shadow:0 0 20px rgba(0,229,255,0.35);
+    backdrop-filter:blur(10px);
+    max-width:88vw;text-align:center;white-space:normal;line-height:1.4;
   }
   .toast.show{opacity:1;}
+  .storage-banner{
+    background:rgba(255,181,69,0.1);border-bottom:1px solid var(--warn);color:var(--warn);
+    font-size:12.5px;padding:10px 18px;text-align:center;
+  }
   .section-actions{display:flex;gap:8px;margin-top:14px;}
+  .confirm-overlay{
+    position:fixed;inset:0;background:rgba(4,6,13,0.75);backdrop-filter:blur(4px);
+    z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .confirm-box{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:20px;max-width:320px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.5);
+  }
+  .confirm-box p{margin:0 0 16px;font-size:14px;line-height:1.4;color:var(--text);}
+  .confirm-actions{display:flex;gap:10px;}
+  .confirm-actions button{flex:1;}
 </style>
 </head>
 <body>
 
 <header class="top">
   <h1><span class="flag">🏁</span><span class="title-text">Trackmania</span></h1>
-  <div class="version-badge" id="versionBadge"><b>V12</b></div>
+  <div class="version-badge" id="versionBadge"></div>
 </header>
 
 <main>
+
+  <div class="storage-banner" id="storageBanner" style="display:none;"></div>
 
   <section class="view active" id="view-rennen">
     <div class="card" id="dateCard">
@@ -226,9 +286,14 @@
     <div class="card" id="driversCard">
       <h2>Fahrer</h2>
       <div class="chip-grid" id="chipGrid"></div>
+      <button class="add-toggle" id="addToggleBtn">+ weiteren Fahrer</button>
+      <div class="add-row" id="addRow" style="display:none;">
+        <input type="text" id="newNameInput" placeholder="Name" maxlength="18" />
+        <button id="addNameBtn">+</button>
+      </div>
     </div>
 
-    <div id="raceArea"><div class="empty">Lade Echtzeit-Datenbank…</div></div>
+    <div id="raceArea"><div class="empty">Verbinde …</div></div>
   </section>
 
   <section class="view" id="view-archiv">
@@ -236,11 +301,11 @@
   </section>
 
   <section class="view" id="view-strecken">
-    <div class="empty">Streckenansicht aktiv</div>
+    <div id="streckenContent"></div>
   </section>
 
   <section class="view" id="view-statistik">
-    <div class="empty">Statistik-Ansicht aktiv</div>
+    <div id="statistikContent"></div>
   </section>
 
   <section class="view" id="view-sicherung">
@@ -260,239 +325,1851 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ==================== FIREBASE CONFIG ====================
-const firebaseConfig = {
-  databaseURL: "https://trkmn-44c02-default-rtdb.europe-west1.firebasedatabase.app"
-};
-
-firebase.initializeApp(firebaseConfig);
-const dbRef = firebase.database().ref('tm_scoreboard_state');
-
 const FIXED_DRIVERS = ['Max','Andy','Dani','Olly','Bär','Mky'];
+const APP_VERSION = 11;
+const APP_VERSION_DATE = '2026-09-25';
+const VERSION_HISTORY = [
+  { v:1, date:'2026-09-10', notes:'Kompletter Funktionsstand: Rennen-Tabelle, Archiv, Statistik, Strafpunkte, Zeitraum-Filter, faires Gesamtranking.' },
+  { v:2, date:'2026-09-10', notes:'Datum startet immer auf heute. Punktetabelle jetzt live für alle sichtbar, schon während der Eingabe (nicht erst nach Speichern).' },
+  { v:3, date:'2026-09-24', notes:'Archiv zeigt beim Antippen die volle Punkteverteilung. Streckennamen & Bestzeiten pro Track eintragbar, neuer "Strecken"-Tab dafür. Stern (*) für "letzter Tropfen Benzin"-Rettung auf Platz 1, wird in der Statistik gezählt. Dieser Versionsverlauf.' },
+  { v:4, date:'2026-09-24', notes:'Neu im Archiv: Sicherung exportieren (Datei-Download) und importieren (fehlende Renn-Einträge werden ergänzt, bestehende bleiben unverändert) – als Schutz gegen Datenverlust.' },
+  { v:5, date:'2026-09-24', notes:'Bug behoben: Bestzeiten im "Strecken"-Tab wurden bei bestimmten Zeitformaten (z.B. "0:47" ohne Millisekunden) falsch berechnet oder gar nicht angezeigt. Zeit-Erkennung deutlich toleranter gemacht (Komma/Punkt, mit/ohne Minuten). Gleich benannte Strecken werden jetzt unabhängig von Groß-/Kleinschreibung zusammengefasst.' },
+  { v:6, date:'2026-09-24', notes:'Sicherungs-Karte im Archiv erinnert jetzt automatisch, falls die letzte Sicherung mehr als 14 Tage her ist (oder noch nie gemacht wurde). Normale Versions-Updates brauchen weiterhin keine Sicherung – nur ein "Unpublish" würde das nötig machen.' },
+  { v:7, date:'2026-09-24', notes:'Zeiteingabe umgebaut: 1. Platz bekommt die Bestzeit, alle anderen nur noch den Rückstand dazu, DNF per Häkchen statt Text. Statistik zeigt jetzt die aufsummierte Fahrzeit jedes Fahrers. Archiv nach Fahrer-Kombination filterbar. Sicherung hat einen eigenen Tab bekommen, inkl. Verlauf aller Exporte/Importe.' },
+  { v:8, date:'2026-09-25', notes:'Echtes Rennen vom 24.09.2026 (Max, Bär, Andy, Dani, mit Streckennamen und Bestzeiten) aus einer hochgeladenen Sicherung nachträglich eingepflegt. Nebenbei: der Historien-Import kopiert jetzt auch Strafpunkte, Streckennamen und Bestzeiten mit, nicht nur die Punktetabelle.' },
+  { v:9, date:'2026-09-25', notes:'Zeit-Eingabe strenger: 1. Platz mm:ss,SSS (Komma), alle anderen nur noch ss,SSS Rückstand. Falsches Format (z.B. Punkt statt Komma) wird direkt im Feld als Fehler markiert und blockiert das Speichern, damit in Strecken/Statistik keine kaputten Zeiten landen können.' },
+  { v:10, date:'2026-09-25', notes:'Persönliche-Bestzeit-Meldung beim Eintragen von Streckenzeiten. CSV-Export im Sicherungs-Tab für Excel/Sheets. Session-Notizen (Freitextfeld) unterhalb der Punktetabelle im Rennen-Tab, sichtbar auch im Archiv.' },
+  { v:11, date:'2026-09-25', notes:'Aktivitäts-Kalender in der Statistik (letzte 14 Wochen als Heatmap). Automatischer Abend-Rückblick nach "Fertig" (Sieger, meiste Platz-1, DNFs, engstes Rennen). QR-Code + Link-Kopieren im Sicherungs-Tab. Streak-Krone 👑 für die längste aktuelle Siegesserie, sichtbar bei der Fahrerauswahl und im Gesamtranking.' }
+];
+const SEED_HISTORY = [{"id": "seed-2025-10-02", "date": "2025-10-02", "participants": ["Max", "Olly", "Dani", "Bär", "Mky", "Andy"], "grid": {"Max": [6, 1, 6, 1, 2, 1, 1, 3, 1], "Olly": [4, 5, 5, 6, 5, 4, 6, 7, 3], "Dani": [3, 2, 3, 2, 1, 6, 4, 1, 4], "Bär": [2, 3, 1, 3, 4, 2, 2, 4, 2], "Mky": [5, 4, 2, 5, 3, 3, 3, 2, 5], "Andy": [1, 6, 4, 4, 6, 5, 5, 7, 6]}}, {"id": "seed-2025-11-29", "date": "2025-11-29", "participants": ["Max", "Bär", "Andy", "Mky"], "grid": {"Max": [2, 2, 2, 1, 2, 5, 1, 3], "Bär": [4, 1, 3, 3, 3, 1, 3, 1], "Andy": [3, 4, 4, 2, 4, 3, 4, 4], "Mky": [1, 3, 1, 4, 1, 2, 2, 2]}}, {"id": "seed-2025-12-02", "date": "2025-12-02", "participants": ["Max", "Andy", "Dani", "Olly", "Mky"], "grid": {"Max": [6, 6, 1, 3, 1, 6, 2, 1], "Andy": [4, 6, 3, 4, 5, 1, 4, 5], "Dani": [2, 1, 6, 1, 3, 3, 1, 3], "Olly": [3, 6, 4, 5, 4, 4, 5, 4], "Mky": [1, 2, 2, 2, 2, 2, 3, 2]}}, {"id": "seed-2025-12-05", "date": "2025-12-05", "participants": ["Mky", "Andy", "Bär", "Max"], "grid": {"Mky": [2, 1, 1, 2, 5, 2, 3, 2, 2, 5], "Andy": [4, 4, 3, 3, 5, 4, 4, 4, 4, 3], "Bär": [3, 3, 2, 4, 5, 3, 1, 3, 3, 2], "Max": [1, 2, 5, 1, 5, 1, 2, 1, 1, 1]}}, {"id": "seed-2025-12-16", "date": "2025-12-16", "participants": ["Max", "Bär", "Mky", "Andy"], "grid": {"Max": [3, 2, 3, 1, 3, 2, 3], "Bär": [2, 3, 2, 2, 2, 3, 1], "Mky": [4, 1, 1, 4, 1, 5, 2], "Andy": [1, 4, 4, 3, 4, 1, 4]}}, {"id": "seed-2025-12-18", "date": "2025-12-18", "participants": ["Bär", "Olly", "Andy", "Dani", "Max"], "grid": {"Bär": [2, 2, 3, 2, 3, 2, 4], "Olly": [4, 4, 5, 5, 4, 4, 5], "Andy": [5, 6, 4, 3, 5, 3, 3], "Dani": [3, 3, 1, 1, 2, 5, 2], "Max": [1, 1, 2, 4, 1, 1, 1]}}, {"id": "seed-2025-12-21", "date": "2025-12-21", "participants": ["Olly", "Max", "Andy"], "grid": {"Olly": [1, 4, 2, 4, 3, 3, 2, 3, 2, 2, 2, 3, 2], "Max": [3, 1, 1, 4, 1, 1, 1, 1, 3, 3, 4, 1, 1], "Andy": [2, 2, 3, 4, 2, 2, 3, 2, 1, 1, 1, 2, 3]}}, {"id": "seed-2025-12-24", "date": "2025-12-24", "participants": ["Olly", "Dani", "Bär", "Max", "Andy"], "grid": {"Olly": [3, 6, 3, 5, 5, 5, 5], "Dani": [2, 2, 1, 4, 3, 2, 3], "Bär": [1, 6, 2, 2, 1, 3, 4], "Max": [5, 1, 4, 1, 2, 1, 1], "Andy": [4, 6, 5, 3, 4, 4, 2]}}, {"id": "seed-2025-12-28", "date": "2025-12-28", "participants": ["Olly", "Dani", "Mky", "Max", "Andy"], "grid": {"Olly": [6, 4, 2, 4, 5, 3, 5], "Dani": [6, 3, 5, 3, 4, 1, 3], "Mky": [6, 2, 4, 2, 1, 2, 1], "Max": [6, 2, 1, 5, 3, 6, 4], "Andy": [1, 5, 3, 1, 2, 4, 2]}}, {"id": "seed-2025-12-29", "date": "2025-12-29", "participants": ["Max", "Andy", "Bär"], "grid": {"Max": [1, 4, 1, 1, 1, 1, 2, 1, 1, 1, 1], "Andy": [4, 2, 4, 2, 2, 3, 3, 2, 3, 3, 3], "Bär": [2, 1, 2, 3, 3, 2, 1, 3, 2, 2, 2]}}, {"id": "seed-2026-01-06", "date": "2026-01-06", "participants": ["Max", "Andy", "Bär"], "grid": {"Max": [2, 4, 1, 3, 1, 1, 4], "Andy": [3, 2, 2, 2, 2, 3, 1], "Bär": [1, 1, 3, 1, 3, 2, 2]}}, {"id": "seed-2026-01-11", "date": "2026-01-11", "participants": ["Max", "Andy", "Dani", "Olly"], "grid": {"Max": [1, 1, 2, 1, 3, 1, 1, 1, 4], "Andy": [4, 2, 4, 2, 2, 2, 2, 2, 2], "Dani": [3, 3, 3, 3, 1, 3, 4, 3, 1], "Olly": [2, 4, 1, 4, 4, 4, 3, 4, 3]}}, {"id": "seed-2026-01-13", "date": "2026-01-13", "participants": ["Max", "Andy", "Dani", "Olly"], "grid": {"Max": [1, 2, 2, 3, 1, 1, 2, 3, 1], "Andy": [2, 4, 5, 2, 3, 3, 5, 1, 4], "Dani": [3, 1, 5, 1, 2, 2, 3, 2, 3], "Olly": [4, 3, 1, 4, 4, 4, 1, 4, 2]}}, {"id": "seed-2026-01-15", "date": "2026-01-15", "participants": ["Max", "Bär", "Andy", "Olly", "Mky"], "grid": {"Max": [2, 2, 3, 1, 4, 6, 1, 4, 1], "Bär": [3, 1, 2, 4, 1, 6, 2, 2, 2], "Andy": [4, 4, 1, 5, 3, 6, 3, 5, 4], "Olly": [5, 6, 5, 3, 5, 6, 4, 3, 5], "Mky": [1, 3, 4, 2, 2, 6, 6, 1, 3]}}, {"id": "seed-2026-01-21", "date": "2026-01-21", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [1, 1, 2, 1, 1, 1, 1], "Andy": [3, 2, 1, 3, 2, 3, 3], "Mky": [2, 3, 3, 2, 2, 2, 2]}}, {"id": "seed-2026-01-30", "date": "2026-01-30", "participants": ["Max", "Dani", "Bär", "Olly", "Mky", "Andy"], "grid": {"Max": [2, 2, 3, 2, 3, 1], "Dani": [1, 1, 5, 6, 2, 3], "Bär": [6, 3, 1, 4, 4, 2], "Olly": [4, 6, 2, 1, 6, 5], "Mky": [5, 4, 6, 5, 1, 4], "Andy": [3, 5, 4, 3, 5, 6]}}, {"id": "seed-2026-02-03", "date": "2026-02-03", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [1, 1, 1, 2, 2, 1, 1, 2, 1, 2, 3], "Andy": [3, 3, 2, 2, 3, 2, 2, 3, 3, 4, 1], "Mky": [2, 2, 3, 4, 1, 3, 3, 1, 2, 2, 2]}}, {"id": "seed-2026-02-05", "date": "2026-02-05", "participants": ["Max", "Bär", "Dani", "Olly", "Andy"], "grid": {"Max": [4, 1, 1, 1, 1, 6, 1, 1], "Bär": [2, 3, 4, 2, 3, 6, 2, 4], "Dani": [1, 4, 2, 4, 2, 6, 3, 2], "Olly": [5, 5, 5, 5, 4, 6, 5, 3], "Andy": [3, 3, 3, 3, 5, 6, 4, 5]}}, {"id": "seed-2026-02-08", "date": "2026-02-08", "participants": ["Max", "Andy", "Dani", "Olly"], "grid": {"Max": [2, 1, 1, 2, 1, 5, 2], "Andy": [3, 3, 4, 3, 3, 5, 3], "Dani": [1, 2, 3, 1, 2, 5, 1], "Olly": [4, 4, 2, 4, 4, 5, 4]}}, {"id": "seed-2026-02-16", "date": "2026-02-16", "participants": ["Max", "Andy", "Olly"], "grid": {"Max": [1, 1, 1, 1, 1, 2, 1, 1, 1, 3], "Andy": [3, 3, 3, 3, 3, 1, 2, 2, 2, 2], "Olly": [2, 2, 2, 2, 2, 3, 3, 3, 3, 1]}}, {"id": "seed-2026-02-17", "date": "2026-02-17", "participants": ["Max", "Bär", "Andy"], "grid": {"Max": [1, 3, 1, 4, 1, 1, 1], "Bär": [2, 2, 2, 1, 2, 3, 2], "Andy": [3, 1, 3, 2, 3, 2, 3]}}, {"id": "seed-2026-02-24", "date": "2026-02-24", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [1, 1, 2, 2, 1, 2, 1, 1, 1], "Andy": [3, 4, 3, 1, 2, 1, 3, 3, 4], "Mky": [2, 2, 1, 3, 3, 3, 2, 2, 2]}}, {"id": "seed-2026-03-03", "date": "2026-03-03", "participants": ["Max", "Dani", "Olly", "Bär", "Andy"], "grid": {"Max": [2, 1, 6, 6, 2, 1], "Dani": [1, 3, 1, 1, 1, 2], "Olly": [5, 4, 6, 3, 5, 5], "Bär": [3, 6, 6, 2, 4, 3], "Andy": [4, 2, 2, 4, 3, 4]}}, {"id": "seed-2026-03-05", "date": "2026-03-05", "participants": ["Max", "Bär", "Andy", "Olly", "Mky"], "grid": {"Max": [5, 2, 6, 2, 1, 1], "Bär": [2, 2, 1, 1, 2, 2], "Andy": [3, 3, 3, 4, 3, 3], "Olly": [4, 4, 4, 3, 5, 4], "Mky": [1, 5, 2, 5, 4, 5]}}, {"id": "seed-2026-03-06", "date": "2026-03-06", "participants": ["Max", "Andy"], "grid": {"Max": [2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1], "Andy": [1, 3, 2, 2, 1, 2, 2, 1, 2, 2, 2]}}, {"id": "seed-2026-03-19", "date": "2026-03-19", "participants": ["Max", "Bär", "Dani", "Olly", "Mky", "Andy"], "grid": {"Max": [2, 2, 3, 1, 5, 1, 7], "Bär": [1, 4, 7, 7, 1, 3, 7], "Dani": [3, 1, 2, 4, 2, 4, 1], "Olly": [6, 3, 2, 7, 3, 6, 3], "Mky": [4, 5, 5, 2, 6, 2, 4], "Andy": [5, 6, 4, 3, 4, 5, 2]}}, {"id": "seed-2026-03-23", "date": "2026-03-23", "participants": ["Max", "Dani", "Andy", "Olly"], "grid": {"Max": [5, 1, 1, 3, 1, 5], "Dani": [3, 2, 2, 1, 2, 2], "Andy": [1, 3, 3, 2, 4, 1], "Olly": [2, 4, 4, 5, 3, 5]}}, {"id": "seed-2026-03-28", "date": "2026-03-28", "participants": ["Max", "Olly", "Andy"], "grid": {"Max": [1, 1, 4, 1], "Olly": [3, 2, 2, 2], "Andy": [2, 3, 1, 3]}}, {"id": "seed-2026-04-02", "date": "2026-04-02", "participants": ["Max", "Andy", "Olly", "Mky"], "grid": {"Max": [3, 2, 1, 2, 5, 1, 1], "Andy": [1, 2, 4, 3, 5, 2, 2], "Olly": [4, 3, 2, 4, 5, 3, 4], "Mky": [2, 4, 3, 2, 5, 4, 3]}}, {"id": "seed-2026-04-09", "date": "2026-04-09", "participants": ["Max", "Andy", "Mky", "Bär"], "grid": {"Max": [1, 1, 2, 2, 5, 1, 3], "Andy": [3, 3, 4, 4, 1, 5, 1], "Mky": [4, 5, 3, 1, 5, 3, 4], "Bär": [2, 2, 1, 3, 2, 2, 2]}}, {"id": "seed-2026-04-14", "date": "2026-04-14", "participants": ["Max", "Andy", "Dani", "Olly", "Bär"], "grid": {"Max": [4, 3, 1, 4, 1, 3], "Andy": [3, 6, 2, 5, 4, 5], "Dani": [2, 1, 4, 2, 2, 2], "Olly": [5, 2, 5, 3, 5, 4], "Bär": [1, 6, 3, 1, 3, 1]}}, {"id": "seed-2026-05-07", "date": "2026-05-07", "participants": ["Max", "Olly", "Andy", "Bär", "Mky"], "grid": {"Max": [2, 1, 3, 2, 1, 1], "Olly": [5, 2, 6, 4, 5, 5], "Andy": [3, 4, 2, 5, 3, 4], "Bär": [4, 3, 4, 1, 4, 2], "Mky": [1, 5, 1, 3, 2, 3]}}, {"id": "seed-2026-05-13", "date": "2026-05-13", "participants": ["Max", "Olly", "Dani", "Bär", "Mky", "Andy"], "grid": {"Max": [5, 1, 5, 1, 3, 2, 1], "Olly": [4, 4, 2, 5, 6, 6, 7], "Dani": [6, 2, 1, 6, 2, 4, 3], "Bär": [1, 5, 7, 3, 4, 1, 5], "Mky": [3, 7, 3, 2, 1, 5, 2], "Andy": [2, 3, 4, 4, 5, 3, 4]}}, {"id": "seed-2026-05-19", "date": "2026-05-19", "participants": ["Max", "Bär", "Dani", "Andy", "Mky"], "grid": {"Max": [2, 1, 1, 2, 1, 1, 5], "Bär": [1, 4, 2, 3, 2, 4, 3], "Dani": [3, 2, 5, 1, 3, 2, 1], "Andy": [4, 6, 3, 4, 4, 5, 4], "Mky": [5, 3, 4, 5, 5, 3, 2]}}, {"id": "seed-2026-05-30", "date": "2026-05-30", "participants": ["Max", "Dani", "Andy"], "grid": {"Max": [1, 3, 1, 3, 3, 1, 1, 4], "Dani": [2, 2, 2, 1, 2, 2, 4, 1], "Andy": [3, 1, 3, 2, 1, 3, 4, 2]}}, {"id": "seed-2026-05-31", "date": "2026-05-31", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [1, 2, 1, 3, 2, 1, 1], "Andy": [3, 3, 3, 1, 3, 2, 3], "Mky": [2, 1, 2, 2, 1, 3, 2]}}, {"id": "seed-2026-06-02", "date": "2026-06-02", "participants": ["Max", "Dani", "Mky", "Bär", "Andy"], "grid": {"Max": [1, 2, 1, 3, 3, 3], "Dani": [3, 3, 3, 1, 4, 2], "Mky": [4, 4, 6, 6, 5, 1], "Bär": [5, 1, 2, 6, 1, 5], "Andy": [2, 5, 4, 2, 2, 4]}}, {"id": "seed-2026-06-04", "date": "2026-06-04", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [4, 2, 2, 2, 1, 1, 1, 1, 1], "Andy": [2, 3, 4, 3, 3, 2, 2, 3, 2], "Mky": [1, 1, 1, 1, 2, 3, 3, 2, 3]}}, {"id": "seed-2026-06-09", "date": "2026-06-09", "participants": ["Max", "Bär", "Andy", "Mky"], "grid": {"Max": [2, 1, 3, 2, 4, 1, 1, 1, 1], "Bär": [4, 3, 2, 5, 1, 3, 3, 3, 3], "Andy": [3, 4, 4, 3, 3, 4, 2, 4, 4], "Mky": [1, 2, 1, 1, 2, 2, 4, 2, 2]}}, {"id": "seed-2026-06-17", "date": "2026-06-17", "participants": ["Max", "Mky", "Olly", "Bär", "Andy"], "grid": {"Max": [3, 2, 1], "Mky": [1, 3, 2], "Olly": [2, 5, 5], "Bär": [5, 1, 3], "Andy": [4, 4, 4]}}, {"id": "seed-2026-07-05", "date": "2026-07-05", "participants": ["Max", "Dani", "Andy", "Olly", "Bär", "Mky"], "grid": {"Max": [3, 1, 1, 6, 2, 2, 3], "Dani": [4, 2, 5, 2, 5, 3, 2], "Andy": [2, 6, 4, 5, 4, 6, 5], "Olly": [6, 5, 6, 4, 6, 1, 6], "Bär": [1, 3, 2, 1, 3, 5, 1], "Mky": [5, 4, 3, 3, 1, 4, 4]}}, {"id": "seed-2026-07-11", "date": "2026-07-11", "participants": ["Max", "Bär", "Andy", "Olly", "Mky"], "grid": {"Max": [3, 1, 4, 1, 1, 1], "Bär": [1, 2, 1, 3, 2, 3], "Andy": [5, 4, 5, 4, 3, 6], "Olly": [4, 5, 2, 5, 5, 4], "Mky": [2, 3, 3, 2, 4, 2]}}, {"id": "seed-2026-07-16", "date": "2026-07-16", "participants": ["Max", "Andy", "Olly", "Mky"], "grid": {"Max": [1, 2, 1, 4, 1], "Andy": [3, 3, 3, 3, 3], "Olly": [4, 4, 4, 2, 4], "Mky": [2, 1, 2, 1, 2]}}, {"id": "seed-2026-07-22", "date": "2026-07-22", "participants": ["Max", "Dani", "Olly", "Bär", "Andy"], "grid": {"Max": [1, 2, 1, 6, 1, 4], "Dani": [3, 1, 3, 1, 3, 1], "Olly": [5, 5, 4, 3, 5, 3], "Bär": [2, 3, 2, 4, 2, 5], "Andy": [4, 4, 5, 2, 4, 2]}}, {"id": "seed-2026-07-24", "date": "2026-07-24", "participants": ["Max", "Andy", "Dani", "Bär"], "grid": {"Max": [2, 2, 1, 5, 1, 1, 5], "Andy": [4, 3, 4, 2, 3, 3, 2], "Dani": [3, 1, 2, 5, 4, 2, 3], "Bär": [1, 4, 3, 1, 2, 4, 1]}}, {"id": "seed-2026-08-05", "date": "2026-08-05", "participants": ["Max", "Andy", "Dani", "Olly", "Mky"], "grid": {"Max": [2, 1, 1, 3, 1, 1], "Andy": [4, 5, 4, 5, 4, 4], "Dani": [1, 3, 3, 1, 3, 3], "Olly": [3, 4, 5, 4, 2, 6], "Mky": [5, 2, 2, 2, 5, 2]}}, {"id": "seed-2026-08-11", "date": "2026-08-11", "participants": ["Max", "Dani", "Andy", "Mky", "Olly"], "grid": {"Max": [4, 2, 1, 2, 1, 2, 1, 4], "Dani": [2, 3, 3, 5, 2, 3, 3, 3], "Andy": [5, 5, 4, 3, 4, 5, 4, 6], "Mky": [1, 1, 2, 4, 3, 1, 2, 1], "Olly": [3, 4, 5, 1, 5, 4, 5, 2]}}, {"id": "seed-2026-08-19", "date": "2026-08-19", "participants": ["Max", "Dani", "Andy", "Mky"], "grid": {"Max": [1, 2, 1, 4, 1, 1, 1, 3], "Dani": [3, 3, 2, 3, 2, 4, 2, 4], "Andy": [4, 4, 3, 2, 5, 3, 4, 2], "Mky": [2, 1, 5, 1, 5, 2, 3, 1]}}, {"id": "seed-2026-08-20", "date": "2026-08-20", "participants": ["Max", "Olly", "Andy"], "grid": {"Max": [2, 1, 1, 1, 2, 3, 2, 1, 3, 1, 1], "Olly": [1, 2, 3, 3, 1, 2, 3, 2, 2, 2, 3], "Andy": [3, 4, 2, 2, 3, 1, 2, 3, 1, 3, 2]}}, {"id": "seed-2026-08-25", "date": "2026-08-25", "participants": ["Max", "Bär", "Andy"], "grid": {"Max": [2, 1, 1, 1, 1, 3, null], "Bär": [1, 2, 2, 4, 3, 1, null], "Andy": [3, 3, 3, 4, 2, 3, 2]}}, {"id": "seed-2026-08-28", "date": "2026-08-28", "participants": ["Max", "Andy", "Mky", "Bär"], "grid": {"Max": [1, 2, 1, 2, 2, 2], "Andy": [4, 4, 2, 5, 5, 1], "Mky": [2, 3, 4, 3, 1, 3], "Bär": [3, 1, 3, 1, 5, 4]}}, {"id": "seed-2026-09-02", "date": "2026-09-02", "participants": ["Max", "Dani", "Mky", "Olly", "Bär", "Andy"], "grid": {"Max": [3, 4, 4, 1, 2, 3, 2], "Dani": [1, 3, 5, 4, 4, 5, 7], "Mky": [5, 5, 1, 2, 1, 1, 7], "Olly": [2, 6, 7, 6, 5, 6, 4], "Bär": [4, 2, 2, 3, 3, 4, 1], "Andy": [7, 1, 4, 5, 7, 2, 3]}}, {"id": "seed-2026-09-04", "date": "2026-09-04", "participants": ["Max", "Andy", "Dani", "Bär"], "grid": {"Max": [1, 1, 1, 1, 1, 4], "Andy": [4, 2, 3, 4, 4, 1], "Dani": [3, 4, 4, 2, 2, 3], "Bär": [2, 3, 2, 3, 3, 2]}}, {"id": "seed-2026-09-06", "date": "2026-09-06", "participants": ["Max", "Bär", "Dani", "Olly", "Mky"], "grid": {"Max": [1, 2, 1, 1, 5, 6, 1, 1], "Bär": [3, 1, 4, 3, 1, 6, 3, 2], "Dani": [2, 6, 5, 2, 2, 6, 2, 5], "Olly": [4, 4, 2, 6, 4, 6, 5, 3], "Mky": [5, 3, 3, 6, 3, 1, 4, 4]}}, {"id": "seed-2026-09-24", "date": "2026-09-24", "participants": ["Max", "Bär", "Andy", "Dani"], "grid": {"Max": [1, 1, 3, 1, 5, 3, 1], "Bär": [2, 3, 2, 3, 5, 1, 2], "Andy": [3, 2, 4, 2, 5, 2, 3], "Dani": [4, 4, 1, 4, 1, 4, 4]}, "penalties": {"Max": 0, "Bär": 0, "Andy": 0, "Dani": 0}, "trackNames": ["Ws.84.02", "Oc.sp2023.13", "Ws.76.04", "Oc.sp2026.07", "Totd.2026.09.24", "Oc.s2023.15", "Ws.69.02"], "trackTimes": {"Max": ["00:17.338", "00:35.228", "00:18.335", "00:29.984", "5:00.000", "00:59.271", "00:18.781"], "Bär": ["00:17.904", "00:36.358", "00:18.145", "00:30.224", "5:00.000", "00:56.047", "00:18.978"], "Andy": ["00:17.969", "00:36.326", "00:18.590", "00:30.101", "5:00.000", "00:58.574", "00:19.025"], "Dani": ["00:18.509", "00:36.908", "00:18.078", "00:30.409", "00:56.000", "01:01.255", "00:19.955"]}}];
+
 let state = null;
 let currentView = 'rennen';
+let statsFilter = { from: null, to: null }; // date-range filter for the Statistik tab, reset on reload
+let draft = null;           // in-progress race being entered, not yet saved to the archive
+let rennenPhase = 'idle';   // 'idle' | 'setup' | 'editing'
+let storageAvailable = null; // null = not yet checked, true/false after first attempt
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+function showStorageBanner(){
+  const b = document.getElementById('storageBanner');
+  b.style.display = 'block';
+  b.textContent = 'Live-Datenbank gerade nicht erreichbar – Ergebnisse bleiben nur auf diesem Gerät, bis die Verbindung wieder da ist. Prüfe deine Internetverbindung und die Firebase-Konfiguration oben im Code.';
+}
+function hideStorageBanner(){
+  const b = document.getElementById('storageBanner');
+  if(b) b.style.display = 'none';
+}
 
 function defaultState(){
   return {
     savedNames: [...FIXED_DRIVERS],
     selectedNames: [...FIXED_DRIVERS],
     selectedDate: todayStr(),
-    sessions: [],
-    liveDraft: null
+    sessions: [], // {id, date, participants:[...], grid:{name:[val,...]}}
+    liveDraft: null, // in-progress race, shared so everyone can watch it live
+    lastExportDate: null,
+    backupHistory: [],
+    historyImported: false
   };
 }
 
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 1800);
+function migrateLegacyNames(state){
+  const RENAME = { 'Andi': 'Andy', 'Mäcky': 'Mky', 'Mäkky': 'Mky' };
+  const renameIn = (arr) => arr.map(n => RENAME[n] || n);
+  state.savedNames = renameIn(state.savedNames);
+  state.selectedNames = renameIn(state.selectedNames);
+  const migrateSessionLike = (s)=>{
+    s.participants = renameIn(s.participants);
+    const newGrid = {};
+    Object.entries(s.grid).forEach(([name, vals])=>{
+      newGrid[RENAME[name] || name] = vals;
+    });
+    s.grid = newGrid;
+    if(s.penalties){
+      const newPenalties = {};
+      Object.entries(s.penalties).forEach(([name, val])=>{
+        newPenalties[RENAME[name] || name] = val;
+      });
+      s.penalties = newPenalties;
+    }
+  };
+  state.sessions.forEach(migrateSessionLike);
+  if(state.liveDraft) migrateSessionLike(state.liveDraft);
 }
 
-function initRealtimeDatabase(){
-  dbRef.on('value', (snapshot) => {
-    const val = snapshot.val();
-    if(!val || typeof val !== 'object'){
-      state = defaultState();
-      saveState();
-    } else {
-      state = val;
-      if(!state.savedNames) state.savedNames = [...FIXED_DRIVERS];
-      if(!state.selectedNames) state.selectedNames = [...FIXED_DRIVERS];
-      if(!state.sessions) state.sessions = [];
-      
-      // Fehlerabsicherung gegen beschädigte Entwürfe
-      if(state.liveDraft && (!state.liveDraft.grid || !state.liveDraft.participants)){
-        state.liveDraft = null;
+function importSeedHistoryOnce(state){
+  // Checks per session id, not a single one-time flag - this way, if I ever
+  // add more historical entries to SEED_HISTORY later, they get picked up
+  // automatically on next load for everyone, without needing a fresh import.
+  const existingIds = new Set(state.sessions.map(s=>s.id));
+  let addedAny = false;
+  SEED_HISTORY.forEach(seed=>{
+    if(!existingIds.has(seed.id)){
+      const entry = {
+        id: seed.id,
+        date: seed.date,
+        participants: [...seed.participants],
+        grid: JSON.parse(JSON.stringify(seed.grid))
+      };
+      if(seed.penalties) entry.penalties = JSON.parse(JSON.stringify(seed.penalties));
+      if(seed.trackNames) entry.trackNames = JSON.parse(JSON.stringify(seed.trackNames));
+      if(seed.trackTimes) entry.trackTimes = JSON.parse(JSON.stringify(seed.trackTimes));
+      state.sessions.push(entry);
+      addedAny = true;
+    }
+  });
+  return addedAny;
+}
+
+function showToast(msg, durationMs){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), durationMs || 1800);
+}
+
+function showConfirm(message, onConfirm){
+  // Custom confirmation instead of window.confirm(): native confirm()/alert()
+  // dialogs are unreliable inside sandboxed artifact iframes (can be silently
+  // blocked), which made the Löschen/Bearbeiten buttons appear to do nothing.
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `<div class="confirm-box">
+    <p>${escapeHtml(message)}</p>
+    <div class="confirm-actions">
+      <button id="confirmCancelBtn">Abbrechen</button>
+      <button class="danger" id="confirmOkBtn">Bestätigen</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  const close = ()=> overlay.remove();
+  overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
+  document.getElementById('confirmCancelBtn').onclick = close;
+  document.getElementById('confirmOkBtn').onclick = ()=>{ close(); onConfirm(); };
+}
+
+function formatMsToTime(ms){
+  if(ms===null || ms===undefined || isNaN(ms)) return '';
+  const totalMs = Math.max(0, Math.round(ms));
+  const min = Math.floor(totalMs/60000);
+  const sec = Math.floor((totalMs%60000)/1000);
+  const msPart = totalMs%1000;
+  // comma decimal separator (German convention) - parseTimeToMs still accepts
+  // a period too, so any older period-formatted stored times keep working.
+  return `${min}:${String(sec).padStart(2,'0')},${String(msPart).padStart(3,'0')}`;
+}
+
+function formatDurationMs(ms){
+  if(!ms) return '–';
+  const totalSec = Math.round(ms/1000);
+  const h = Math.floor(totalSec/3600);
+  const m = Math.floor((totalSec%3600)/60);
+  const s = totalSec%60;
+  if(h>0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+const LEADER_TIME_RE = /^\d{1,2}:\d{2},\d{3}$/;
+const GAP_TIME_RE = /^\d{1,3},\d{3}$/;
+
+function formatGapDisplay(ms){
+  if(ms===null || ms===undefined || isNaN(ms)) return '';
+  const totalMs = Math.max(0, Math.round(ms));
+  const sec = Math.floor(totalMs/1000);
+  const msPart = totalMs%1000;
+  return `${String(sec).padStart(2,'0')},${String(msPart).padStart(3,'0')}`;
+}
+
+function showTrackEditor(roundIndex){
+  if(!draft) return;
+  const currentName = (draft.trackNames && draft.trackNames[roundIndex]) || '';
+  const N = draft.participants.length;
+
+  // Default "who is 1st place" from the points already entered for this
+  // track, if any - otherwise just the first participant.
+  let leaderName = null;
+  draft.participants.forEach(name=>{
+    const pv = draft.grid[name] ? draft.grid[name][roundIndex] : null;
+    if(asPlacementNumber(pv) === 1) leaderName = name;
+  });
+  if(!leaderName) leaderName = draft.participants[0];
+
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `<div class="confirm-box" style="max-width:380px;text-align:left;">
+    <h2 style="font-family:var(--font-display);font-size:16px;margin:0 0 12px;">Track ${roundIndex+1}</h2>
+    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Streckenname</label>
+    <input type="text" id="trackNameInputModal" value="${escapeHtml(currentName)}" placeholder="z.B. Canyon Speed" style="width:100%;margin-bottom:14px;" />
+    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:8px;">Zeiten (1. Platz = Bestzeit, alle anderen = Rückstand)</label>
+    <div id="trackRowsContainer"></div>
+    <div class="confirm-actions" style="margin-top:10px;">
+      <button id="trackEditorCancelBtn">Abbrechen</button>
+      <button class="primary" id="trackEditorSaveBtn">Speichern</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+
+  function getLeaderMs(){
+    const inp = overlay.querySelector('.track-time-input[data-track-name]');
+    return inp ? parseTimeToMs(inp.value) : null;
+  }
+
+  function validateField(inp, isLeader){
+    const wrap = inp.closest('.track-time-field');
+    const errEl = wrap ? wrap.querySelector('.track-time-error') : null;
+    const raw = inp.value.trim();
+    if(raw === ''){
+      inp.classList.remove('time-invalid');
+      if(errEl) errEl.style.display = 'none';
+      return true;
+    }
+    const re = isLeader ? LEADER_TIME_RE : GAP_TIME_RE;
+    const ok = re.test(raw);
+    inp.classList.toggle('time-invalid', !ok);
+    if(errEl) errEl.style.display = ok ? 'none' : 'block';
+    return ok;
+  }
+
+  function renderRows(){
+    const leaderTimeStrRaw = (draft.trackTimes && draft.trackTimes[leaderName] && draft.trackTimes[leaderName][roundIndex]) || '';
+    const leaderMs = parseTimeToMs(leaderTimeStrRaw);
+    const leaderTimeDisplay = leaderMs!==null ? formatMsToTime(leaderMs) : '';
+
+    const container = document.getElementById('trackRowsContainer');
+    container.innerHTML = draft.participants.map(name=>{
+      const pv = draft.grid[name] ? draft.grid[name][roundIndex] : null;
+      const dnfDefault = pv==='DNF' || (typeof pv==='number' && pv===N+1);
+      const isLeader = name===leaderName;
+      let fieldValue = '';
+      if(isLeader){
+        fieldValue = leaderTimeDisplay;
+      } else if(!dnfDefault && leaderMs!==null){
+        const ownMs = parseTimeToMs((draft.trackTimes && draft.trackTimes[name] && draft.trackTimes[name][roundIndex]) || '');
+        if(ownMs!==null && ownMs>=leaderMs) fieldValue = formatGapDisplay(ownMs-leaderMs);
+      }
+      const errMsg = isLeader ? 'Format: mm:ss,SSS (z.B. 0:47,325)' : 'Format: ss,SSS (z.B. 01,500)';
+      return `<div class="track-time-field" style="margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <label style="display:flex;align-items:center;gap:4px;flex-shrink:0;" title="Als 1. Platz / Bestzeit-Referenz festlegen">
+            <input type="radio" name="leaderRadio" class="leader-radio" data-track-name="${escapeHtml(name)}" ${isLeader?'checked':''} />
+          </label>
+          <div style="flex:1;font-size:14px;">${escapeHtml(name)}</div>
+          <input type="text" class="track-time-input" data-track-name="${escapeHtml(name)}" data-is-leader="${isLeader}"
+            placeholder="${isLeader?'mm:ss,SSS':'ss,SSS'}" value="${escapeHtml(fieldValue)}"
+            style="width:110px;text-align:center;" ${!isLeader && dnfDefault ? 'disabled':''} />
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);flex-shrink:0;">
+            <input type="checkbox" class="track-dnf-check" data-track-name="${escapeHtml(name)}" ${dnfDefault?'checked':''} /> DNF
+          </label>
+        </div>
+        <div class="track-time-error" style="display:none;color:var(--danger);font-size:11px;margin-top:4px;margin-left:26px;">${escapeHtml(errMsg)}</div>
+      </div>`;
+    }).join('');
+
+    container.querySelectorAll('.leader-radio').forEach(r=>{
+      r.onchange = ()=>{ leaderName = r.dataset.trackName; renderRows(); };
+    });
+    container.querySelectorAll('.track-dnf-check').forEach(cb=>{
+      cb.onchange = ()=>{
+        const timeInp = container.querySelector(`.track-time-input[data-track-name="${cssEscape(cb.dataset.trackName)}"]`);
+        if(timeInp){
+          timeInp.disabled = cb.checked;
+          if(cb.checked){ timeInp.value = ''; validateField(timeInp, timeInp.dataset.isLeader==='true'); }
+        }
+      };
+    });
+    container.querySelectorAll('.track-time-input').forEach(inp=>{
+      inp.addEventListener('blur', ()=> validateField(inp, inp.dataset.isLeader==='true'));
+      inp.addEventListener('input', ()=>{
+        const wrap = inp.closest('.track-time-field');
+        const errEl = wrap ? wrap.querySelector('.track-time-error') : null;
+        if(errEl && errEl.style.display !== 'none'){ inp.classList.remove('time-invalid'); errEl.style.display = 'none'; }
+      });
+    });
+  }
+  renderRows();
+
+  const close = ()=> overlay.remove();
+  overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
+  document.getElementById('trackEditorCancelBtn').onclick = close;
+  document.getElementById('trackEditorSaveBtn').onclick = ()=>{
+    // validate every active (non-DNF, non-empty) field before accepting anything
+    let allValid = true;
+    overlay.querySelectorAll('.track-time-input').forEach(inp=>{
+      if(inp.disabled) return;
+      const ok = validateField(inp, inp.dataset.isLeader==='true');
+      if(!ok) allValid = false;
+    });
+    if(!allValid){
+      showToast('Bitte Zeitformat korrigieren (Komma statt Punkt, siehe Hinweis)');
+      return;
+    }
+
+    const name = document.getElementById('trackNameInputModal').value.trim();
+    if(!draft.trackNames) draft.trackNames = [];
+    draft.trackNames[roundIndex] = name;
+    if(!draft.trackTimes) draft.trackTimes = {};
+
+    // capture each driver's PREVIOUS personal best on this track before we
+    // overwrite anything, so we can tell afterwards who just beat their own record
+    const previousBests = {};
+    if(name){
+      draft.participants.forEach(pname=>{ previousBests[pname] = getPersonalBestMs(pname, name); });
+    }
+
+    const leaderMs = getLeaderMs();
+    const newTimesMs = {};
+    draft.participants.forEach(pname=>{
+      if(!draft.trackTimes[pname]) draft.trackTimes[pname] = [];
+      const dnfChecked = overlay.querySelector(`.track-dnf-check[data-track-name="${cssEscape(pname)}"]`).checked;
+      if(dnfChecked){
+        draft.trackTimes[pname][roundIndex] = null;
+        return;
+      }
+      const inp = overlay.querySelector(`.track-time-input[data-track-name="${cssEscape(pname)}"]`);
+      const raw = inp.value.trim();
+      let finalMs = null;
+      if(pname === leaderName){
+        finalMs = raw ? parseTimeToMs(raw) : null;
+      } else if(raw && leaderMs!==null){
+        const gapMs = parseTimeToMs(raw);
+        finalMs = gapMs===null ? null : leaderMs + gapMs;
+      }
+      draft.trackTimes[pname][roundIndex] = finalMs===null ? null : formatMsToTime(finalMs);
+      newTimesMs[pname] = finalMs;
+    });
+    saveDraft();
+    close();
+    renderRennen();
+
+    // personal-best celebration: only counts as "beating a record" if they
+    // already HAD a previous time on this exact track and the new one is faster
+    if(name){
+      const achievers = draft.participants.filter(pname=>
+        newTimesMs[pname]!==null && previousBests[pname]!==null && newTimesMs[pname] < previousBests[pname]
+      );
+      if(achievers.length){
+        const msg = achievers.length===1
+          ? `🏆 Neue Bestzeit für ${achievers[0]} auf ${name}: ${formatMsToTime(newTimesMs[achievers[0]])}!`
+          : `🏆 Neue Bestzeiten auf ${name}: ${achievers.map(a=>`${a} (${formatMsToTime(newTimesMs[a])})`).join(', ')}!`;
+        showToast(msg, 4200);
       }
     }
+  };
+}
+
+function showSessionRecap(session){
+  const bodyHtml = buildSessionRecapHtml(session);
+  if(!bodyHtml) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `<div class="confirm-box" style="max-width:360px;text-align:left;">
+    <h2 style="font-family:var(--font-display);font-size:17px;margin:0 0 14px;">Rückblick · ${escapeHtml(formatDate(session.date))}</h2>
+    ${bodyHtml}
+    <div class="confirm-actions" style="margin-top:12px;">
+      <button class="primary full" id="recapCloseBtn">Danke, weiter</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  const close = ()=> overlay.remove();
+  overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
+  document.getElementById('recapCloseBtn').onclick = close;
+}
+
+function showVersionHistory(){
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  const rowsHtml = VERSION_HISTORY.slice().reverse().map(entry=>`
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px;">
+        <b style="font-family:var(--font-display);color:var(--accent);font-size:15px;">V${entry.v}</b>
+        <span style="font-size:12px;color:var(--muted);">${escapeHtml(formatDate(entry.date))}</span>
+      </div>
+      <div style="font-size:13px;color:var(--text);line-height:1.4;">${escapeHtml(entry.notes)}</div>
+    </div>`).join('');
+  overlay.innerHTML = `<div class="confirm-box" style="max-width:360px;max-height:70vh;overflow-y:auto;text-align:left;">
+    <h2 style="font-family:var(--font-display);font-size:16px;margin:0 0 14px;">Versionsverlauf</h2>
+    ${rowsHtml}
+    <div class="confirm-actions" style="margin-top:6px;">
+      <button class="full" id="versionHistoryCloseBtn">Schließen</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  const close = ()=> overlay.remove();
+  overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
+  document.getElementById('versionHistoryCloseBtn').onclick = close;
+}
+
+/* ============================================================
+   PERSISTENCE LAYER - Firebase Realtime Database
+   ============================================================
+   Uses the already-configured, already-working Firebase project.
+   Realtime Database's .on('value', ...) listener fires immediately
+   with the current data AND again on every future change - this
+   replaces both the old one-time load AND the old 5-second poll
+   with a single, instantly-pushed live subscription.
+*/
+const firebaseConfig = {
+  databaseURL: "https://trkmn-44c02-default-rtdb.europe-west1.firebasedatabase.app"
+};
+
+let dbRef = null;
+let firebaseReady = false;
+try{
+  firebase.initializeApp(firebaseConfig);
+  dbRef = firebase.database().ref('tm_scoreboard_state');
+  firebaseReady = true;
+}catch(e){
+  console.error('Firebase init failed - check firebaseConfig at the top of the script.', e);
+}
+
+let saveInFlight = 0;
+let firstLoadDone = false;
+
+function loadState(){
+  if(!firebaseReady){
+    storageAvailable = false;
+    state = defaultState();
+    migrateLegacyNames(state);
+    importSeedHistoryOnce(state);
+    showStorageBanner();
+    syncDraftFromState();
     render();
+    return;
+  }
+
+  dbRef.on('value', (snapshot)=>{
+    const val = snapshot.val();
+    const fresh = (val && typeof val === 'object') ? val : defaultState();
+
+    // same defensive normalization as before, applied to whatever just arrived
+    migrateLegacyNames(fresh);
+    if(!Array.isArray(fresh.savedNames)) fresh.savedNames = [...FIXED_DRIVERS];
+    if(!Array.isArray(fresh.selectedNames)) fresh.selectedNames = [...FIXED_DRIVERS];
+    if(!Array.isArray(fresh.sessions)) fresh.sessions = [];
+    FIXED_DRIVERS.forEach(n=>{ if(!fresh.savedNames.includes(n)) fresh.savedNames.push(n); });
+    fresh.savedNames = [...new Set(fresh.savedNames)];
+    fresh.selectedNames = [...new Set(fresh.selectedNames)];
+    // guard against a corrupted in-progress draft (e.g. missing grid/participants)
+    if(fresh.liveDraft && (!fresh.liveDraft.grid || !fresh.liveDraft.participants)) fresh.liveDraft = null;
+    const imported = importSeedHistoryOnce(fresh);
+
+    storageAvailable = true;
+    hideStorageBanner();
+
+    if(!firstLoadDone){
+      firstLoadDone = true;
+      state = fresh;
+      let needsSave = imported;
+      if(state.selectedDate !== todayStr()){ state.selectedDate = todayStr(); needsSave = true; }
+      syncDraftFromState();
+      if(needsSave) saveState();
+      render();
+      return;
+    }
+
+    // subsequent live pushes from other devices - don't clobber an active edit
+    if(isTypingNow()) return;
+    if(saveInFlight > 0) return;
+    if(JSON.stringify(fresh) !== JSON.stringify(state)){
+      state = fresh;
+      syncDraftFromState();
+      render();
+    }
+  }, (err)=>{
+    console.error('Firebase sync error:', err);
+    storageAvailable = false;
+    showStorageBanner();
   });
 }
 
-function saveState(){
-  if(state) dbRef.set(state);
+function syncDraftFromState(){
+  // the in-progress race table lives in the SHARED state (state.liveDraft)
+  // instead of a personal-only key, so anyone with the link can watch the
+  // points being entered live, not just see it after it's saved.
+  draft = state.liveDraft || null;
+  rennenPhase = draft ? 'editing' : 'idle';
+}
+
+async function saveDraft(){
+  state.liveDraft = draft;
+  await saveState();
+}
+
+async function clearDraft(){
+  draft = null;
+  rennenPhase = 'idle';
+  state.liveDraft = null;
+  await saveState();
+}
+
+async function saveState(){
+  if(!firebaseReady){
+    storageAvailable = false;
+    showStorageBanner();
+    return;
+  }
+  saveInFlight++;
+  try{
+    await dbRef.set(state);
+    storageAvailable = true;
+    hideStorageBanner();
+  }catch(e){
+    console.error('Firebase save failed:', e);
+    storageAvailable = false;
+    showStorageBanner();
+  }finally{
+    saveInFlight--;
+  }
+}
+
+function isTypingNow(){
+  const a = document.activeElement;
+  return a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA');
 }
 
 function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function sameSet(a,b){
+  if(a.length!==b.length) return false;
+  const sa=[...a].sort(), sb=[...b].sort();
+  return sa.every((v,i)=>v===sb[i]);
+}
+function getStreakCrownHolder(){
+  // "streak" = consecutive sessions a driver has WON in a row, counting
+  // backwards from the most recent (complete) session they took part in.
+  const complete = state.sessions
+    .filter(s=> s.participants.every(n=>s.grid[n].every(v=>v!==null && v!==undefined)))
+    .slice().sort((a,b)=> a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+
+  const perDriverSeq = {};
+  complete.forEach(s=>{
+    const totals = sessionTotals(s);
+    const winner = Object.entries(totals).sort((a,b)=>a[1]-b[1])[0][0];
+    s.participants.forEach(name=>{
+      (perDriverSeq[name] = perDriverSeq[name] || []).push(name===winner);
+    });
+  });
+
+  let bestName = null, bestStreak = 1; // need at least 2 in a row to count as a streak
+  Object.entries(perDriverSeq).forEach(([name,seq])=>{
+    let streak = 0;
+    for(let i=seq.length-1; i>=0; i--){ if(seq[i]) streak++; else break; }
+    if(streak > bestStreak){ bestStreak = streak; bestName = name; }
+  });
+  return bestName ? { name: bestName, streak: bestStreak } : null;
+}
+
+function orderedSavedNames(){
+  // Always display drivers in this fixed order, regardless of the order
+  // they happen to be stored in - keeps the picker stable and predictable.
+  const canonicalOrder = ['Max','Andy','Dani','Olly','Bär','Mky'];
+  const known = canonicalOrder.filter(n=>state.savedNames.includes(n));
+  const extra = state.savedNames.filter(n=>!canonicalOrder.includes(n));
+  return [...known, ...extra];
+}
+function formatDate(iso){
+  const d = new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
+}
+function cssEscape(s){ return s.replace(/(["\\])/g,'\\$1'); }
 
 function switchView(v){
   currentView = v;
   document.querySelectorAll('section.view').forEach(s=>s.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   document.querySelectorAll('nav.bottom button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
-  render();
+  renderCurrentView();
 }
-
-function render(){
-  if(!state) return;
-  document.getElementById('dateInput').value = state.selectedDate || todayStr();
-  
+function renderCurrentView(){
   if(currentView==='rennen') renderRennen();
   else if(currentView==='archiv') renderArchiv();
+  else if(currentView==='strecken') renderStrecken();
+  else if(currentView==='statistik') renderStatistik();
   else if(currentView==='sicherung') renderSicherung();
 }
+function render(){
+  document.getElementById('dateInput').value = state.selectedDate;
+  renderCurrentView();
+}
 
+/* ---------------- RENNEN (Fahrer + Tabelle kombiniert) ---------------- */
 function renderRennen(){
   const dateCard = document.getElementById('dateCard');
   const driversCard = document.getElementById('driversCard');
   const area = document.getElementById('raceArea');
 
-  if(state.liveDraft && state.liveDraft.grid){
+  if(rennenPhase === 'editing' && draft){
     dateCard.style.display = 'none';
     driversCard.style.display = 'none';
     renderEditingPhase(area);
     return;
   }
 
+  // 'idle' or 'setup' both use the date + driver picker cards
   dateCard.style.display = 'block';
   driversCard.style.display = 'block';
-  
   const grid = document.getElementById('chipGrid');
   grid.innerHTML = '';
-  state.savedNames.forEach(name=>{
+  const crownHolder = getStreakCrownHolder();
+  orderedSavedNames().forEach(name=>{
     const active = state.selectedNames.includes(name);
     const chip = document.createElement('div');
     chip.className = 'chip' + (active?' active':'');
-    chip.textContent = name;
-    chip.onclick = ()=>{
-      const idx = state.selectedNames.indexOf(name);
-      if(idx>=0) state.selectedNames.splice(idx,1); else state.selectedNames.push(name);
-      saveState();
-    };
+    chip.textContent = name + (crownHolder && crownHolder.name===name ? ' 👑' : '');
+    if(crownHolder && crownHolder.name===name) chip.title = `${crownHolder.streak}x in Folge gewonnen`;
+    chip.onclick = ()=>toggleSelected(name);
     grid.appendChild(chip);
   });
 
-  const n = state.selectedNames.length;
-  area.innerHTML = `<div class="card" style="text-align:center;">
-    <button class="primary full" id="startBtn" ${n<2?'disabled':''}>Neues Rennen starten (${n} Fahrer)</button>
-  </div>`;
+  if(rennenPhase === 'idle'){
+    area.innerHTML = `<div class="card" style="text-align:center;">
+      <button class="primary full" id="startNewRaceBtn">Neues Rennen starten</button>
+    </div>`;
+    document.getElementById('startNewRaceBtn').onclick = ()=>{
+      rennenPhase = 'setup';
+      renderRennen();
+    };
+    return;
+  }
 
-  document.getElementById('startBtn').onclick = ()=>{
-    const order = [...state.selectedNames];
-    const g = {};
-    order.forEach(p=> g[p] = new Array(order.length+1).fill(null));
-    state.liveDraft = { id: 's'+Date.now(), date: state.selectedDate, participants: order, grid: g };
-    saveState();
-  };
+  // rennenPhase === 'setup'
+  const n = state.selectedNames.length;
+  area.innerHTML = `<div class="card">
+    <p class="muted" style="margin:0 0 12px;">${n<2 ? 'Wähle mindestens 2 Fahrer aus.' : `${n} Fahrer ausgewählt.`}</p>
+    <button class="primary full" id="continueSetupBtn" ${n<2?'disabled':''}>Weiter</button>
+  </div>`;
+  document.getElementById('continueSetupBtn').onclick = ()=>continueToEditing();
+}
+
+function continueToEditing(){
+  if(state.selectedNames.length < 2) return;
+  const lastMatch = state.sessions
+    .filter(s=>sameSet(s.participants, state.selectedNames))
+    .slice().sort((a,b)=> b.date.localeCompare(a.date))[0] || null;
+
+  let order;
+  let lastMatchInfo = null;
+  if(lastMatch){
+    const totals = sessionTotals(lastMatch);
+    order = Object.entries(totals).sort((a,b)=>a[1]-b[1]).map(([name])=>name);
+    lastMatchInfo = { date: lastMatch.date, standing: totals };
+  } else {
+    order = [...state.selectedNames];
+  }
+
+  const g = {};
+  const penalties = {};
+  const trackNames = new Array(order.length+1).fill('');
+  const trackTimes = {};
+  order.forEach(n=>{
+    g[n] = new Array(order.length+1).fill(null);
+    penalties[n] = 0;
+    trackTimes[n] = new Array(order.length+1).fill(null);
+  });
+
+  draft = { id: null, date: state.selectedDate, participants: order, grid: g, penalties, trackNames, trackTimes, note: '', lastMatchInfo };
+  rennenPhase = 'editing';
+  saveDraft();
+  renderRennen();
 }
 
 function renderEditingPhase(area){
-  const draft = state.liveDraft;
   const N = draft.participants.length;
-  const rounds = draft.grid[draft.participants[0]] ? draft.grid[draft.participants[0]].length : 0;
+  const rounds = draft.grid[draft.participants[0]].length;
 
-  let html = `<div class="card">
+  let html = '';
+
+  if(draft.lastMatchInfo){
+    const sorted = Object.entries(draft.lastMatchInfo.standing).sort((a,b)=>a[1]-b[1]);
+    const winnerPts = sorted.length ? sorted[0][1] : null;
+    html += `<div class="card"><h2>Letztes Rennen mit dieser Besetzung</h2>
+      <div class="match-item">
+        <div class="match-date">${formatDate(draft.lastMatchInfo.date)}</div>
+        <div class="match-standing">${sorted.map(([n,p])=>`<span class="${p===winnerPts?'win':''}">${escapeHtml(n)} ${p}</span>`).join('')}</div>
+      </div>
+    </div>`;
+  }
+
+  html += `<div class="card">
     <div class="session-head">
-      <div class="info"><b>${draft.date}</b> · ${N} Fahrer</div>
-      <button class="danger" id="cancelDraftBtn">Verwerfen</button>
+      <div class="info"><b>${formatDate(draft.date)}</b> · ${N} Fahrer · ${rounds} Tracks</div>
+      <button class="danger" id="discardDraftBtn">Verwerfen</button>
     </div>
     <div class="table-wrap"><table class="grid">
       <thead><tr><th class="namecol">Fahrer</th>`;
-  for(let r=1;r<=rounds;r++) html += `<th>T${r}</th>`;
-  html += `<th class="sumcol">Σ</th></tr></thead><tbody>`;
+  for(let r=1;r<=rounds;r++){
+    const tname = (draft.trackNames && draft.trackNames[r-1]) ? draft.trackNames[r-1] : '';
+    const label = tname ? escapeHtml(tname.length > 6 ? tname.slice(0,6)+'…' : tname) : `T${r}`;
+    html += `<th class="track-th" data-track-round="${r-1}" title="${tname ? escapeHtml(tname) : 'Streckenname + Bestzeiten eintragen'}">${label}</th>`;
+  }
+  html += `<th>Straf.</th><th class="sumcol">Σ</th></tr></thead><tbody>`;
 
   draft.participants.forEach(name=>{
     html += `<tr><td class="namecol">${escapeHtml(name)}</td>`;
-    const arr = draft.grid[name] || [];
+    const arr = draft.grid[name];
     for(let r=0;r<rounds;r++){
-      const val = arr[r] === null || arr[r] === undefined ? '' : arr[r];
-      html += `<td><input class="cell-input" type="text" data-name="${escapeHtml(name)}" data-round="${r}" value="${escapeHtml(String(val))}" /></td>`;
+      const val = arr[r];
+      const displayVal = val===null||val===undefined ? '' : val;
+      const cls = ['cell-input'];
+      if(val==='DNF') cls.push('dnf');
+      if(isStarredValue(val)) cls.push('star');
+      html += `<td><input class="${cls.join(' ')}" type="text" inputmode="tel"
+        data-name="${escapeHtml(name)}" data-round="${r}" value="${escapeHtml(String(displayVal))}" /></td>`;
     }
-    html += `<td class="sumcol" id="sum-${cssEscape(name)}">0</td></tr>`;
+    const penaltyVal = (draft.penalties && draft.penalties[name]) || 0;
+    html += `<td><input class="cell-input penalty-input" type="text" inputmode="numeric" pattern="[0-9]*"
+        data-penalty-name="${escapeHtml(name)}" value="${penaltyVal ? escapeHtml(String(penaltyVal)) : ''}" placeholder="0" /></td>`;
+    html += `<td class="sumcol" data-sumfor="${escapeHtml(name)}">–</td></tr>`;
   });
-  html += `</tbody></table></div></div>`;
+  html += `</tbody></table></div>
+    <p class="muted" style="margin-top:8px;">DNF = Anzahl der Mitspieler +1 Punkt · * = mit dem letzten Tropfen Benzin von einer schlechten Platzierung auf Platz 1 gefahren (z. B. 1*)</p>
+    <div id="warnNote"></div>
+    <div class="section-actions">
+      <button id="addExtraRoundBtn">+ Zusatztrack</button>
+    </div>
+    </div>`;
 
   html += `<div class="card">
-    <h2>Zwischenstand</h2>
-    <div class="standing-list" id="standingList"></div>
+    <h2>Notizen</h2>
+    <textarea id="sessionNoteInput" placeholder="Lustige Momente, Ausreden, Insider-Witze…" style="width:100%;min-height:70px;resize:vertical;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:11px 12px;font-size:14px;font-family:var(--font-body);">${escapeHtml(draft.note||'')}</textarea>
   </div>`;
 
+  html += `<div class="card"><h2>Zwischenstand</h2><div class="standing-list" id="standingList"></div></div>`;
+
   html += `<div class="section-actions">
-    <button class="primary full" id="finishBtn">Rennen Speichern (Archiv)</button>
+    <button class="primary full" id="saveDraftBtn">Speichern</button>
+  </div>
+  <div class="section-actions">
+    <button class="full" id="finishRaceBtn">Fertig – zurück zum Start</button>
   </div>`;
 
   area.innerHTML = html;
 
-  area.querySelectorAll('.cell-input').forEach(input=>{
-    input.addEventListener('change', ()=>{
-      const name = input.dataset.name;
-      const r = parseInt(input.dataset.round,10);
-      const val = input.value.trim();
-      draft.grid[name][r] = val === '' ? null : (isNaN(val) ? val : parseInt(val,10));
-      saveState();
+  area.querySelectorAll('.cell-input[data-name]').forEach(input=>{
+    input.addEventListener('change', ()=>onDraftCellChange(input));
+    input.addEventListener('blur', ()=>onDraftCellChange(input));
+  });
+  const noteInput = document.getElementById('sessionNoteInput');
+  if(noteInput){
+    noteInput.addEventListener('change', ()=>{ draft.note = noteInput.value; saveDraft(); });
+    noteInput.addEventListener('blur', ()=>{ draft.note = noteInput.value; saveDraft(); });
+  }
+  area.querySelectorAll('.penalty-input').forEach(input=>{
+    input.addEventListener('change', ()=>onPenaltyChange(input));
+    input.addEventListener('blur', ()=>onPenaltyChange(input));
+  });
+  area.querySelectorAll('.track-th').forEach(th=>{
+    th.onclick = ()=> showTrackEditor(parseInt(th.dataset.trackRound, 10));
+  });
+  document.getElementById('discardDraftBtn').onclick = ()=>{
+    const msg = draft.id
+      ? 'Nicht gespeicherte Änderungen verwerfen? Der zuletzt gespeicherte Stand bleibt im Archiv erhalten.'
+      : 'Dieses Rennen verwerfen? Alle bisher eingetragenen Werte gehen verloren.';
+    showConfirm(msg, ()=>{
+      clearDraft();
+      renderRennen();
+    });
+  };
+  document.getElementById('addExtraRoundBtn').onclick = ()=>{
+    draft.participants.forEach(name=>{
+      draft.grid[name].push(null);
+      if(!draft.trackTimes) draft.trackTimes = {};
+      if(!draft.trackTimes[name]) draft.trackTimes[name] = [];
+      draft.trackTimes[name].push(null);
+    });
+    if(!draft.trackNames) draft.trackNames = [];
+    draft.trackNames.push('');
+    saveDraft();
+    renderRennen();
+  };
+  document.getElementById('saveDraftBtn').onclick = ()=>{
+    const { isNewSession } = commitDraftToArchive();
+    showToast('Gespeichert');
+    renderRennen();
+    if(isNewSession) maybeCelebrateMilestone(state.sessions.length);
+  };
+  document.getElementById('finishRaceBtn').onclick = ()=>{
+    const { session, isNewSession } = commitDraftToArchive();
+    clearDraft();
+    showToast('Rennen abgeschlossen');
+    renderRennen();
+    const isMilestone = isNewSession && state.sessions.length >= 60 && state.sessions.length % 10 === 0;
+    showFinishOverlay(session, isMilestone, state.sessions.length);
+  };
+
+  updateSumsAndStandings(draft);
+}
+
+function toggleSelected(name){
+  const i = state.selectedNames.indexOf(name);
+  if(i>=0) state.selectedNames.splice(i,1); else state.selectedNames.push(name);
+  saveState(); renderRennen();
+}
+
+document.getElementById('addToggleBtn').onclick = ()=>{
+  const row = document.getElementById('addRow');
+  row.style.display = row.style.display==='none' ? 'flex' : 'none';
+};
+document.getElementById('addNameBtn').onclick = ()=>{
+  const input = document.getElementById('newNameInput');
+  const name = input.value.trim();
+  if(!name) return;
+  if(state.savedNames.includes(name)){ showToast('Name existiert bereits'); return; }
+  state.savedNames.push(name);
+  state.selectedNames.push(name);
+  input.value = '';
+  saveState(); renderRennen();
+};
+document.getElementById('newNameInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('addNameBtn').click(); });
+
+document.getElementById('dateInput').addEventListener('change', e=>{
+  state.selectedDate = e.target.value || todayStr();
+  saveState(); renderRennen();
+});
+
+function sessionTotals(session){
+  const totals = {};
+  session.participants.forEach(p=>totals[p]=0);
+  const N = session.participants.length;
+  session.participants.forEach(name=>{
+    const arr = session.grid[name] || [];
+    arr.forEach(val=>{
+      if(val===null || val===undefined || val==='') return;
+      if(val==='DNF'){ totals[name] += N+1; return; }
+      const n = asPlacementNumber(val);
+      if(n!==null) totals[name] += n;
+    });
+    const penalty = session.penalties && session.penalties[name];
+    if(penalty){ totals[name] += Number(penalty) || 0; }
+  });
+  return totals;
+}
+
+function normalizeCellValue(raw){
+  let v = raw.trim();
+  if(v === '') return null;
+  if(v.toUpperCase() === 'DNF') return 'DNF';
+  if(v === '0') return 'DNF'; // shorthand for the numeric-only mobile keypad
+  let starred = false;
+  if(v.endsWith('*')){ starred = true; v = v.slice(0,-1); }
+  const n = parseInt(v, 10);
+  if(isNaN(n) || n < 1) return null;
+  return starred ? (n + '*') : n;
+}
+
+// A stored cell value is one of: null, 'DNF', a plain number, or a string
+// like "3*" (a starred placement - see the "letzter Tropfen Sprit" rule).
+// These two helpers give every other function a single, consistent way to
+// read a placement number and to detect a star, regardless of which shape
+// the value is in.
+function asPlacementNumber(val){
+  if(typeof val === 'number') return val;
+  if(typeof val === 'string' && val !== 'DNF' && val.endsWith('*')){
+    const n = parseInt(val, 10);
+    return isNaN(n) ? null : n;
+  }
+  return null;
+}
+function isStarredValue(val){
+  return typeof val === 'string' && val !== 'DNF' && val.endsWith('*');
+}
+
+function onDraftCellChange(input){
+  const name = input.dataset.name;
+  const round = parseInt(input.dataset.round, 10);
+  const val = normalizeCellValue(input.value);
+  draft.grid[name][round] = val;
+  input.value = val===null ? '' : val;
+  input.classList.toggle('dnf', val==='DNF');
+  input.classList.toggle('star', isStarredValue(val));
+  saveDraft();
+  updateSumsAndStandings(draft);
+}
+
+function onPenaltyChange(input){
+  const name = input.dataset.penaltyName;
+  const raw = input.value.trim();
+  const n = raw === '' ? 0 : parseInt(raw, 10);
+  const val = (isNaN(n) || n < 0) ? 0 : n;
+  if(!draft.penalties) draft.penalties = {};
+  draft.penalties[name] = val;
+  input.value = val ? String(val) : '';
+  saveDraft();
+  updateSumsAndStandings(draft);
+}
+
+const RACING_QUOTES = [
+  'Bremsen ist für Leute ohne Vertrauen in die Ideallinie.',
+  'Ein Start ohne Powerslide ist wie ein Kaffee ohne Koffein.',
+  "Respawn ist nur ein anderes Wort für 'nochmal, aber schneller'.",
+  'Die Ideallinie kennt keine Gnade, aber sie kennt dich.',
+  'Wer nicht in die Leitplanke fährt, fährt nicht schnell genug.',
+  'Ein guter Fahrer bremst spät. Ein sehr guter Fahrer bremst gar nicht.',
+  'Trackmania: Wo ein Zehntel Sekunde eine Ewigkeit ist.',
+  "DNF steht für 'Definitiv Nächstes Fenster' – auf zur nächsten Runde.",
+  'Der schnellste Weg durch die Kurve führt manchmal über die Wand.',
+  'Manche fahren um zu gewinnen. Manche fahren, weil Bremsen für Anfänger ist.',
+  'Ruhm ist vergänglich. Die Bestzeit bleibt für immer – bis zum nächsten Rennen.',
+  'Ein Rennfahrer ohne Ehrgeiz ist wie ein Auto ohne Motor: theoretisch möglich, aber wozu?',
+  'Es gibt keine Abkürzungen im Leben. In Trackmania schon – man muss sie nur finden.',
+  'Am Ende zählt nicht, wie du gestartet bist, sondern wie krachend du gecrasht bist.',
+  'Perfektion ist eine 0,001-Sekunden-Verbesserung, die du nie wieder schaffst.',
+  'Wer bremst, verliert. Wer crasht, verliert schneller.'
+];
+
+function maybeCelebrateMilestone(newCount){
+  if(newCount < 60 || newCount % 10 !== 0) return;
+  const isBig = (newCount === 100 || newCount === 200);
+  showMilestoneModal(newCount, isBig);
+}
+
+function showMilestoneModal(count, isBig, extraHtml){
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+
+  let title, bodyHtml;
+  if(count === 100){
+    title = '🏁💯 JAHRHUNDERT-RENNEN 💯🏁';
+    bodyHtml = `<p style="margin:0;">100 Rennen stehen jetzt im Archiv – das ist offiziell Trackmania-Geschichte. Zeit, sich selbst (und ein kühles Getränk) zu feiern. 🏆🥂</p>`;
+  } else if(count === 200){
+    title = '🏆🎊 200 RENNEN 🎊🏆';
+    bodyHtml = `<p style="margin:0;">Ihr habt gerade eine zweistellige... nein, eine <b>DREISTELLIGE VERDOPPLUNG</b> hingelegt. Das ist nicht mehr Hobby, das ist Hingabe. Chapeau! 🎉🍾</p>`;
+  } else {
+    const quote = RACING_QUOTES[Math.floor(Math.random()*RACING_QUOTES.length)];
+    title = `🎉 ${count} Rennen! 🎉`;
+    bodyHtml = `<p style="margin:0;font-style:italic;color:var(--muted);">"${escapeHtml(quote)}"</p>`;
+  }
+
+  const titleSize = isBig ? '22px' : '18px';
+  const extraSection = extraHtml ? `<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);text-align:left;">${extraHtml}</div>` : '';
+  overlay.innerHTML = `<div class="confirm-box" style="max-width:340px;text-align:center;">
+    <h2 style="font-family:var(--font-display);font-weight:700;font-size:${titleSize};margin:0 0 14px;
+      background:linear-gradient(100deg, var(--text) 10%, var(--gold) 40%, #fff 50%, var(--accent-2) 62%, var(--text) 90%);
+      background-size:260% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+      filter:drop-shadow(0 0 10px rgba(255,209,102,0.5));animation:titleSheen 4s ease-in-out infinite;">${title}</h2>
+    <div style="font-size:14px;line-height:1.5;">${bodyHtml}</div>
+    ${extraSection}
+    <div class="confirm-actions" style="margin-top:18px;">
+      <button class="primary full" id="milestoneCloseBtn">Weiterfahren 🏎️</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  const close = ()=> overlay.remove();
+  overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
+  document.getElementById('milestoneCloseBtn').onclick = close;
+}
+
+function showFinishOverlay(session, isMilestone, sessionCount){
+  const recapHtml = buildSessionRecapHtml(session);
+  if(isMilestone){
+    const isBig = (sessionCount===100 || sessionCount===200);
+    showMilestoneModal(sessionCount, isBig, recapHtml);
+  } else if(recapHtml){
+    showSessionRecap(session);
+  }
+}
+
+function commitDraftToArchive(){
+  // Deep-copy so the archived entry and the still-open draft are independent
+  // objects: further edits to the draft must NOT silently leak into the
+  // shared archive until the next explicit Speichern/Fertig press.
+  const copy = JSON.parse(JSON.stringify(draft));
+  let isNewSession = false;
+  if(draft.id){
+    const idx = state.sessions.findIndex(s=>s.id===draft.id);
+    if(idx>=0) state.sessions[idx] = copy;
+    else { state.sessions.push(copy); isNewSession = true; }
+  } else {
+    draft.id = 's'+Date.now();
+    copy.id = draft.id;
+    state.sessions.push(copy);
+    isNewSession = true;
+  }
+  saveDraft(); // persists the whole shared state (sessions + liveDraft) in one write
+  return { session: copy, isNewSession };
+}
+
+function buildSessionRecapHtml(s){
+  const N = s.participants.length;
+  const totals = sessionTotals(s);
+  const ranked = Object.entries(totals).sort((a,b)=>a[1]-b[1]);
+  if(ranked.length===0) return '';
+  const winner = ranked[0][0];
+
+  const winCounts = {};
+  const dnfCounts = {};
+  let anyStar = null;
+  s.participants.forEach(name=>{
+    winCounts[name] = 0; dnfCounts[name] = 0;
+    (s.grid[name]||[]).forEach(val=>{
+      if(val===null||val===undefined) return;
+      const isDnf = val==='DNF' || (typeof val==='number' && val===N+1);
+      if(isDnf){ dnfCounts[name]++; return; }
+      const num = asPlacementNumber(val);
+      if(num===1) winCounts[name]++;
+      if(isStarredValue(val) && !anyStar) anyStar = name;
     });
   });
 
-  document.getElementById('cancelDraftBtn').onclick = ()=>{
-    state.liveDraft = null;
-    saveState();
-  };
+  const lines = [];
+  lines.push(`🏆 Sieger des Abends: <b style="color:var(--text);">${escapeHtml(winner)}</b> (${ranked[0][1]} Punkte)`);
 
-  document.getElementById('finishBtn').onclick = ()=>{
-    state.sessions.push(JSON.parse(JSON.stringify(draft)));
-    state.liveDraft = null;
-    saveState();
-    showToast('Im Archiv gespeichert!');
-  };
+  const topWinner = Object.entries(winCounts).sort((a,b)=>b[1]-a[1])[0];
+  if(topWinner && topWinner[1] > 0){
+    lines.push(`🥇 ${escapeHtml(topWinner[0])} holte ${topWinner[1]}x Platz 1`);
+  }
+  const topDnf = Object.entries(dnfCounts).sort((a,b)=>b[1]-a[1])[0];
+  if(topDnf && topDnf[1] > 0){
+    lines.push(`💥 ${escapeHtml(topDnf[0])} kassierte ${topDnf[1]} DNF${topDnf[1]>1?'s':''}`);
+  }
+  if(anyStar){
+    lines.push(`🌟 ${escapeHtml(anyStar)} rettete sich mit dem letzten Tropfen Benzin auf Platz 1!`);
+  }
 
-  calculateSums(draft);
+  // closest race: smallest real time gap between 1st and 2nd on any track
+  let closest = null;
+  const rounds = s.participants.length ? (s.grid[s.participants[0]]||[]).length : 0;
+  for(let r=0;r<rounds;r++){
+    const times = s.participants
+      .map(name=> ({ name, ms: s.trackTimes && s.trackTimes[name] ? parseTimeToMs(s.trackTimes[name][r]) : null }))
+      .filter(t=>t.ms!==null)
+      .sort((a,b)=>a.ms-b.ms);
+    if(times.length>=2){
+      const gap = times[1].ms - times[0].ms;
+      if(!closest || gap < closest.gap) closest = { round:r+1, gap, trackName: (s.trackNames&&s.trackNames[r])||('Track '+(r+1)) };
+    }
+  }
+  if(closest){
+    lines.push(`⏱️ Engstes Rennen: ${escapeHtml(closest.trackName)} (nur ${formatGapDisplay(closest.gap)}s Unterschied)`);
+  }
+
+  return lines.map(l=>`<div style="margin-bottom:8px;font-size:14px;">${l}</div>`).join('');
 }
 
-function calculateSums(draft){
-  const totals = {};
-  draft.participants.forEach(p=> totals[p] = 0);
-  draft.participants.forEach(p=>{
-    (draft.grid[p] || []).forEach(v=>{
-      if(v!==null && v!==undefined && !isNaN(v)) totals[p] += parseInt(v,10);
-    });
-    const el = document.getElementById(`sum-${p}`);
-    if(el) el.textContent = totals[p];
+function updateSumsAndStandings(session){
+  const N = session.participants.length;
+  const rounds = session.participants.length ? session.grid[session.participants[0]].length : N + 1;
+  const totals = sessionTotals(session);
+
+  session.participants.forEach(name=>{
+    const cell = document.querySelector(`[data-sumfor="${cssEscape(name)}"]`);
+    if(cell) cell.textContent = totals[name];
+  });
+
+  const warnings = [];
+  for(let r=0;r<rounds;r++){
+    // DNF's numeric value (N+1) is allowed to repeat - several drivers can
+    // fail to finish the same track. Only genuine placements (1..N) count
+    // as a real duplicate-rank conflict. A starred value ("3*") still
+    // represents placement 3 for this check.
+    const vals = session.participants.map(name=>asPlacementNumber(session.grid[name][r])).filter(v=>v!==null && v !== N+1);
+    const seen = new Set(); const dups = new Set();
+    vals.forEach(v=>{ if(seen.has(v)) dups.add(v); seen.add(v); });
+    if(dups.size>0) warnings.push(`Track ${r+1}: Platz ${[...dups].join(', ')} mehrfach vergeben`);
+  }
+  const warnEl = document.getElementById('warnNote');
+  if(warnEl){
+    warnEl.innerHTML = warnings.length
+      ? warnings.map(w=>`<div class="warn-note">${escapeHtml(w)}</div>`).join('')
+      : '';
+  }
+  document.querySelectorAll('.cell-input[data-name]').forEach(inp=>{
+    const r = parseInt(inp.dataset.round,10);
+    const v = normalizeCellValue(inp.value);
+    const num = asPlacementNumber(v);
+    const isDup = num!==null && num !== N+1 && warnings.some(w=>w.startsWith(`Track ${r+1}:`));
+    inp.classList.toggle('dup', !!isDup);
   });
 
   const sorted = Object.entries(totals).sort((a,b)=>a[1]-b[1]);
   const list = document.getElementById('standingList');
   if(list){
-    list.innerHTML = sorted.map(([name,pts],i)=>`
-      <div class="result-row">
-        <div class="rank-badge">${i+1}</div>
+    list.innerHTML = sorted.map(([name,pts],i)=>{
+      const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
+      const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+      return `<div class="result-row">
+        <div class="rank-badge ${cls}">${badge}</div>
         <div class="name">${escapeHtml(name)}</div>
-        <div class="pts">${pts} Pkt.</div>
-      </div>`).join('');
+        <div class="pts">${pts}</div>
+      </div>`;
+    }).join('');
   }
+}
+
+/* ---------------- ARCHIV ---------------- */
+function parseTimeToMs(str){
+  let s = (str||'').trim();
+  if(!s) return null;
+  s = s.replace(/,/g, '.').replace(/s(ec)?$/i, '').trim();
+  if(!s) return null;
+  const groups = s.split(/[:.]/).filter(p=>p!=='');
+  if(groups.length===0 || groups.some(p=>!/^\d+$/.test(p))) return null;
+
+  let min=0, sec=0, ms=0;
+  if(s.includes(':')){
+    // whatever comes after the LAST colon is "seconds(.ms)"; everything
+    // before it is whole minute groups (e.g. "1:23.456" or "1:02:03.456")
+    const afterLastColon = s.split(':').pop();
+    const msParts = afterLastColon.split('.');
+    sec = +msParts[0];
+    if(msParts[1]) ms = +msParts[1].padEnd(3,'0').slice(0,3);
+    const beforeLastColon = s.slice(0, s.length - afterLastColon.length - 1);
+    const minGroups = beforeLastColon.split(':').filter(p=>p!=='');
+    min = minGroups.reduce((acc,p)=> acc*60 + (+p||0), 0);
+  } else {
+    // no colon at all: 1 dot-group = seconds, 2 = seconds.ms, 3 = min.sec.ms
+    const dotParts = s.split('.').filter(p=>p!=='');
+    if(dotParts.length===1){ sec = +dotParts[0]; }
+    else if(dotParts.length===2){ sec = +dotParts[0]; ms = +dotParts[1].padEnd(3,'0').slice(0,3); }
+    else { min = +dotParts[0]; sec = +dotParts[1]; ms = +(dotParts[2]||'0').padEnd(3,'0').slice(0,3); }
+  }
+  return min*60000 + sec*1000 + ms;
+}
+
+function getPersonalBestMs(driverName, trackNameRaw){
+  const key = (trackNameRaw||'').trim().toLowerCase();
+  if(!key) return null;
+  let best = null;
+  state.sessions.forEach(s=>{
+    if(!s.trackNames) return;
+    s.trackNames.forEach((tname, r)=>{
+      if((tname||'').trim().toLowerCase() !== key) return;
+      const timeStr = s.trackTimes && s.trackTimes[driverName] && s.trackTimes[driverName][r];
+      if(!timeStr) return;
+      const ms = parseTimeToMs(timeStr);
+      if(ms!==null && (best===null || ms<best)) best = ms;
+    });
+  });
+  return best;
+}
+
+function renderStrecken(){
+  const el = document.getElementById('streckenContent');
+  const tracks = {}; // normalizedName -> { displayName, entries: { driver -> {ms, timeStr, date} } }
+  state.sessions.forEach(s=>{
+    if(!s.trackNames) return;
+    s.trackNames.forEach((tname, r)=>{
+      const raw = (tname||'').trim();
+      if(!raw) return;
+      const key = raw.toLowerCase();
+      if(!tracks[key]) tracks[key] = { displayName: raw, entries: {} };
+      s.participants.forEach(driver=>{
+        const timeStr = s.trackTimes && s.trackTimes[driver] && s.trackTimes[driver][r];
+        if(!timeStr) return;
+        const ms = parseTimeToMs(timeStr);
+        const cur = tracks[key].entries[driver];
+        // if we can't parse it, still show it (sorted last) rather than
+        // silently dropping it - better to see something odd than nothing
+        const sortKey = ms===null ? Infinity : ms;
+        const curSortKey = cur ? (cur.ms===null ? Infinity : cur.ms) : Infinity;
+        if(!cur || sortKey < curSortKey){
+          tracks[key].entries[driver] = { ms, timeStr, date: s.date };
+        }
+      });
+    });
+  });
+
+  const trackKeys = Object.keys(tracks).sort((a,b)=> tracks[a].displayName.localeCompare(tracks[b].displayName));
+  if(trackKeys.length === 0){
+    el.innerHTML = '<div class="empty">Noch keine Streckennamen/Bestzeiten eingetragen.<br>Im Rennen-Tab auf einen Spaltenkopf (T1, T2, …) tippen.</div>';
+    return;
+  }
+
+  el.innerHTML = trackKeys.map(key=>{
+    const t = tracks[key];
+    const entries = Object.entries(t.entries).sort((a,b)=>{
+      const am = a[1].ms===null ? Infinity : a[1].ms;
+      const bm = b[1].ms===null ? Infinity : b[1].ms;
+      return am-bm;
+    });
+    return `<div class="card">
+      <h2>${escapeHtml(t.displayName)}</h2>
+      <div class="standing-list">
+        ${entries.map(([driver,info],i)=>{
+          const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
+          const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+          const timeLabel = info.ms===null ? (info.timeStr + ' ⚠︎') : info.timeStr;
+          return `<div class="result-row">
+            <div class="rank-badge ${cls}">${badge}</div>
+            <div class="name">${escapeHtml(driver)}<div class="breakdown"><span>${formatDate(info.date)}</span></div></div>
+            <div class="pts">${escapeHtml(timeLabel)}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildReadOnlyGridHtml(s){
+  const rounds = s.grid[s.participants[0]].length;
+  let html = `<div class="table-wrap"><table class="grid"><thead><tr><th class="namecol">Fahrer</th>`;
+  for(let r=1;r<=rounds;r++){
+    const tname = (s.trackNames && s.trackNames[r-1]) ? s.trackNames[r-1] : '';
+    html += `<th title="${tname ? escapeHtml(tname) : ''}">${tname ? escapeHtml(tname.length>6?tname.slice(0,6)+'…':tname) : 'T'+r}</th>`;
+  }
+  html += `<th>Straf.</th><th class="sumcol">Σ</th></tr></thead><tbody>`;
+  const totals = sessionTotals(s);
+  s.participants.forEach(name=>{
+    html += `<tr><td class="namecol">${escapeHtml(name)}</td>`;
+    const arr = s.grid[name];
+    for(let r=0;r<rounds;r++){
+      const val = arr[r];
+      const display = (val===null||val===undefined) ? '–' : String(val);
+      const cls = val==='DNF' ? 'dnf' : (isStarredValue(val) ? 'star' : '');
+      html += `<td><span class="ro-cell ${cls}">${escapeHtml(display)}</span></td>`;
+    }
+    const penaltyVal = (s.penalties && s.penalties[name]) || 0;
+    html += `<td><span class="ro-cell">${penaltyVal || '–'}</span></td>`;
+    html += `<td class="sumcol">${totals[name]}</td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+  if(s.note){
+    html += `<p class="muted" style="margin-top:10px;white-space:pre-wrap;">📝 ${escapeHtml(s.note)}</p>`;
+  }
+  return html;
+}
+
+function daysSince(dateStr){
+  if(!dateStr) return null;
+  const then = new Date(dateStr+'T00:00:00').getTime();
+  const now = new Date(todayStr()+'T00:00:00').getTime();
+  return Math.round((now-then) / 86400000);
+}
+
+function backupCardHtml(){
+  const days = daysSince(state.lastExportDate);
+  let reminder = '';
+  if(days === null){
+    reminder = `<p class="warn-note" style="margin:0 0 12px;">Noch nie exportiert – am besten gleich einmal eine Sicherung anlegen.</p>`;
+  } else if(days >= 14){
+    reminder = `<p class="warn-note" style="margin:0 0 12px;">Letzte Sicherung ist ${days} Tage her.</p>`;
+  }
+  return `<div class="card">
+    <h2>Sicherung</h2>
+    ${reminder}
+    <p class="muted" style="margin:0 0 12px;">Lädt alle Rennen als Datei herunter bzw. spielt eine solche Datei wieder ein (bestehende Einträge bleiben dabei erhalten, nur fehlende werden ergänzt). Nur nötig, falls jemals ein "Unpublish" gemacht werden muss – normale Updates brauchen das nicht.</p>
+    <div class="section-actions" style="margin-top:0;">
+      <button id="exportBackupBtn">Exportieren (JSON)</button>
+      <button id="importBackupBtn">Importieren</button>
+    </div>
+    <input type="file" id="importBackupFile" accept="application/json" style="display:none;" />
+    <div class="section-actions">
+      <button id="exportCsvBtn">Als CSV exportieren (Excel/Sheets)</button>
+    </div>
+  </div>`;
+}
+
+function wireBackupButtons(){
+  const exportBtn = document.getElementById('exportBackupBtn');
+  if(exportBtn) exportBtn.onclick = exportBackup;
+  const importBtn = document.getElementById('importBackupBtn');
+  const fileInput = document.getElementById('importBackupFile');
+  if(importBtn && fileInput){
+    importBtn.onclick = ()=> fileInput.click();
+    fileInput.onchange = ()=>{
+      if(fileInput.files && fileInput.files[0]) importBackupFile(fileInput.files[0]);
+      fileInput.value = '';
+    };
+  }
+  const csvBtn = document.getElementById('exportCsvBtn');
+  if(csvBtn) csvBtn.onclick = exportCsv;
+}
+
+function csvEscapeField(v){
+  const s = String(v===null||v===undefined ? '' : v);
+  if(s.includes(';') || s.includes('"') || s.includes('\n') || s.includes('\r')){
+    return '"' + s.replace(/"/g,'""') + '"';
+  }
+  return s;
+}
+
+function exportCsv(){
+  const sessions = state.sessions.slice().sort((a,b)=> a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  const maxRounds = sessions.reduce((m,s)=> Math.max(m, s.participants.length ? (s.grid[s.participants[0]]||[]).length : 0), 1);
+
+  const headers = ['Datum','Fahrer','Besetzung'];
+  for(let i=1;i<=maxRounds;i++) headers.push('Track'+i);
+  headers.push('Punkte_Gesamt','Strafpunkte','DNFs','Notiz');
+
+  const rows = [headers];
+  sessions.forEach(s=>{
+    const totals = sessionTotals(s);
+    const besetzung = s.participants.join('+');
+    const N = s.participants.length;
+    s.participants.forEach(name=>{
+      const row = [s.date, name, besetzung];
+      const arr = s.grid[name] || [];
+      for(let i=0;i<maxRounds;i++){
+        const v = arr[i];
+        row.push(v===null||v===undefined ? '' : String(v));
+      }
+      row.push(String(totals[name]||0));
+      row.push(String((s.penalties && s.penalties[name]) || 0));
+      const dnfCount = arr.filter(v => v==='DNF' || (typeof v==='number' && v===N+1)).length;
+      row.push(String(dnfCount));
+      row.push(s.note || '');
+      rows.push(row);
+    });
+  });
+
+  const csvContent = rows.map(r=> r.map(csvEscapeField).join(';')).join('\r\n');
+  const blob = new Blob(['\uFEFF'+csvContent], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `trackmania-export-${todayStr()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  logBackupEvent('export-csv', { sessionCount: sessions.length });
+  saveState();
+  showToast('CSV heruntergeladen');
+  renderCurrentView();
+}
+
+function logBackupEvent(type, extra){
+  if(!Array.isArray(state.backupHistory)) state.backupHistory = [];
+  state.backupHistory.push(Object.assign({
+    type, // 'export' | 'import'
+    date: todayStr(),
+    time: new Date().toISOString(),
+    version: APP_VERSION
+  }, extra||{}));
+  // keep this from growing forever - last 100 events is plenty
+  if(state.backupHistory.length > 100) state.backupHistory = state.backupHistory.slice(-100);
+}
+
+function exportBackup(){
+  const payload = Object.assign({}, state, { exportedFromVersion: APP_VERSION, exportedAt: new Date().toISOString() });
+  const dataStr = JSON.stringify(payload, null, 2);
+  const blob = new Blob([dataStr], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `trackmania-sicherung-${todayStr()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  state.lastExportDate = todayStr();
+  logBackupEvent('export', { sessionCount: state.sessions.length });
+  saveState();
+  showToast('Sicherung heruntergeladen');
+  renderCurrentView();
+}
+
+function importBackupFile(file){
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    let backup;
+    try{
+      backup = JSON.parse(e.target.result);
+    }catch(err){
+      showToast('Datei konnte nicht gelesen werden');
+      return;
+    }
+    if(!backup || !Array.isArray(backup.sessions)){
+      showToast('Ungültige Sicherungsdatei');
+      return;
+    }
+    const existingIds = new Set(state.sessions.map(s=>s.id));
+    const toAdd = backup.sessions.filter(s=>s && s.id && !existingIds.has(s.id));
+    showConfirm(`${toAdd.length} fehlende Renn-Einträge aus der Sicherung ergänzen? Bestehende Einträge werden nicht verändert.`, ()=>{
+      toAdd.forEach(s=> state.sessions.push(s));
+      if(Array.isArray(backup.savedNames)){
+        backup.savedNames.forEach(n=>{ if(!state.savedNames.includes(n)) state.savedNames.push(n); });
+      }
+      logBackupEvent('import', { addedCount: toAdd.length, sourceVersion: backup.exportedFromVersion || null });
+      saveState();
+      showToast(`${toAdd.length} Rennen wiederhergestellt`);
+      renderCurrentView();
+    });
+  };
+  reader.readAsText(file);
+}
+
+function buildShareCardHtml(){
+  const url = window.location.href;
+  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&color=0-0-0&bgcolor=255-255-255&data=' + encodeURIComponent(url);
+  return `<div class="card">
+    <h2>Link teilen</h2>
+    <div style="display:flex;justify-content:center;margin-bottom:12px;">
+      <div id="qrWrap" style="background:#fff;padding:8px;border-radius:10px;line-height:0;">
+        <img id="qrImg" src="${qrUrl}" width="180" height="180" alt="QR-Code für diesen Link" style="display:block;" />
+      </div>
+    </div>
+    <div id="qrFallback" style="display:none;" class="muted">QR-Code konnte nicht geladen werden (kein Internetzugriff von hier aus möglich) – Link einfach kopieren:</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="text" readonly value="${escapeHtml(url)}" style="flex:1;font-size:12px;" onclick="this.select();" />
+      <button id="copyLinkBtn">Kopieren</button>
+    </div>
+    <p class="muted" style="margin-top:8px;">Freunde können den QR-Code direkt mit der Handy-Kamera scannen.</p>
+  </div>`;
+}
+
+function wireShareCard(){
+  const img = document.getElementById('qrImg');
+  if(img){
+    img.onerror = ()=>{
+      document.getElementById('qrWrap').style.display = 'none';
+      document.getElementById('qrFallback').style.display = 'block';
+    };
+  }
+  const copyBtn = document.getElementById('copyLinkBtn');
+  if(copyBtn){
+    copyBtn.onclick = async ()=>{
+      const url = window.location.href;
+      try{
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          await navigator.clipboard.writeText(url);
+        } else {
+          const inp = copyBtn.previousElementSibling;
+          inp.select();
+          document.execCommand('copy');
+        }
+        showToast('Link kopiert');
+      }catch(e){
+        showToast('Kopieren nicht möglich – bitte manuell markieren');
+      }
+    };
+  }
+}
+
+function renderSicherung(){
+  const el = document.getElementById('sicherungContent');
+  const history = Array.isArray(state.backupHistory) ? state.backupHistory.slice().reverse() : [];
+
+  let html = buildShareCardHtml() + backupCardHtml();
+
+  html += `<div class="card"><h2>Verlauf</h2>`;
+  if(history.length === 0){
+    html += `<div class="empty" style="padding:16px 0;">Noch keine Sicherung exportiert oder importiert.</div>`;
+  } else {
+    html += `<div class="standing-list">` + history.map(ev=>{
+      const label = ev.type==='export' ? 'Exportiert (JSON)' : ev.type==='export-csv' ? 'Exportiert (CSV)' : 'Importiert';
+      const detail = ev.type==='import'
+        ? `${ev.addedCount!=null ? ev.addedCount+' Rennen ergänzt' : ''}${ev.sourceVersion ? ' · aus V'+ev.sourceVersion : ''}`
+        : `${ev.sessionCount!=null ? ev.sessionCount+' Rennen im Datenbestand' : ''}`;
+      return `<div class="result-row">
+        <div class="name">${label}<div class="breakdown"><span>${escapeHtml(formatDate(ev.date))}</span><span>V${ev.version}</span></div></div>
+        <div class="pts" style="font-size:12px;color:var(--muted);font-weight:500;">${escapeHtml(detail)}</div>
+      </div>`;
+    }).join('') + `</div>`;
+  }
+  html += `<p class="muted" style="margin-top:10px;">Zeigt, wann zuletzt exportiert/importiert wurde und mit welcher App-Version.</p></div>`;
+
+  el.innerHTML = html;
+  wireBackupButtons();
+  wireShareCard();
+}
+
+let archivFilter = []; // selected driver names to filter the archive by exact combination
+
+function archivFilterCardHtml(){
+  const names = orderedSavedNames();
+  return `<div class="card">
+    <h2>Nach Besetzung filtern</h2>
+    <div class="chip-grid" id="archivFilterChips">
+      ${names.map(n=>`<div class="chip${archivFilter.includes(n)?' active':''}" data-archiv-filter-name="${escapeHtml(n)}">${escapeHtml(n)}</div>`).join('')}
+    </div>
+    ${archivFilter.length ? '<button class="add-toggle" id="archivFilterResetBtn" style="margin-top:8px;">Filter zurücksetzen</button>' : '<p class="muted" style="margin:8px 0 0;">Keine Auswahl = alle Rennen</p>'}
+  </div>`;
+}
+
+function wireArchivFilterChips(){
+  document.querySelectorAll('#archivFilterChips [data-archiv-filter-name]').forEach(chip=>{
+    chip.onclick = ()=>{
+      const n = chip.dataset.archivFilterName;
+      const i = archivFilter.indexOf(n);
+      if(i>=0) archivFilter.splice(i,1); else archivFilter.push(n);
+      renderArchiv();
+    };
+  });
+  const resetBtn = document.getElementById('archivFilterResetBtn');
+  if(resetBtn) resetBtn.onclick = ()=>{ archivFilter = []; renderArchiv(); };
 }
 
 function renderArchiv(){
   const el = document.getElementById('archivContent');
-  if(!state.sessions || state.sessions.length===0){
-    el.innerHTML = '<div class="empty">Noch keine Rennen im Archiv.</div>';
+  const filtered = archivFilter.length
+    ? state.sessions.filter(s=> sameSet(s.participants, archivFilter))
+    : state.sessions;
+
+  if(state.sessions.length === 0){
+    el.innerHTML = '<div class="empty">Noch keine Rennen gespeichert.</div>';
     return;
   }
-  el.innerHTML = state.sessions.slice().reverse().map(s=>`
-    <div class="card">
-      <div class="session-head"><div class="info"><b>${s.date}</b> · ${s.participants.length} Fahrer</div></div>
-      <div class="muted">${s.participants.join(', ')}</div>
-    </div>`).join('');
+  if(filtered.length === 0){
+    el.innerHTML = archivFilterCardHtml() + '<div class="empty">Keine Rennen mit genau dieser Besetzung.</div>';
+    wireArchivFilterChips();
+    return;
+  }
+  const sorted = filtered.slice().sort((a,b)=> b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+
+  el.innerHTML = archivFilterCardHtml() + sorted.map(s=>{
+    const totals = sessionTotals(s);
+    const rankedStandings = Object.entries(totals).sort((a,b)=>a[1]-b[1]);
+    const winnerPts = rankedStandings.length ? rankedStandings[0][1] : null;
+    const complete = s.participants.every(n=>s.grid[n].every(v=>v!==null && v!==undefined));
+    return `<div class="card">
+      <div class="session-head" data-toggle-id="${s.id}" style="cursor:pointer;">
+        <div class="info"><b>${formatDate(s.date)}</b> · ${s.participants.length} Fahrer${complete?'':' · unvollständig'}</div>
+        <div style="display:flex;gap:6px;">
+          <button data-edit-id="${s.id}">Bearbeiten</button>
+          <button class="danger" data-delete-id="${s.id}">Löschen</button>
+        </div>
+      </div>
+      <div class="match-standing" data-toggle-id="${s.id}" style="cursor:pointer;">${rankedStandings.map(([n,p])=>`<span class="${p===winnerPts?'win':''}">${escapeHtml(n)} ${p}</span>`).join('')}</div>
+      <div class="archiv-detail" id="detail-${s.id}" style="display:none;margin-top:12px;"></div>
+    </div>`;
+  }).join('');
+
+  wireArchivFilterChips();
+
+  el.querySelectorAll('[data-toggle-id]').forEach(elToggle=>{
+    elToggle.onclick = ()=>{
+      const id = elToggle.dataset.toggleId;
+      const detail = document.getElementById('detail-'+id);
+      const isOpen = detail.style.display !== 'none';
+      if(isOpen){
+        detail.style.display = 'none';
+        detail.innerHTML = '';
+      } else {
+        const session = state.sessions.find(x=>x.id===id);
+        detail.innerHTML = session ? buildReadOnlyGridHtml(session) : '';
+        detail.style.display = 'block';
+      }
+    };
+  });
+
+  el.querySelectorAll('[data-delete-id]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const id = btn.dataset.deleteId;
+      showConfirm('Dieses Rennen wirklich löschen?', ()=>{
+        state.sessions = state.sessions.filter(x=>x.id!==id);
+        saveState();
+        renderArchiv();
+      });
+    };
+  });
+
+  el.querySelectorAll('[data-edit-id]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const id = btn.dataset.editId;
+      const openNow = ()=>{
+        const session = state.sessions.find(x=>x.id===id);
+        if(!session) return;
+        const prevMatch = state.sessions
+          .filter(x=>x.id!==id && sameSet(x.participants, session.participants) && x.date <= session.date)
+          .slice().sort((a,b)=> b.date.localeCompare(a.date))[0] || null;
+        draft = JSON.parse(JSON.stringify(session));
+        const rounds = draft.grid[draft.participants[0]].length;
+        if(!draft.penalties) draft.penalties = {};
+        draft.participants.forEach(n=>{ if(!(n in draft.penalties)) draft.penalties[n] = 0; });
+        if(!draft.trackNames) draft.trackNames = [];
+        while(draft.trackNames.length < rounds) draft.trackNames.push('');
+        if(!draft.trackTimes) draft.trackTimes = {};
+        draft.participants.forEach(n=>{
+          if(!draft.trackTimes[n]) draft.trackTimes[n] = [];
+          while(draft.trackTimes[n].length < rounds) draft.trackTimes[n].push(null);
+        });
+        if(typeof draft.note !== 'string') draft.note = '';
+        draft.lastMatchInfo = prevMatch ? { date: prevMatch.date, standing: sessionTotals(prevMatch) } : null;
+        rennenPhase = 'editing';
+        saveDraft();
+        switchView('rennen');
+      };
+      if(draft){
+        showConfirm('Es gibt bereits ein unfertiges Rennen in Bearbeitung. Dieses verwerfen und stattdessen das gewählte bearbeiten?', ()=>{
+          clearDraft().then(openNow);
+        });
+      } else {
+        openNow();
+      }
+    };
+  });
 }
 
-function renderSicherung(){
-  document.getElementById('sicherungContent').innerHTML = `<div class="card">
-    <h2>Echtzeit-Synchronisation</h2>
-    <p class="muted">Live-Verbindung zu Firebase ist aktiv!</p>
+/* ---------------- STATISTIK ---------------- */
+let calendarViewMonth = null; // {year, month(0-indexed)} - defaults to current month on first render
+
+const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const WEEKDAY_LABELS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+function buildActivityCalendarHtml(){
+  const today = new Date();
+  if(!calendarViewMonth) calendarViewMonth = { year: today.getFullYear(), month: today.getMonth() };
+  const { year, month } = calendarViewMonth;
+
+  const firstOfMonth = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const startWeekday = (firstOfMonth.getDay()+6)%7; // 0 = Monday
+
+  const countByDate = {};
+  state.sessions.forEach(s=>{ countByDate[s.date] = (countByDate[s.date]||0) + 1; });
+  let maxCount = 1;
+  Object.values(countByDate).forEach(c=>{ if(c>maxCount) maxCount=c; });
+
+  const isCurrentOrFutureMonth = (year > today.getFullYear()) || (year === today.getFullYear() && month >= today.getMonth());
+
+  let cellsHtml = '';
+  for(let i=0;i<startWeekday;i++) cellsHtml += `<div></div>`;
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const count = countByDate[dateStr] || 0;
+    const isToday = dateStr === todayStr();
+    let bg = 'rgba(255,255,255,0.05)', textColor = 'var(--muted)', fontWeight = '500';
+    if(count > 0){
+      const alpha = 0.3 + Math.min(1, count/maxCount)*0.6;
+      bg = `rgba(0,229,255,${alpha.toFixed(2)})`;
+      textColor = '#04222a';
+      fontWeight = '700';
+    }
+    const ring = isToday ? 'box-shadow:0 0 0 2px var(--accent) inset;' : '';
+    cellsHtml += `<div title="${escapeHtml(formatDate(dateStr))}: ${count} Rennen" style="aspect-ratio:1;border-radius:7px;background:${bg};${ring}
+      display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:${fontWeight};color:${textColor};">${d}</div>`;
+  }
+
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <button id="calPrevBtn" style="padding:8px 16px;">‹</button>
+      <h2 style="margin:0;">${MONTH_NAMES[month]} ${year}</h2>
+      <button id="calNextBtn" style="padding:8px 16px;" ${isCurrentOrFutureMonth?'disabled':''}>›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;">
+      ${WEEKDAY_LABELS.map(w=>`<div style="text-align:center;font-size:10px;color:var(--muted);letter-spacing:0.3px;">${w}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${cellsHtml}</div>
+    <p class="muted" style="margin-top:10px;">Je heller, desto mehr Rennen an diesem Tag</p>
   </div>`;
 }
 
-document.querySelectorAll('nav.bottom button').forEach(btn=>{
-  btn.onclick = ()=>switchView(btn.dataset.view);
-});
+function wireActivityCalendar(){
+  const prevBtn = document.getElementById('calPrevBtn');
+  const nextBtn = document.getElementById('calNextBtn');
+  if(prevBtn){
+    prevBtn.onclick = ()=>{
+      calendarViewMonth.month--;
+      if(calendarViewMonth.month < 0){ calendarViewMonth.month = 11; calendarViewMonth.year--; }
+      renderStatistik();
+    };
+  }
+  if(nextBtn && !nextBtn.disabled){
+    nextBtn.onclick = ()=>{
+      calendarViewMonth.month++;
+      if(calendarViewMonth.month > 11){ calendarViewMonth.month = 0; calendarViewMonth.year++; }
+      renderStatistik();
+    };
+  }
+}
 
-document.getElementById('dateInput').addEventListener('change', e=>{
-  state.selectedDate = e.target.value;
-  saveState();
-});
+function renderStatistik(){
+  const el = document.getElementById('statistikContent');
 
-initRealtimeDatabase();
+  const earliestDate = state.sessions.length
+    ? state.sessions.reduce((min,s)=> s.date < min ? s.date : min, state.sessions[0].date)
+    : todayStr();
+  const effectiveFrom = statsFilter.from || earliestDate;
+  const effectiveTo = statsFilter.to || todayStr();
+
+  const filterCardHtml = `<div class="card">
+    <h2>Zeitraum</h2>
+    <div class="setup-row" style="display:flex;gap:10px;">
+      <div style="flex:1;">
+        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Von</label>
+        <input type="date" id="statsFromInput" value="${effectiveFrom}" />
+      </div>
+      <div style="flex:1;">
+        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Bis</label>
+        <input type="date" id="statsToInput" value="${effectiveTo}" />
+      </div>
+    </div>
+    ${(statsFilter.from || statsFilter.to) ? '<button class="add-toggle" id="statsResetBtn" style="margin-top:10px;">Zeitraum zurücksetzen</button>' : ''}
+  </div>`;
+
+  const sessions = state.sessions.filter(s=> s.date >= effectiveFrom && s.date <= effectiveTo);
+  const activityCardHtml = buildActivityCalendarHtml();
+
+  if(sessions.length===0){
+    el.innerHTML = filterCardHtml + activityCardHtml + '<div class="empty">Keine Rennen in diesem Zeitraum.<br>Trage Ergebnisse im Rennen-Tab ein oder wähle einen anderen Zeitraum.</div>';
+    wireStatsFilterInputs();
+    wireActivityCalendar();
+    return;
+  }
+
+  const stats = {};
+  function ensure(n){ if(!stats[n]) stats[n]={sessions:0, rounds:0, points:0, wins:0, podiums:0, dnfs:0, stars:0, sessionWins:0, recent:[], raceDates:new Set(), penalties:0, totalTimeMs:0}; return stats[n]; }
+  const comboCount = {};
+
+  sessions.forEach(s=>{
+    const key = [...s.participants].sort().join(' + ');
+    comboCount[key] = (comboCount[key]||0) + 1;
+    const N = s.participants.length;
+    s.participants.forEach(name=>{
+      const st = ensure(name);
+      st.sessions++;
+      st.raceDates.add(s.date);
+      const penalty = s.penalties && s.penalties[name];
+      if(penalty){
+        const p = Number(penalty) || 0;
+        st.penalties += p;
+        st.points += p; // penalties must also affect the overall ranking/Ø Pkt, not just the raw display counter
+      }
+      if(s.trackTimes && s.trackTimes[name]){
+        s.trackTimes[name].forEach(t=>{
+          const ms = t ? parseTimeToMs(t) : null;
+          if(ms!==null) st.totalTimeMs += ms;
+        });
+      }
+      const arr = s.grid[name];
+      arr.forEach(val=>{
+        if(val===null || val===undefined) return;
+        st.rounds++;
+        const isDnf = (val === 'DNF');
+        const num = isDnf ? null : asPlacementNumber(val);
+        const pts = isDnf ? N+1 : (num!==null ? num : 0);
+        st.points += pts;
+        st.recent.push({date:s.date, pts});
+        if(isDnf) st.dnfs++;
+        else{
+          if(num===1) st.wins++;
+          if(num!==null && num<=3) st.podiums++;
+        }
+        if(isStarredValue(val)) st.stars++;
+      });
+    });
+    const totals = sessionTotals(s);
+    const complete = s.participants.every(n=>s.grid[n].every(v=>v!==null && v!==undefined));
+    if(complete){
+      const winner = Object.entries(totals).sort((a,b)=>a[1]-b[1])[0][0];
+      ensure(winner).sessionWins++;
+    }
+  });
+
+  const totalSessions = sessions.length;
+  const totalRoundsPlayed = sessions.reduce((sum,s)=> sum + (s.participants.length ? Math.max(...s.participants.map(n=>s.grid[n].filter(v=>v!==null&&v!==undefined).length),0) : 0), 0);
+
+  let html = `<div class="stat-grid">
+    <div class="stat-box"><div class="num">${totalSessions}</div><div class="lbl">Sessions</div></div>
+    <div class="stat-box"><div class="num">${totalRoundsPlayed}</div><div class="lbl">Tracks gesamt</div></div>
+  </div>`;
+
+  // Fairness-adjusted score: shrink each driver's average toward the group
+  // average, weighted by how many rounds they've actually raced. Someone
+  // with only a handful of rounds gets pulled toward the group average
+  // instead of being ranked purely on a lucky small sample.
+  const statEntries = Object.entries(stats).filter(([,st])=>st.rounds>0);
+  const totalPointsAll = statEntries.reduce((a,[,st])=>a+st.points,0);
+  const totalRoundsAll = statEntries.reduce((a,[,st])=>a+st.rounds,0);
+  const groupAvg = totalRoundsAll ? totalPointsAll/totalRoundsAll : 0;
+  const C = 12; // fixed shrinkage strength (~1-2 typical race nights of rounds) —
+                // deliberately NOT scaled to the group's average round count,
+                // otherwise a large history makes C huge and over-shrinks
+                // even well-established averages back toward the group mean.
+
+  const rankedByFair = statEntries.map(([name,st])=>{
+    const rawAvg = st.points/st.rounds;
+    const adjusted = (st.points + C*groupAvg) / (st.rounds + C);
+    return [name, st, rawAvg, adjusted];
+  }).sort((a,b)=> a[3]-b[3]);
+
+  const crownHolder = getStreakCrownHolder();
+  html += `<div class="card"><h2>Gesamtranking</h2><div class="standing-list">`;
+  html += rankedByFair.map(([name,st,rawAvg,adjusted],i)=>{
+    const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
+    const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+    const crown = (crownHolder && crownHolder.name===name) ? ` 👑<span style="font-size:11px;color:var(--muted);"> (${crownHolder.streak}x in Folge)</span>` : '';
+    return `<div class="result-row">
+      <div class="rank-badge ${cls}">${badge}</div>
+      <div class="name">${escapeHtml(name)}${crown}</div>
+      <div class="pts">${adjusted.toFixed(2)}</div>
+    </div>`;
+  }).join('');
+  html += `</div><p class="muted" style="margin-top:10px;">
+    So wird gerechnet: <b style="color:var(--text);">bereinigter Schnitt = (eigene Punktesumme + ${C} × Gruppen-Durchschnitt) ÷ (eigene Streckenanzahl + ${C})</b>.
+    Der aktuelle Gruppen-Durchschnitt liegt bei ${groupAvg.toFixed(2)} Punkten pro Strecke.
+    Das rechnet so, als hätte jeder zusätzlich ${C} Strecken exakt mit diesem Gruppen-Durchschnitt gefahren:
+    Wer schon sehr viele echte Strecken gefahren ist, wird davon kaum noch beeinflusst –
+    wer erst wenige gefahren ist, wird spürbar Richtung Durchschnitt gezogen,
+    damit nicht ein einzelnes gutes Rennen jemanden unfair nach oben katapultiert.
+    Niedriger = besser.</p></div>`;
+
+  html += `<div class="card"><h2>Fahrer-Statistik</h2>
+    <div class="table-wrap"><table class="stats"><thead><tr>
+      <th>Name</th><th>Renntage</th><th>Strecken</th><th>Sess.-Sieg</th><th>Renn.-Sieg</th><th>Podest %</th><th>Ø Pkt</th><th>DNF %</th><th>Strafp.</th><th>⭐</th><th>Fahrzeit</th>
+    </tr></thead><tbody>`;
+  Object.entries(stats)
+    .sort((a,b)=> a[1].points - b[1].points)
+    .forEach(([name,st])=>{
+      const avg = st.rounds ? (st.points/st.rounds).toFixed(1) : '–';
+      const podiumPct = st.rounds ? Math.round(100*st.podiums/st.rounds) : 0;
+      const dnfPct = st.rounds ? Math.round(100*st.dnfs/st.rounds) : 0;
+      html += `<tr>
+        <td>${escapeHtml(name)}</td>
+        <td>${st.raceDates.size}</td>
+        <td>${st.rounds}</td>
+        <td>${st.sessionWins}</td>
+        <td>${st.wins}</td>
+        <td>${podiumPct}%</td>
+        <td>${avg}</td>
+        <td>${dnfPct}%</td>
+        <td>${st.penalties}</td>
+        <td>${st.stars}</td>
+        <td>${formatDurationMs(st.totalTimeMs)}</td>
+      </tr>`;
+    });
+  html += `</tbody></table></div>`;
+  html += `<p class="muted" style="margin-top:10px;">Ø Pkt = durchschnittliche Punkte pro Strecke (niedriger = besser) · Renntage = Anzahl unterschiedlicher Tage mit Teilnahme · Strecken = Anzahl gefahrener Rennstrecken gesamt · DNF % = Anteil nicht abgeschlossener Strecken · Strafp. = Summe aller erhaltenen Strafpunkte · ⭐ = Anzahl "letzter Tropfen Benzin"-Rettungen auf Platz 1 · Fahrzeit = Summe aller eingetragenen Streckenzeiten (h:mm:ss)</p>
+  </div>`;
+
+  const comboSorted = Object.entries(comboCount).sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0]));
+  html += `<div class="card"><h2>Besetzungen</h2>
+    <table class="stats"><thead><tr><th>Fahrer</th><th>Anzahl</th></tr></thead><tbody>`;
+  comboSorted.forEach(([combo,count])=>{
+    html += `<tr><td>${escapeHtml(combo)}</td><td>${count}×</td></tr>`;
+  });
+  html += `</tbody></table>
+  <p class="muted" style="margin-top:10px;">Wie oft jede Fahrer-Kombination bisher zusammen gefahren ist</p>
+  </div>`;
+
+  el.innerHTML = filterCardHtml + activityCardHtml + html;
+  wireStatsFilterInputs();
+  wireActivityCalendar();
+}
+
+function wireStatsFilterInputs(){
+  const fromInput = document.getElementById('statsFromInput');
+  const toInput = document.getElementById('statsToInput');
+  const resetBtn = document.getElementById('statsResetBtn');
+  if(fromInput){
+    fromInput.addEventListener('change', e=>{
+      statsFilter.from = e.target.value || null;
+      renderStatistik();
+    });
+  }
+  if(toInput){
+    toInput.addEventListener('change', e=>{
+      statsFilter.to = e.target.value || null;
+      renderStatistik();
+    });
+  }
+  if(resetBtn){
+    resetBtn.onclick = ()=>{
+      statsFilter = { from: null, to: null };
+      renderStatistik();
+    };
+  }
+}
+
+/* ---------------- NAV / INIT ---------------- */
+document.querySelectorAll('nav.bottom button').forEach(btn=>{ btn.onclick = ()=>switchView(btn.dataset.view); });
+
+document.getElementById('versionBadge').innerHTML = `<b>V${APP_VERSION}</b> · ${formatDate(APP_VERSION_DATE)}`;
+document.getElementById('versionBadge').style.cursor = 'pointer';
+document.getElementById('versionBadge').onclick = showVersionHistory;
+
+loadState();
 </script>
 </body>
 </html>
