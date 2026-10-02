@@ -340,7 +340,7 @@ const VERSION_HISTORY = [
   { v:9, date:'2026-09-25', notes:'Zeit-Eingabe strenger: 1. Platz mm:ss,SSS (Komma), alle anderen nur noch ss,SSS Rückstand. Falsches Format (z.B. Punkt statt Komma) wird direkt im Feld als Fehler markiert und blockiert das Speichern, damit in Strecken/Statistik keine kaputten Zeiten landen können.' },
   { v:10, date:'2026-09-25', notes:'Persönliche-Bestzeit-Meldung beim Eintragen von Streckenzeiten. CSV-Export im Sicherungs-Tab für Excel/Sheets. Session-Notizen (Freitextfeld) unterhalb der Punktetabelle im Rennen-Tab, sichtbar auch im Archiv.' },
   { v:11, date:'2026-09-25', notes:'Aktivitäts-Kalender in der Statistik (letzte 14 Wochen als Heatmap). Automatischer Abend-Rückblick nach "Fertig" (Sieger, meiste Platz-1, DNFs, engstes Rennen). QR-Code + Link-Kopieren im Sicherungs-Tab. Streak-Krone 👑 für die längste aktuelle Siegesserie, sichtbar bei der Fahrerauswahl und im Gesamtranking.' },
-  { v:12, date:'2026-10-02', notes:'Speicher-Backend auf Firebase Realtime Database umgestellt (Echtzeit-Sync statt 5-Sekunden-Abfrage), gehostet über GitHub Pages. Bug behoben: Bei einem Verbindungsfehler blieb die App bisher für immer bei "Verbinde…" hängen, ohne eine Erklärung zu zeigen – jetzt wird die genaue Fehlermeldung angezeigt.' }
+  { v:12, date:'2026-10-02', notes:'Speicher-Backend auf Firebase Realtime Database umgestellt (Echtzeit-Sync statt 5-Sekunden-Abfrage), gehostet über GitHub Pages. Bug behoben: Bei einem Verbindungsfehler blieb die App bisher für immer bei "Verbinde…" hängen, ohne eine Erklärung zu zeigen – jetzt wird die genaue Fehlermeldung angezeigt. Außerdem: Absturz behoben, falls Teilnehmer und Punktetabelle einer Session nicht exakt zusammenpassten (z.B. durch ältere Testdaten) – solche Einträge werden jetzt automatisch repariert statt die App zum Abstürzen zu bringen.' }
 ];
 const SEED_HISTORY = [{"id": "seed-2025-10-02", "date": "2025-10-02", "participants": ["Max", "Olly", "Dani", "Bär", "Mky", "Andy"], "grid": {"Max": [6, 1, 6, 1, 2, 1, 1, 3, 1], "Olly": [4, 5, 5, 6, 5, 4, 6, 7, 3], "Dani": [3, 2, 3, 2, 1, 6, 4, 1, 4], "Bär": [2, 3, 1, 3, 4, 2, 2, 4, 2], "Mky": [5, 4, 2, 5, 3, 3, 3, 2, 5], "Andy": [1, 6, 4, 4, 6, 5, 5, 7, 6]}}, {"id": "seed-2025-11-29", "date": "2025-11-29", "participants": ["Max", "Bär", "Andy", "Mky"], "grid": {"Max": [2, 2, 2, 1, 2, 5, 1, 3], "Bär": [4, 1, 3, 3, 3, 1, 3, 1], "Andy": [3, 4, 4, 2, 4, 3, 4, 4], "Mky": [1, 3, 1, 4, 1, 2, 2, 2]}}, {"id": "seed-2025-12-02", "date": "2025-12-02", "participants": ["Max", "Andy", "Dani", "Olly", "Mky"], "grid": {"Max": [6, 6, 1, 3, 1, 6, 2, 1], "Andy": [4, 6, 3, 4, 5, 1, 4, 5], "Dani": [2, 1, 6, 1, 3, 3, 1, 3], "Olly": [3, 6, 4, 5, 4, 4, 5, 4], "Mky": [1, 2, 2, 2, 2, 2, 3, 2]}}, {"id": "seed-2025-12-05", "date": "2025-12-05", "participants": ["Mky", "Andy", "Bär", "Max"], "grid": {"Mky": [2, 1, 1, 2, 5, 2, 3, 2, 2, 5], "Andy": [4, 4, 3, 3, 5, 4, 4, 4, 4, 3], "Bär": [3, 3, 2, 4, 5, 3, 1, 3, 3, 2], "Max": [1, 2, 5, 1, 5, 1, 2, 1, 1, 1]}}, {"id": "seed-2025-12-16", "date": "2025-12-16", "participants": ["Max", "Bär", "Mky", "Andy"], "grid": {"Max": [3, 2, 3, 1, 3, 2, 3], "Bär": [2, 3, 2, 2, 2, 3, 1], "Mky": [4, 1, 1, 4, 1, 5, 2], "Andy": [1, 4, 4, 3, 4, 1, 4]}}, {"id": "seed-2025-12-18", "date": "2025-12-18", "participants": ["Bär", "Olly", "Andy", "Dani", "Max"], "grid": {"Bär": [2, 2, 3, 2, 3, 2, 4], "Olly": [4, 4, 5, 5, 4, 4, 5], "Andy": [5, 6, 4, 3, 5, 3, 3], "Dani": [3, 3, 1, 1, 2, 5, 2], "Max": [1, 1, 2, 4, 1, 1, 1]}}, {"id": "seed-2025-12-21", "date": "2025-12-21", "participants": ["Olly", "Max", "Andy"], "grid": {"Olly": [1, 4, 2, 4, 3, 3, 2, 3, 2, 2, 2, 3, 2], "Max": [3, 1, 1, 4, 1, 1, 1, 1, 3, 3, 4, 1, 1], "Andy": [2, 2, 3, 4, 2, 2, 3, 2, 1, 1, 1, 2, 3]}}, {"id": "seed-2025-12-24", "date": "2025-12-24", "participants": ["Olly", "Dani", "Bär", "Max", "Andy"], "grid": {"Olly": [3, 6, 3, 5, 5, 5, 5], "Dani": [2, 2, 1, 4, 3, 2, 3], "Bär": [1, 6, 2, 2, 1, 3, 4], "Max": [5, 1, 4, 1, 2, 1, 1], "Andy": [4, 6, 5, 3, 4, 4, 2]}}, {"id": "seed-2025-12-28", "date": "2025-12-28", "participants": ["Olly", "Dani", "Mky", "Max", "Andy"], "grid": {"Olly": [6, 4, 2, 4, 5, 3, 5], "Dani": [6, 3, 5, 3, 4, 1, 3], "Mky": [6, 2, 4, 2, 1, 2, 1], "Max": [6, 2, 1, 5, 3, 6, 4], "Andy": [1, 5, 3, 1, 2, 4, 2]}}, {"id": "seed-2025-12-29", "date": "2025-12-29", "participants": ["Max", "Andy", "Bär"], "grid": {"Max": [1, 4, 1, 1, 1, 1, 2, 1, 1, 1, 1], "Andy": [4, 2, 4, 2, 2, 3, 3, 2, 3, 3, 3], "Bär": [2, 1, 2, 3, 3, 2, 1, 3, 2, 2, 2]}}, {"id": "seed-2026-01-06", "date": "2026-01-06", "participants": ["Max", "Andy", "Bär"], "grid": {"Max": [2, 4, 1, 3, 1, 1, 4], "Andy": [3, 2, 2, 2, 2, 3, 1], "Bär": [1, 1, 3, 1, 3, 2, 2]}}, {"id": "seed-2026-01-11", "date": "2026-01-11", "participants": ["Max", "Andy", "Dani", "Olly"], "grid": {"Max": [1, 1, 2, 1, 3, 1, 1, 1, 4], "Andy": [4, 2, 4, 2, 2, 2, 2, 2, 2], "Dani": [3, 3, 3, 3, 1, 3, 4, 3, 1], "Olly": [2, 4, 1, 4, 4, 4, 3, 4, 3]}}, {"id": "seed-2026-01-13", "date": "2026-01-13", "participants": ["Max", "Andy", "Dani", "Olly"], "grid": {"Max": [1, 2, 2, 3, 1, 1, 2, 3, 1], "Andy": [2, 4, 5, 2, 3, 3, 5, 1, 4], "Dani": [3, 1, 5, 1, 2, 2, 3, 2, 3], "Olly": [4, 3, 1, 4, 4, 4, 1, 4, 2]}}, {"id": "seed-2026-01-15", "date": "2026-01-15", "participants": ["Max", "Bär", "Andy", "Olly", "Mky"], "grid": {"Max": [2, 2, 3, 1, 4, 6, 1, 4, 1], "Bär": [3, 1, 2, 4, 1, 6, 2, 2, 2], "Andy": [4, 4, 1, 5, 3, 6, 3, 5, 4], "Olly": [5, 6, 5, 3, 5, 6, 4, 3, 5], "Mky": [1, 3, 4, 2, 2, 6, 6, 1, 3]}}, {"id": "seed-2026-01-21", "date": "2026-01-21", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [1, 1, 2, 1, 1, 1, 1], "Andy": [3, 2, 1, 3, 2, 3, 3], "Mky": [2, 3, 3, 2, 2, 2, 2]}}, {"id": "seed-2026-01-30", "date": "2026-01-30", "participants": ["Max", "Dani", "Bär", "Olly", "Mky", "Andy"], "grid": {"Max": [2, 2, 3, 2, 3, 1], "Dani": [1, 1, 5, 6, 2, 3], "Bär": [6, 3, 1, 4, 4, 2], "Olly": [4, 6, 2, 1, 6, 5], "Mky": [5, 4, 6, 5, 1, 4], "Andy": [3, 5, 4, 3, 5, 6]}}, {"id": "seed-2026-02-03", "date": "2026-02-03", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [1, 1, 1, 2, 2, 1, 1, 2, 1, 2, 3], "Andy": [3, 3, 2, 2, 3, 2, 2, 3, 3, 4, 1], "Mky": [2, 2, 3, 4, 1, 3, 3, 1, 2, 2, 2]}}, {"id": "seed-2026-02-05", "date": "2026-02-05", "participants": ["Max", "Bär", "Dani", "Olly", "Andy"], "grid": {"Max": [4, 1, 1, 1, 1, 6, 1, 1], "Bär": [2, 3, 4, 2, 3, 6, 2, 4], "Dani": [1, 4, 2, 4, 2, 6, 3, 2], "Olly": [5, 5, 5, 5, 4, 6, 5, 3], "Andy": [3, 3, 3, 3, 5, 6, 4, 5]}}, {"id": "seed-2026-02-08", "date": "2026-02-08", "participants": ["Max", "Andy", "Dani", "Olly"], "grid": {"Max": [2, 1, 1, 2, 1, 5, 2], "Andy": [3, 3, 4, 3, 3, 5, 3], "Dani": [1, 2, 3, 1, 2, 5, 1], "Olly": [4, 4, 2, 4, 4, 5, 4]}}, {"id": "seed-2026-02-16", "date": "2026-02-16", "participants": ["Max", "Andy", "Olly"], "grid": {"Max": [1, 1, 1, 1, 1, 2, 1, 1, 1, 3], "Andy": [3, 3, 3, 3, 3, 1, 2, 2, 2, 2], "Olly": [2, 2, 2, 2, 2, 3, 3, 3, 3, 1]}}, {"id": "seed-2026-02-17", "date": "2026-02-17", "participants": ["Max", "Bär", "Andy"], "grid": {"Max": [1, 3, 1, 4, 1, 1, 1], "Bär": [2, 2, 2, 1, 2, 3, 2], "Andy": [3, 1, 3, 2, 3, 2, 3]}}, {"id": "seed-2026-02-24", "date": "2026-02-24", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [1, 1, 2, 2, 1, 2, 1, 1, 1], "Andy": [3, 4, 3, 1, 2, 1, 3, 3, 4], "Mky": [2, 2, 1, 3, 3, 3, 2, 2, 2]}}, {"id": "seed-2026-03-03", "date": "2026-03-03", "participants": ["Max", "Dani", "Olly", "Bär", "Andy"], "grid": {"Max": [2, 1, 6, 6, 2, 1], "Dani": [1, 3, 1, 1, 1, 2], "Olly": [5, 4, 6, 3, 5, 5], "Bär": [3, 6, 6, 2, 4, 3], "Andy": [4, 2, 2, 4, 3, 4]}}, {"id": "seed-2026-03-05", "date": "2026-03-05", "participants": ["Max", "Bär", "Andy", "Olly", "Mky"], "grid": {"Max": [5, 2, 6, 2, 1, 1], "Bär": [2, 2, 1, 1, 2, 2], "Andy": [3, 3, 3, 4, 3, 3], "Olly": [4, 4, 4, 3, 5, 4], "Mky": [1, 5, 2, 5, 4, 5]}}, {"id": "seed-2026-03-06", "date": "2026-03-06", "participants": ["Max", "Andy"], "grid": {"Max": [2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1], "Andy": [1, 3, 2, 2, 1, 2, 2, 1, 2, 2, 2]}}, {"id": "seed-2026-03-19", "date": "2026-03-19", "participants": ["Max", "Bär", "Dani", "Olly", "Mky", "Andy"], "grid": {"Max": [2, 2, 3, 1, 5, 1, 7], "Bär": [1, 4, 7, 7, 1, 3, 7], "Dani": [3, 1, 2, 4, 2, 4, 1], "Olly": [6, 3, 2, 7, 3, 6, 3], "Mky": [4, 5, 5, 2, 6, 2, 4], "Andy": [5, 6, 4, 3, 4, 5, 2]}}, {"id": "seed-2026-03-23", "date": "2026-03-23", "participants": ["Max", "Dani", "Andy", "Olly"], "grid": {"Max": [5, 1, 1, 3, 1, 5], "Dani": [3, 2, 2, 1, 2, 2], "Andy": [1, 3, 3, 2, 4, 1], "Olly": [2, 4, 4, 5, 3, 5]}}, {"id": "seed-2026-03-28", "date": "2026-03-28", "participants": ["Max", "Olly", "Andy"], "grid": {"Max": [1, 1, 4, 1], "Olly": [3, 2, 2, 2], "Andy": [2, 3, 1, 3]}}, {"id": "seed-2026-04-02", "date": "2026-04-02", "participants": ["Max", "Andy", "Olly", "Mky"], "grid": {"Max": [3, 2, 1, 2, 5, 1, 1], "Andy": [1, 2, 4, 3, 5, 2, 2], "Olly": [4, 3, 2, 4, 5, 3, 4], "Mky": [2, 4, 3, 2, 5, 4, 3]}}, {"id": "seed-2026-04-09", "date": "2026-04-09", "participants": ["Max", "Andy", "Mky", "Bär"], "grid": {"Max": [1, 1, 2, 2, 5, 1, 3], "Andy": [3, 3, 4, 4, 1, 5, 1], "Mky": [4, 5, 3, 1, 5, 3, 4], "Bär": [2, 2, 1, 3, 2, 2, 2]}}, {"id": "seed-2026-04-14", "date": "2026-04-14", "participants": ["Max", "Andy", "Dani", "Olly", "Bär"], "grid": {"Max": [4, 3, 1, 4, 1, 3], "Andy": [3, 6, 2, 5, 4, 5], "Dani": [2, 1, 4, 2, 2, 2], "Olly": [5, 2, 5, 3, 5, 4], "Bär": [1, 6, 3, 1, 3, 1]}}, {"id": "seed-2026-05-07", "date": "2026-05-07", "participants": ["Max", "Olly", "Andy", "Bär", "Mky"], "grid": {"Max": [2, 1, 3, 2, 1, 1], "Olly": [5, 2, 6, 4, 5, 5], "Andy": [3, 4, 2, 5, 3, 4], "Bär": [4, 3, 4, 1, 4, 2], "Mky": [1, 5, 1, 3, 2, 3]}}, {"id": "seed-2026-05-13", "date": "2026-05-13", "participants": ["Max", "Olly", "Dani", "Bär", "Mky", "Andy"], "grid": {"Max": [5, 1, 5, 1, 3, 2, 1], "Olly": [4, 4, 2, 5, 6, 6, 7], "Dani": [6, 2, 1, 6, 2, 4, 3], "Bär": [1, 5, 7, 3, 4, 1, 5], "Mky": [3, 7, 3, 2, 1, 5, 2], "Andy": [2, 3, 4, 4, 5, 3, 4]}}, {"id": "seed-2026-05-19", "date": "2026-05-19", "participants": ["Max", "Bär", "Dani", "Andy", "Mky"], "grid": {"Max": [2, 1, 1, 2, 1, 1, 5], "Bär": [1, 4, 2, 3, 2, 4, 3], "Dani": [3, 2, 5, 1, 3, 2, 1], "Andy": [4, 6, 3, 4, 4, 5, 4], "Mky": [5, 3, 4, 5, 5, 3, 2]}}, {"id": "seed-2026-05-30", "date": "2026-05-30", "participants": ["Max", "Dani", "Andy"], "grid": {"Max": [1, 3, 1, 3, 3, 1, 1, 4], "Dani": [2, 2, 2, 1, 2, 2, 4, 1], "Andy": [3, 1, 3, 2, 1, 3, 4, 2]}}, {"id": "seed-2026-05-31", "date": "2026-05-31", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [1, 2, 1, 3, 2, 1, 1], "Andy": [3, 3, 3, 1, 3, 2, 3], "Mky": [2, 1, 2, 2, 1, 3, 2]}}, {"id": "seed-2026-06-02", "date": "2026-06-02", "participants": ["Max", "Dani", "Mky", "Bär", "Andy"], "grid": {"Max": [1, 2, 1, 3, 3, 3], "Dani": [3, 3, 3, 1, 4, 2], "Mky": [4, 4, 6, 6, 5, 1], "Bär": [5, 1, 2, 6, 1, 5], "Andy": [2, 5, 4, 2, 2, 4]}}, {"id": "seed-2026-06-04", "date": "2026-06-04", "participants": ["Max", "Andy", "Mky"], "grid": {"Max": [4, 2, 2, 2, 1, 1, 1, 1, 1], "Andy": [2, 3, 4, 3, 3, 2, 2, 3, 2], "Mky": [1, 1, 1, 1, 2, 3, 3, 2, 3]}}, {"id": "seed-2026-06-09", "date": "2026-06-09", "participants": ["Max", "Bär", "Andy", "Mky"], "grid": {"Max": [2, 1, 3, 2, 4, 1, 1, 1, 1], "Bär": [4, 3, 2, 5, 1, 3, 3, 3, 3], "Andy": [3, 4, 4, 3, 3, 4, 2, 4, 4], "Mky": [1, 2, 1, 1, 2, 2, 4, 2, 2]}}, {"id": "seed-2026-06-17", "date": "2026-06-17", "participants": ["Max", "Mky", "Olly", "Bär", "Andy"], "grid": {"Max": [3, 2, 1], "Mky": [1, 3, 2], "Olly": [2, 5, 5], "Bär": [5, 1, 3], "Andy": [4, 4, 4]}}, {"id": "seed-2026-07-05", "date": "2026-07-05", "participants": ["Max", "Dani", "Andy", "Olly", "Bär", "Mky"], "grid": {"Max": [3, 1, 1, 6, 2, 2, 3], "Dani": [4, 2, 5, 2, 5, 3, 2], "Andy": [2, 6, 4, 5, 4, 6, 5], "Olly": [6, 5, 6, 4, 6, 1, 6], "Bär": [1, 3, 2, 1, 3, 5, 1], "Mky": [5, 4, 3, 3, 1, 4, 4]}}, {"id": "seed-2026-07-11", "date": "2026-07-11", "participants": ["Max", "Bär", "Andy", "Olly", "Mky"], "grid": {"Max": [3, 1, 4, 1, 1, 1], "Bär": [1, 2, 1, 3, 2, 3], "Andy": [5, 4, 5, 4, 3, 6], "Olly": [4, 5, 2, 5, 5, 4], "Mky": [2, 3, 3, 2, 4, 2]}}, {"id": "seed-2026-07-16", "date": "2026-07-16", "participants": ["Max", "Andy", "Olly", "Mky"], "grid": {"Max": [1, 2, 1, 4, 1], "Andy": [3, 3, 3, 3, 3], "Olly": [4, 4, 4, 2, 4], "Mky": [2, 1, 2, 1, 2]}}, {"id": "seed-2026-07-22", "date": "2026-07-22", "participants": ["Max", "Dani", "Olly", "Bär", "Andy"], "grid": {"Max": [1, 2, 1, 6, 1, 4], "Dani": [3, 1, 3, 1, 3, 1], "Olly": [5, 5, 4, 3, 5, 3], "Bär": [2, 3, 2, 4, 2, 5], "Andy": [4, 4, 5, 2, 4, 2]}}, {"id": "seed-2026-07-24", "date": "2026-07-24", "participants": ["Max", "Andy", "Dani", "Bär"], "grid": {"Max": [2, 2, 1, 5, 1, 1, 5], "Andy": [4, 3, 4, 2, 3, 3, 2], "Dani": [3, 1, 2, 5, 4, 2, 3], "Bär": [1, 4, 3, 1, 2, 4, 1]}}, {"id": "seed-2026-08-05", "date": "2026-08-05", "participants": ["Max", "Andy", "Dani", "Olly", "Mky"], "grid": {"Max": [2, 1, 1, 3, 1, 1], "Andy": [4, 5, 4, 5, 4, 4], "Dani": [1, 3, 3, 1, 3, 3], "Olly": [3, 4, 5, 4, 2, 6], "Mky": [5, 2, 2, 2, 5, 2]}}, {"id": "seed-2026-08-11", "date": "2026-08-11", "participants": ["Max", "Dani", "Andy", "Mky", "Olly"], "grid": {"Max": [4, 2, 1, 2, 1, 2, 1, 4], "Dani": [2, 3, 3, 5, 2, 3, 3, 3], "Andy": [5, 5, 4, 3, 4, 5, 4, 6], "Mky": [1, 1, 2, 4, 3, 1, 2, 1], "Olly": [3, 4, 5, 1, 5, 4, 5, 2]}}, {"id": "seed-2026-08-19", "date": "2026-08-19", "participants": ["Max", "Dani", "Andy", "Mky"], "grid": {"Max": [1, 2, 1, 4, 1, 1, 1, 3], "Dani": [3, 3, 2, 3, 2, 4, 2, 4], "Andy": [4, 4, 3, 2, 5, 3, 4, 2], "Mky": [2, 1, 5, 1, 5, 2, 3, 1]}}, {"id": "seed-2026-08-20", "date": "2026-08-20", "participants": ["Max", "Olly", "Andy"], "grid": {"Max": [2, 1, 1, 1, 2, 3, 2, 1, 3, 1, 1], "Olly": [1, 2, 3, 3, 1, 2, 3, 2, 2, 2, 3], "Andy": [3, 4, 2, 2, 3, 1, 2, 3, 1, 3, 2]}}, {"id": "seed-2026-08-25", "date": "2026-08-25", "participants": ["Max", "Bär", "Andy"], "grid": {"Max": [2, 1, 1, 1, 1, 3, null], "Bär": [1, 2, 2, 4, 3, 1, null], "Andy": [3, 3, 3, 4, 2, 3, 2]}}, {"id": "seed-2026-08-28", "date": "2026-08-28", "participants": ["Max", "Andy", "Mky", "Bär"], "grid": {"Max": [1, 2, 1, 2, 2, 2], "Andy": [4, 4, 2, 5, 5, 1], "Mky": [2, 3, 4, 3, 1, 3], "Bär": [3, 1, 3, 1, 5, 4]}}, {"id": "seed-2026-09-02", "date": "2026-09-02", "participants": ["Max", "Dani", "Mky", "Olly", "Bär", "Andy"], "grid": {"Max": [3, 4, 4, 1, 2, 3, 2], "Dani": [1, 3, 5, 4, 4, 5, 7], "Mky": [5, 5, 1, 2, 1, 1, 7], "Olly": [2, 6, 7, 6, 5, 6, 4], "Bär": [4, 2, 2, 3, 3, 4, 1], "Andy": [7, 1, 4, 5, 7, 2, 3]}}, {"id": "seed-2026-09-04", "date": "2026-09-04", "participants": ["Max", "Andy", "Dani", "Bär"], "grid": {"Max": [1, 1, 1, 1, 1, 4], "Andy": [4, 2, 3, 4, 4, 1], "Dani": [3, 4, 4, 2, 2, 3], "Bär": [2, 3, 2, 3, 3, 2]}}, {"id": "seed-2026-09-06", "date": "2026-09-06", "participants": ["Max", "Bär", "Dani", "Olly", "Mky"], "grid": {"Max": [1, 2, 1, 1, 5, 6, 1, 1], "Bär": [3, 1, 4, 3, 1, 6, 3, 2], "Dani": [2, 6, 5, 2, 2, 6, 2, 5], "Olly": [4, 4, 2, 6, 4, 6, 5, 3], "Mky": [5, 3, 3, 6, 3, 1, 4, 4]}}, {"id": "seed-2026-09-24", "date": "2026-09-24", "participants": ["Max", "Bär", "Andy", "Dani"], "grid": {"Max": [1, 1, 3, 1, 5, 3, 1], "Bär": [2, 3, 2, 3, 5, 1, 2], "Andy": [3, 2, 4, 2, 5, 2, 3], "Dani": [4, 4, 1, 4, 1, 4, 4]}, "penalties": {"Max": 0, "Bär": 0, "Andy": 0, "Dani": 0}, "trackNames": ["Ws.84.02", "Oc.sp2023.13", "Ws.76.04", "Oc.sp2026.07", "Totd.2026.09.24", "Oc.s2023.15", "Ws.69.02"], "trackTimes": {"Max": ["00:17.338", "00:35.228", "00:18.335", "00:29.984", "5:00.000", "00:59.271", "00:18.781"], "Bär": ["00:17.904", "00:36.358", "00:18.145", "00:30.224", "5:00.000", "00:56.047", "00:18.978"], "Andy": ["00:17.969", "00:36.326", "00:18.590", "00:30.101", "5:00.000", "00:58.574", "00:19.025"], "Dani": ["00:18.509", "00:36.908", "00:18.078", "00:30.409", "00:56.000", "01:01.255", "00:19.955"]}}];
 
@@ -407,6 +407,35 @@ function migrateLegacyNames(state){
     state.sessions.forEach(migrateSessionLike);
   }
   if(state.liveDraft) migrateSessionLike(state.liveDraft);
+}
+
+function sanitizeSessionLike(s){
+  // Returns false if the session is unusable (caller should drop it);
+  // otherwise guarantees every participant has a grid array of equal,
+  // consistent length - the one invariant every other function relies on.
+  // This is a defense-in-depth layer: several render functions already
+  // guard themselves individually, but repairing the data once here,
+  // right after it arrives from Firebase, means every function (including
+  // ones added later) can safely assume well-formed sessions.
+  if(!s || !Array.isArray(s.participants) || s.participants.length===0 || !s.grid || typeof s.grid !== 'object') return false;
+  let rounds = 1;
+  s.participants.forEach(p=>{
+    if(Array.isArray(s.grid[p])) rounds = Math.max(rounds, s.grid[p].length);
+  });
+  s.participants.forEach(p=>{
+    if(!Array.isArray(s.grid[p])) s.grid[p] = [];
+    while(s.grid[p].length < rounds) s.grid[p].push(null);
+  });
+  if(s.trackTimes && typeof s.trackTimes === 'object'){
+    s.participants.forEach(p=>{
+      if(!Array.isArray(s.trackTimes[p])) s.trackTimes[p] = [];
+      while(s.trackTimes[p].length < rounds) s.trackTimes[p].push(null);
+    });
+  }
+  if(s.trackNames && Array.isArray(s.trackNames)){
+    while(s.trackNames.length < rounds) s.trackNames.push('');
+  }
+  return true;
 }
 
 function importSeedHistoryOnce(state){
@@ -739,7 +768,12 @@ function loadState(){
     FIXED_DRIVERS.forEach(n=>{ if(!fresh.savedNames.includes(n)) fresh.savedNames.push(n); });
     fresh.savedNames = [...new Set(fresh.savedNames)];
     fresh.selectedNames = [...new Set(fresh.selectedNames)];
-    if(fresh.liveDraft && (!fresh.liveDraft.grid || !fresh.liveDraft.participants)) fresh.liveDraft = null;
+    // Guard against malformed/legacy data (e.g. from an earlier, simpler
+    // version of this app) where a session's participants and its grid
+    // don't fully match up - repair or drop anything that doesn't fit,
+    // BEFORE any render function ever touches it.
+    fresh.sessions = fresh.sessions.filter(s=>sanitizeSessionLike(s));
+    if(fresh.liveDraft && !sanitizeSessionLike(fresh.liveDraft)) fresh.liveDraft = null;
     const imported = importSeedHistoryOnce(fresh);
 
     storageAvailable = true;
@@ -826,7 +860,6 @@ function sameSet(a,b){
   return sa.every((v,i)=>v===sb[i]);
 }
 
-/* FIX FUER FEHLER TYPEERROR: CANNOT READ PROPERTIES OF UNDEFINED (READING 'EVERY') */
 function getStreakCrownHolder(){
   if (!state || !Array.isArray(state.sessions)) return null;
 
@@ -848,8 +881,8 @@ function getStreakCrownHolder(){
   let bestName = null, bestStreak = 1;
   Object.entries(perDriverSeq).forEach(([name, seq]) => {
     let streak = 0;
-    for(let i = seq.length - 1; i >= 0; i--){ 
-      if(seq[i]) streak++; else break; 
+    for(let i = seq.length - 1; i >= 0; i--){
+      if(seq[i]) streak++; else break;
     }
     if(streak > bestStreak){ bestStreak = streak; bestName = name; }
   });
@@ -1150,7 +1183,7 @@ function normalizeCellValue(raw){
   let v = String(raw || '').trim();
   if(v === '') return null;
   if(v.toUpperCase() === 'DNF') return 'DNF';
-  if(v === '0') return 'DNF'; 
+  if(v === '0') return 'DNF';
   let starred = false;
   if(v.endsWith('*')){ starred = true; v = v.slice(0,-1); }
   const n = parseInt(v, 10);
@@ -1234,7 +1267,7 @@ function showMilestoneModal(count, isBig, extraHtml){
   } else {
     const quote = RACING_QUOTES[Math.floor(Math.random()*RACING_QUOTES.length)];
     title = `🎉 ${count} Rennen! 🎉`;
-    bodyHtml = `<p style="margin:0;font-style:italic;color:var(--muted);"${escapeHtml(quote)}"</p>`;
+    bodyHtml = `<p style="margin:0;font-style:italic;color:var(--muted);">"${escapeHtml(quote)}"</p>`;
   }
 
   const titleSize = isBig ? '22px' : '18px';
@@ -1434,7 +1467,7 @@ function getPersonalBestMs(driverName, trackNameRaw){
 function renderStrecken(){
   const el = document.getElementById('streckenContent');
   if (!el || !state || !Array.isArray(state.sessions)) return;
-  const tracks = {}; 
+  const tracks = {};
   state.sessions.forEach(s=>{
     if(!s.trackNames) return;
     s.trackNames.forEach((tname, r)=>{
@@ -1621,7 +1654,7 @@ function exportCsv(){
 function logBackupEvent(type, extra){
   if(!Array.isArray(state.backupHistory)) state.backupHistory = [];
   state.backupHistory.push(Object.assign({
-    type, 
+    type,
     date: todayStr(),
     time: new Date().toISOString(),
     version: APP_VERSION
@@ -1779,7 +1812,6 @@ function wireArchivFilterChips(){
   if(resetBtn) resetBtn.onclick = ()=>{ archivFilter = []; renderArchiv(); };
 }
 
-/* FIX FUER FEHLER TYPEERROR: CANNOT READ PROPERTIES OF UNDEFINED (READING 'EVERY') IN RENDERARCHIV */
 function renderArchiv(){
   const el = document.getElementById('archivContent');
   if (!el || !state || !Array.isArray(state.sessions)) return;
@@ -1803,10 +1835,9 @@ function renderArchiv(){
     const totals = sessionTotals(s);
     const rankedStandings = Object.entries(totals).sort((a,b)=>a[1]-b[1]);
     const winnerPts = rankedStandings.length ? rankedStandings[0][1] : null;
-    
-    // SICHERE UEBERPRUEFUNG:
+
     const complete = s && Array.isArray(s.participants) && s.grid && s.participants.every(n=> Array.isArray(s.grid[n]) && s.grid[n].every(v=>v!==null && v!==undefined));
-    
+
     return `<div class="card">
       <div class="session-head" data-toggle-id="${s.id}" style="cursor:pointer;">
         <div class="info"><b>${formatDate(s.date)}</b> · ${s.participants ? s.participants.length : 0} Fahrer${complete?'':' · unvollständig'}</div>
@@ -1815,7 +1846,7 @@ function renderArchiv(){
           <button class="danger" data-delete-id="${s.id}">Löschen</button>
         </div>
       </div>
-      <div class="match-standing" data-toggle-id="${s.id}" style="cursor:pointer;">${rankedStandings.map(([n,p])=>`<span class="${p===winnerPts?'win':''}">${escapeHtml(n)}${p}</span>`).join('')}</div>
+      <div class="match-standing" data-toggle-id="${s.id}" style="cursor:pointer;">${rankedStandings.map(([n,p])=>`<span class="${p===winnerPts?'win':''}">${escapeHtml(n)} ${p}</span>`).join('')}</div>
       <div class="archiv-detail" id="detail-${s.id}" style="display:none;margin-top:12px;"></div>
     </div>`;
   }).join('');
@@ -1887,7 +1918,7 @@ function renderArchiv(){
 }
 
 /* ---------------- STATISTIK ---------------- */
-let calendarViewMonth = null; 
+let calendarViewMonth = null;
 
 const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 const WEEKDAY_LABELS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
@@ -1899,7 +1930,7 @@ function buildActivityCalendarHtml(){
 
   const firstOfMonth = new Date(year, month, 1);
   const daysInMonth = new Date(year, month+1, 0).getDate();
-  const startWeekday = (firstOfMonth.getDay()+6)%7; 
+  const startWeekday = (firstOfMonth.getDay()+6)%7;
 
   const countByDate = {};
   if (state && Array.isArray(state.sessions)) {
@@ -2013,7 +2044,7 @@ function renderStatistik(){
       if(penalty){
         const p = Number(penalty) || 0;
         st.penalties += p;
-        st.points += p; 
+        st.points += p;
       }
       if(s.trackTimes && s.trackTimes[name]){
         s.trackTimes[name].forEach(t=>{
