@@ -1,0 +1,13 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Trackmania",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "Trackmania",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "id": "DRTM",
+  "description": "Trackmania V13 APP"
+}
