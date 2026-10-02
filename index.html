@@ -11,6 +11,7 @@
 <!-- Firebase Live-Sync SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
   :root{
@@ -268,6 +269,19 @@
 </head>
 <body>
 
+<div id="loginGate" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg-1);align-items:center;justify-content:center;padding:20px;">
+  <div class="card" style="max-width:320px;width:100%;margin:0;">
+    <h2 style="text-align:center;">🏁 Trackmania</h2>
+    <p class="muted" style="text-align:center;margin-bottom:16px;">Bitte anmelden</p>
+    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Benutzername</label>
+    <input type="text" id="loginUserInput" style="width:100%;margin-bottom:12px;" autocomplete="username" />
+    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Passwort</label>
+    <input type="password" id="loginPassInput" style="width:100%;margin-bottom:6px;" autocomplete="current-password" />
+    <div id="loginError" style="display:none;color:var(--danger);font-size:12px;margin-bottom:10px;">Falscher Benutzername oder falsches Passwort.</div>
+    <button class="primary full" id="loginSubmitBtn" style="width:100%;margin-top:8px;">Anmelden</button>
+  </div>
+</div>
+
 <header class="top">
   <h1><span class="flag">🏁</span><span class="title-text">Trackmania</span></h1>
   <div class="version-badge" id="versionBadge"></div>
@@ -312,6 +326,14 @@
     <div id="sicherungContent"></div>
   </section>
 
+  <section class="view" id="view-fotos">
+    <div id="fotosContent"></div>
+  </section>
+
+  <section class="view" id="view-settings">
+    <div id="settingsContent"></div>
+  </section>
+
 </main>
 
 <nav class="bottom">
@@ -319,14 +341,19 @@
   <button data-view="archiv"><span class="ico">🗂️</span>Archiv</button>
   <button data-view="strecken"><span class="ico">🏁</span>Strecken</button>
   <button data-view="statistik"><span class="ico">🏆</span>Statistik</button>
+  <button data-view="fotos"><span class="ico">📷</span>Fotos</button>
   <button data-view="sicherung"><span class="ico">💾</span>Sicherung</button>
+  <button data-view="settings"><span class="ico">⚙️</span>Settings</button>
 </nav>
 
 <div class="toast" id="toast"></div>
 
 <script>
 const FIXED_DRIVERS = ['Max','Andy','Dani','Olly','Bär','Mky'];
-const APP_VERSION = 13;
+// A random id for THIS browser tab, used only to detect (and warn about,
+// not prevent) two people editing the same race at the same time.
+const CLIENT_ID = 'c' + Date.now() + Math.random().toString(36).slice(2,8);
+const APP_VERSION = 14;
 const APP_VERSION_DATE = '2026-10-02';
 const VERSION_HISTORY = [
   { v:1, date:'2026-09-10', notes:'Kompletter Funktionsstand: Rennen-Tabelle, Archiv, Statistik, Strafpunkte, Zeitraum-Filter, faires Gesamtranking.' },
@@ -341,7 +368,8 @@ const VERSION_HISTORY = [
   { v:10, date:'2026-09-25', notes:'Persönliche-Bestzeit-Meldung beim Eintragen von Streckenzeiten. CSV-Export im Sicherungs-Tab für Excel/Sheets. Session-Notizen (Freitextfeld) unterhalb der Punktetabelle im Rennen-Tab, sichtbar auch im Archiv.' },
   { v:11, date:'2026-09-25', notes:'Aktivitäts-Kalender in der Statistik (letzte 14 Wochen als Heatmap). Automatischer Abend-Rückblick nach "Fertig" (Sieger, meiste Platz-1, DNFs, engstes Rennen). QR-Code + Link-Kopieren im Sicherungs-Tab. Streak-Krone 👑 für die längste aktuelle Siegesserie, sichtbar bei der Fahrerauswahl und im Gesamtranking.' },
   { v:12, date:'2026-10-02', notes:'Speicher-Backend auf Firebase Realtime Database umgestellt (Echtzeit-Sync statt 5-Sekunden-Abfrage), gehostet über GitHub Pages. Bug behoben: Bei einem Verbindungsfehler blieb die App bisher für immer bei "Verbinde…" hängen, ohne eine Erklärung zu zeigen – jetzt wird die genaue Fehlermeldung angezeigt. Außerdem: Absturz behoben, falls Teilnehmer und Punktetabelle einer Session nicht exakt zusammenpassten (z.B. durch ältere Testdaten) – solche Einträge werden jetzt automatisch repariert statt die App zum Abstürzen zu bringen.' },
-  { v:13, date:'2026-10-02', notes:'Bug behoben: Im Track-Editor wurde beim Speichern manchmal die Zeit der falschen Person als Bestzeit-Basis verwendet (nicht die tatsächlich als Platz 1 markierte), wodurch für alle anderen Fahrer viel zu kleine "absolute" Zeiten im Strecken-Tab gespeichert wurden. Historien-Daten im Code entfernt – die Rennen liegen jetzt ausschließlich in Firebase, nicht mehr zusätzlich fest im Code.' }
+  { v:13, date:'2026-10-02', notes:'Bug behoben: Im Track-Editor wurde beim Speichern manchmal die Zeit der falschen Person als Bestzeit-Basis verwendet (nicht die tatsächlich als Platz 1 markierte), wodurch für alle anderen Fahrer viel zu kleine "absolute" Zeiten im Strecken-Tab gespeichert wurden. Historien-Daten im Code entfernt – die Rennen liegen jetzt ausschließlich in Firebase, nicht mehr zusätzlich fest im Code.' },
+  { v:14, date:'2026-10-02', notes:'Track-Editor: Reihenfolge folgt jetzt dem aktuellen Punktestand. Zeiteingabe braucht nur noch Ziffern (Doppelpunkt/Komma automatisch). Archiv & Statistik: neues Fahrzeit-Ranking (Gesamtzeit je Session, fair pro Strecke in der Statistik). 💩 für die längste Verlustserie neben der 👑. Parallel-Eingabe abgesichert (gezielte statt komplette Speicherzugriffe). Warnung bei gleichzeitiger Bearbeitung derselben Session. Neuer Fotos-Tab (Firebase Storage). Neuer Settings-Tab: Zugangsdaten-Login (Standard TM/TM2026) und Notizen für Änderungswünsche.' }
 ];
 
 let state = null;
@@ -375,7 +403,12 @@ function defaultState(){
     sessions: [], // {id, date, participants:[...], grid:{name:[val,...]}}
     liveDraft: null, // in-progress race, shared so everyone can watch it live
     lastExportDate: null,
-    backupHistory: []
+    backupHistory: [],
+    settings: {
+      authUsername: 'TM',
+      authPassword: 'TM2026',
+      changeRequests: ''
+    }
   };
 }
 
@@ -482,6 +515,27 @@ function formatDurationMs(ms){
 const LEADER_TIME_RE = /^\d{1,2}:\d{2},\d{3}$/;
 const GAP_TIME_RE = /^\d{1,3},\d{3}$/;
 
+// Digit-only masking so people never have to type ":" or "," themselves -
+// the digits fill in from the right, like a stopwatch/calculator display.
+function maskDigitsToLeaderTime(digits){
+  digits = digits.replace(/\D/g,'').slice(0,7);
+  if(digits==='') return '';
+  const ms = digits.slice(-3).padStart(3,'0');
+  let rest = digits.slice(0,-3);
+  const sec = (rest.slice(-2) || '0').padStart(2,'0');
+  let min = rest.slice(0,-2);
+  if(min==='') min = '0';
+  return `${parseInt(min,10)}:${sec},${ms}`;
+}
+function maskDigitsToGapTime(digits){
+  digits = digits.replace(/\D/g,'').slice(0,6);
+  if(digits==='') return '';
+  const ms = digits.slice(-3).padStart(3,'0');
+  let rest = digits.slice(0,-3);
+  if(rest==='') rest = '0';
+  return `${rest.padStart(2,'0')},${ms}`;
+}
+
 function formatGapDisplay(ms){
   if(ms===null || ms===undefined || isNaN(ms)) return '';
   const totalMs = Math.max(0, Math.round(ms));
@@ -495,12 +549,18 @@ function showTrackEditor(roundIndex){
   const currentName = (draft.trackNames && draft.trackNames[roundIndex]) || '';
   const N = draft.participants.length;
 
+  // Order the rows by the CURRENT overall standing (lowest points first),
+  // not the fixed participant list - so the editor matches what's already
+  // on screen and you don't have to hunt for names in a different order.
+  const currentTotals = sessionTotals(draft);
+  const orderedNames = draft.participants.slice().sort((a,b)=> (currentTotals[a]||0) - (currentTotals[b]||0));
+
   let leaderName = null;
-  draft.participants.forEach(name=>{
+  orderedNames.forEach(name=>{
     const pv = draft.grid[name] ? draft.grid[name][roundIndex] : null;
     if(asPlacementNumber(pv) === 1) leaderName = name;
   });
-  if(!leaderName) leaderName = draft.participants[0];
+  if(!leaderName) leaderName = orderedNames[0];
 
   const overlay = document.createElement('div');
   overlay.className = 'confirm-overlay';
@@ -550,7 +610,7 @@ function showTrackEditor(roundIndex){
     const leaderTimeDisplay = leaderMs!==null ? formatMsToTime(leaderMs) : '';
 
     const container = document.getElementById('trackRowsContainer');
-    container.innerHTML = draft.participants.map(name=>{
+    container.innerHTML = orderedNames.map(name=>{
       const pv = draft.grid[name] ? draft.grid[name][roundIndex] : null;
       const dnfDefault = pv==='DNF' || (typeof pv==='number' && pv===N+1);
       const isLeader = name===leaderName;
@@ -568,7 +628,7 @@ function showTrackEditor(roundIndex){
             <input type="radio" name="leaderRadio" class="leader-radio" data-track-name="${escapeHtml(name)}" ${isLeader?'checked':''} />
           </label>
           <div style="flex:1;font-size:14px;">${escapeHtml(name)}</div>
-          <input type="text" class="track-time-input" data-track-name="${escapeHtml(name)}" data-is-leader="${isLeader}"
+          <input type="text" inputmode="numeric" class="track-time-input" data-track-name="${escapeHtml(name)}" data-is-leader="${isLeader}"
             placeholder="${isLeader?'mm:ss,SSS':'ss,SSS'}" value="${escapeHtml(fieldValue)}"
             style="width:110px;text-align:center;" ${!isLeader && dnfDefault ? 'disabled':''} />
           <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);flex-shrink:0;">
@@ -593,10 +653,43 @@ function showTrackEditor(roundIndex){
     });
     container.querySelectorAll('.track-time-input').forEach(inp=>{
       inp.addEventListener('blur', ()=> validateField(inp, inp.dataset.isLeader==='true'));
-      inp.addEventListener('input', ()=>{
+      // Mask-as-you-type: the person only ever types digits, ":" and ","
+      // are filled in automatically, building from the right like a
+      // stopwatch display. This is driven entirely off a tracked digit
+      // buffer (not re-parsed from the displayed/padded value) - re-parsing
+      // the masked text would double-count its own zero-padding on every
+      // keystroke and snowball into garbage.
+      const isLeaderField = inp.dataset.isLeader === 'true';
+      const maxDigits = isLeaderField ? 7 : 6;
+      inp.dataset.rawDigits = inp.value.replace(/\D/g,'');
+      const clearErrorIfShown = ()=>{
         const wrap = inp.closest('.track-time-field');
         const errEl = wrap ? wrap.querySelector('.track-time-error') : null;
         if(errEl && errEl.style.display !== 'none'){ inp.classList.remove('time-invalid'); errEl.style.display = 'none'; }
+      };
+      const applyMask = (raw)=>{
+        inp.dataset.rawDigits = raw;
+        inp.value = raw ? (isLeaderField ? maskDigitsToLeaderTime(raw) : maskDigitsToGapTime(raw)) : '';
+        clearErrorIfShown();
+      };
+      inp.addEventListener('keydown', (e)=>{
+        if(e.ctrlKey || e.metaKey || e.altKey) return; // allow copy/paste/select-all shortcuts etc.
+        if(/^[0-9]$/.test(e.key)){
+          e.preventDefault();
+          applyMask(((inp.dataset.rawDigits||'') + e.key).slice(-maxDigits));
+        } else if(e.key === 'Backspace' || e.key === 'Delete'){
+          e.preventDefault();
+          applyMask((inp.dataset.rawDigits||'').slice(0,-1));
+        } else if(['Tab','Enter','ArrowLeft','ArrowRight','Home','End'].includes(e.key)){
+          // let these through untouched
+        } else if(e.key.length === 1){
+          e.preventDefault(); // block any other character (letters, symbols incl. "." and ",")
+        }
+      });
+      inp.addEventListener('paste', (e)=>{
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text');
+        applyMask(((inp.dataset.rawDigits||'') + text.replace(/\D/g,'')).slice(-maxDigits));
       });
     });
   }
@@ -713,17 +806,30 @@ function showVersionHistory(){
    ============================================================
 */
 const firebaseConfig = {
-  databaseURL: "https://trkmn-44c02-default-rtdb.europe-west1.firebasedatabase.app"
+  databaseURL: "https://trkmn-44c02-default-rtdb.europe-west1.firebasedatabase.app",
+  // Needed for the Fotos tab (Firebase Storage). Best guess based on your
+  // project id from the databaseURL above - if photo upload doesn't work,
+  // check Firebase Console → Project settings → General → "Your apps" →
+  // the storageBucket value shown there, and paste the exact value here.
+  storageBucket: "trkmn-44c02.firebasestorage.app"
 };
 
 let dbRef = null;
+let storageRef = null;
 let firebaseReady = false;
+let storageReady = false;
 try{
   firebase.initializeApp(firebaseConfig);
   dbRef = firebase.database().ref('tm_scoreboard_state');
   firebaseReady = true;
 }catch(e){
   console.error('Firebase init failed - check firebaseConfig at the top of the script.', e);
+}
+try{
+  storageRef = firebase.storage().ref();
+  storageReady = true;
+}catch(e){
+  console.error('Firebase Storage init failed - check storageBucket in firebaseConfig, and that Storage is enabled in the Firebase console.', e);
 }
 
 let saveInFlight = 0;
@@ -736,7 +842,7 @@ function loadState(){
     migrateLegacyNames(state);
     showStorageBanner();
     syncDraftFromState();
-    render();
+    checkAuthGate();
     return;
   }
 
@@ -748,6 +854,10 @@ function loadState(){
     if(!Array.isArray(fresh.savedNames)) fresh.savedNames = [...FIXED_DRIVERS];
     if(!Array.isArray(fresh.selectedNames)) fresh.selectedNames = [...FIXED_DRIVERS];
     if(!Array.isArray(fresh.sessions)) fresh.sessions = [];
+    if(!fresh.settings || typeof fresh.settings !== 'object') fresh.settings = {};
+    if(typeof fresh.settings.authUsername !== 'string') fresh.settings.authUsername = 'TM';
+    if(typeof fresh.settings.authPassword !== 'string') fresh.settings.authPassword = 'TM2026';
+    if(typeof fresh.settings.changeRequests !== 'string') fresh.settings.changeRequests = '';
     FIXED_DRIVERS.forEach(n=>{ if(!fresh.savedNames.includes(n)) fresh.savedNames.push(n); });
     fresh.savedNames = [...new Set(fresh.savedNames)];
     fresh.selectedNames = [...new Set(fresh.selectedNames)];
@@ -768,7 +878,7 @@ function loadState(){
       if(state.selectedDate !== todayStr()){ state.selectedDate = todayStr(); needsSave = true; }
       syncDraftFromState();
       if(needsSave) saveState();
-      render();
+      checkAuthGate();
       return;
     }
 
@@ -787,7 +897,7 @@ function loadState(){
       firstLoadDone = true;
       state = defaultState();
       syncDraftFromState();
-      render();
+      checkAuthGate();
     }
   });
 }
@@ -798,15 +908,17 @@ function syncDraftFromState(){
 }
 
 async function saveDraft(){
+  // Writes only the liveDraft subtree (not sessions/settings/backupHistory),
+  // so concurrent edits elsewhere in the app can never collide with this.
   state.liveDraft = draft;
-  await saveState();
+  await patchFirebase({ liveDraft: draft });
 }
 
 async function clearDraft(){
   draft = null;
   rennenPhase = 'idle';
   state.liveDraft = null;
-  await saveState();
+  await patchFirebase({ liveDraft: null });
 }
 
 async function saveState(){
@@ -829,9 +941,97 @@ async function saveState(){
   }
 }
 
+// Writes ONLY the given paths (e.g. {"liveDraft/grid/Max/0": 1}) via Firebase's
+// multi-location update - this is the key to safe concurrent editing: two
+// people entering points for DIFFERENT fields at the same time each touch
+// only their own leaf, so neither write can ever clobber the other's,
+// unlike a full saveState() which re-sends (and could overwrite) everything.
+async function patchFirebase(updates){
+  if(!firebaseReady){
+    storageAvailable = false;
+    showStorageBanner();
+    return;
+  }
+  saveInFlight++;
+  try{
+    await dbRef.update(updates);
+    storageAvailable = true;
+    hideStorageBanner();
+  }catch(e){
+    console.error('Firebase patch failed:', e);
+    storageAvailable = false;
+    showStorageBanner();
+  }finally{
+    saveInFlight--;
+  }
+}
+
 function isTypingNow(){
   const a = document.activeElement;
   return a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA');
+}
+
+/* ============================================================
+   LOGIN GATE
+   ============================================================
+   This is a soft access gate for a private friend-group app, not real
+   security: the credentials live in Firebase (so they're changeable from
+   the Settings tab) and are checked in plain JavaScript that anyone could
+   read via "View Source" or browser devtools. It keeps out casual visitors
+   who stumble on the link, nothing more - don't rely on it for anything
+   sensitive.
+*/
+function isAuthed(){
+  try{ return localStorage.getItem('tm_authed') === '1'; }catch(e){ return false; }
+}
+function setAuthed(){
+  try{ localStorage.setItem('tm_authed','1'); }catch(e){ /* ignore */ }
+}
+function logout(){
+  try{ localStorage.removeItem('tm_authed'); }catch(e){ /* ignore */ }
+  document.getElementById('loginUserInput').value = '';
+  document.getElementById('loginPassInput').value = '';
+  document.querySelector('header.top').style.display = 'none';
+  document.querySelector('main').style.display = 'none';
+  document.querySelector('nav.bottom').style.display = 'none';
+  document.getElementById('loginGate').style.display = 'flex';
+}
+
+function checkAuthGate(){
+  if(isAuthed()){
+    showApp();
+  } else {
+    document.querySelector('header.top').style.display = 'none';
+    document.querySelector('main').style.display = 'none';
+    document.querySelector('nav.bottom').style.display = 'none';
+    document.getElementById('loginGate').style.display = 'flex';
+  }
+}
+
+function showApp(){
+  // defensively clear focus from the (now-hidden) login fields - otherwise
+  // isTypingNow() would still see an INPUT as document.activeElement and
+  // incorrectly keep blocking incoming live updates for this tab
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  document.getElementById('loginGate').style.display = 'none';
+  document.querySelector('header.top').style.display = 'flex';
+  document.querySelector('main').style.display = 'block';
+  document.querySelector('nav.bottom').style.display = 'flex';
+  render();
+}
+
+function attemptLogin(){
+  const u = document.getElementById('loginUserInput').value.trim();
+  const p = document.getElementById('loginPassInput').value;
+  const expectedU = (state.settings && state.settings.authUsername) || 'TM';
+  const expectedP = (state.settings && state.settings.authPassword) || 'TM2026';
+  if(u === expectedU && p === expectedP){
+    setAuthed();
+    document.getElementById('loginError').style.display = 'none';
+    showApp();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
 }
 
 function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
@@ -871,6 +1071,37 @@ function getStreakCrownHolder(){
   return bestName ? { name: bestName, streak: bestStreak } : null;
 }
 
+function getStreakLoserHolder(){
+  // same idea as the crown, but for the longest current run of LAST-place
+  // finishes (highest total that session) in a row.
+  if (!state || !Array.isArray(state.sessions)) return null;
+
+  const complete = state.sessions
+    .filter(s => s && Array.isArray(s.participants) && s.grid && s.participants.every(n => Array.isArray(s.grid[n]) && s.grid[n].every(v => v !== null && v !== undefined)))
+    .slice().sort((a,b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+
+  const perDriverSeq = {};
+  complete.forEach(s => {
+    const totals = sessionTotals(s);
+    const loserEntry = Object.entries(totals).sort((a,b) => b[1] - a[1])[0];
+    if (!loserEntry) return;
+    const loser = loserEntry[0];
+    s.participants.forEach(name => {
+      (perDriverSeq[name] = perDriverSeq[name] || []).push(name === loser);
+    });
+  });
+
+  let worstName = null, worstStreak = 1;
+  Object.entries(perDriverSeq).forEach(([name, seq]) => {
+    let streak = 0;
+    for(let i = seq.length - 1; i >= 0; i--){
+      if(seq[i]) streak++; else break;
+    }
+    if(streak > worstStreak){ worstStreak = streak; worstName = name; }
+  });
+  return worstName ? { name: worstName, streak: worstStreak } : null;
+}
+
 function orderedSavedNames(){
   const canonicalOrder = ['Max','Andy','Dani','Olly','Bär','Mky'];
   const saved = Array.isArray(state?.savedNames) ? state.savedNames : [];
@@ -900,6 +1131,8 @@ function renderCurrentView(){
   else if(currentView==='strecken') renderStrecken();
   else if(currentView==='statistik') renderStatistik();
   else if(currentView==='sicherung') renderSicherung();
+  else if(currentView==='fotos') renderFotos();
+  else if(currentView==='settings') renderSettings();
 }
 
 function render(){
@@ -926,12 +1159,19 @@ function renderRennen(){
   const grid = document.getElementById('chipGrid');
   grid.innerHTML = '';
   const crownHolder = getStreakCrownHolder();
+  const loserHolder = getStreakLoserHolder();
   orderedSavedNames().forEach(name=>{
     const active = Array.isArray(state?.selectedNames) && state.selectedNames.includes(name);
     const chip = document.createElement('div');
     chip.className = 'chip' + (active?' active':'');
-    chip.textContent = name + (crownHolder && crownHolder.name===name ? ' 👑' : '');
-    if(crownHolder && crownHolder.name===name) chip.title = `${crownHolder.streak}x in Folge gewonnen`;
+    let suffix = '';
+    if(crownHolder && crownHolder.name===name) suffix += ' 👑';
+    if(loserHolder && loserHolder.name===name) suffix += ' 💩';
+    chip.textContent = name + suffix;
+    const titles = [];
+    if(crownHolder && crownHolder.name===name) titles.push(`${crownHolder.streak}x in Folge gewonnen`);
+    if(loserHolder && loserHolder.name===name) titles.push(`${loserHolder.streak}x in Folge verloren`);
+    if(titles.length) chip.title = titles.join(' · ');
     chip.onclick = ()=>toggleSelected(name);
     grid.appendChild(chip);
   });
@@ -981,7 +1221,7 @@ function continueToEditing(){
     trackTimes[n] = new Array(order.length+1).fill(null);
   });
 
-  draft = { id: null, date: state.selectedDate, participants: order, grid: g, penalties, trackNames, trackTimes, note: '', lastMatchInfo };
+  draft = { id: null, date: state.selectedDate, participants: order, grid: g, penalties, trackNames, trackTimes, note: '', lastMatchInfo, editorClientId: CLIENT_ID };
   rennenPhase = 'editing';
   saveDraft();
   renderRennen();
@@ -992,6 +1232,12 @@ function renderEditingPhase(area){
   const rounds = draft.grid[draft.participants[0]] ? draft.grid[draft.participants[0]].length : 0;
 
   let html = '';
+
+  if(draft.editorClientId && draft.editorClientId !== CLIENT_ID){
+    html += `<div class="warn-note" style="background:rgba(255,181,69,0.1);border:1px solid var(--warn);border-radius:10px;padding:10px 14px;margin-bottom:14px;">
+      ⚠️ Ein anderes Gerät hat dieses Rennen zuletzt geöffnet und bearbeitet möglicherweise gerade mit. Sprecht euch kurz ab, sonst können sich Änderungen gegenseitig überschreiben.
+    </div>`;
+  }
 
   if(draft.lastMatchInfo){
     const sorted = Object.entries(draft.lastMatchInfo.standing).sort((a,b)=>a[1]-b[1]);
@@ -1065,8 +1311,8 @@ function renderEditingPhase(area){
   });
   const noteInput = document.getElementById('sessionNoteInput');
   if(noteInput){
-    noteInput.addEventListener('change', ()=>{ draft.note = noteInput.value; saveDraft(); });
-    noteInput.addEventListener('blur', ()=>{ draft.note = noteInput.value; saveDraft(); });
+    noteInput.addEventListener('change', ()=>{ draft.note = noteInput.value; patchFirebase({ 'liveDraft/note': noteInput.value }); });
+    noteInput.addEventListener('blur', ()=>{ draft.note = noteInput.value; patchFirebase({ 'liveDraft/note': noteInput.value }); });
   }
   area.querySelectorAll('.penalty-input').forEach(input=>{
     input.addEventListener('change', ()=>onPenaltyChange(input));
@@ -1098,14 +1344,13 @@ function renderEditingPhase(area){
     renderRennen();
   };
   document.getElementById('saveDraftBtn').onclick = ()=>{
-    const { isNewSession } = commitDraftToArchive();
+    const { isNewSession } = commitDraftToArchive(false);
     showToast('Gespeichert');
     renderRennen();
     if(isNewSession) maybeCelebrateMilestone(state.sessions.length);
   };
   document.getElementById('finishRaceBtn').onclick = ()=>{
-    const { session, isNewSession } = commitDraftToArchive();
-    clearDraft();
+    const { session, isNewSession } = commitDraftToArchive(true);
     showToast('Rennen abgeschlossen');
     renderRennen();
     const isMilestone = isNewSession && state.sessions.length >= 60 && state.sessions.length % 10 === 0;
@@ -1194,7 +1439,14 @@ function onDraftCellChange(input){
   input.value = val===null ? '' : val;
   input.classList.toggle('dnf', val==='DNF');
   input.classList.toggle('star', isStarredValue(val));
-  saveDraft();
+  if(val === null){
+    // clearing a cell: fall back to a full liveDraft write, since setting a
+    // single array leaf to null via a targeted Firebase path DELETES that
+    // key instead of storing null, which would corrupt the array shape
+    saveDraft();
+  } else {
+    patchFirebase({ [`liveDraft/grid/${name}/${round}`]: val });
+  }
   updateSumsAndStandings(draft);
 }
 
@@ -1206,7 +1458,7 @@ function onPenaltyChange(input){
   if(!draft.penalties) draft.penalties = {};
   draft.penalties[name] = val;
   input.value = val ? String(val) : '';
-  saveDraft();
+  patchFirebase({ [`liveDraft/penalties/${name}`]: val });
   updateSumsAndStandings(draft);
 }
 
@@ -1281,20 +1533,38 @@ function showFinishOverlay(session, isMilestone, sessionCount){
   }
 }
 
-function commitDraftToArchive(){
+function commitDraftToArchive(clearAfter){
   const copy = JSON.parse(JSON.stringify(draft));
   let isNewSession = false;
+  let idx;
   if(draft.id){
-    const idx = state.sessions.findIndex(s=>s.id===draft.id);
+    idx = state.sessions.findIndex(s=>s.id===draft.id);
     if(idx>=0) state.sessions[idx] = copy;
-    else { state.sessions.push(copy); isNewSession = true; }
+    else { idx = state.sessions.length; state.sessions.push(copy); isNewSession = true; }
   } else {
     draft.id = 's'+Date.now();
     copy.id = draft.id;
+    idx = state.sessions.length;
     state.sessions.push(copy);
     isNewSession = true;
   }
-  saveDraft();
+  // BUG FIX: writing the session AND clearing/keeping the liveDraft used to
+  // be two separate, un-awaited Firebase writes (commitDraftToArchive then
+  // a following clearDraft()) - whichever one's network round-trip happened
+  // to finish last would "win" and could silently bring the liveDraft back,
+  // even after Fertig was clicked. Doing both paths in ONE atomic multi-path
+  // update removes that race entirely.
+  const patch = { [`sessions/${idx}`]: copy };
+  if(clearAfter){
+    draft = null;
+    rennenPhase = 'idle';
+    state.liveDraft = null;
+    patch.liveDraft = null;
+  } else {
+    state.liveDraft = draft;
+    patch.liveDraft = draft;
+  }
+  patchFirebase(patch); // fire-and-forget: local state above is already correct for an instant UI update
   return { session: copy, isNewSession };
 }
 
@@ -1528,10 +1798,46 @@ function buildReadOnlyGridHtml(s){
     html += `<td class="sumcol">${totals[name] || 0}</td></tr>`;
   });
   html += `</tbody></table></div>`;
+  html += buildSessionTimeRankingHtml(s);
   if(s.note){
     html += `<p class="muted" style="margin-top:10px;white-space:pre-wrap;">📝 ${escapeHtml(s.note)}</p>`;
   }
   return html;
+}
+
+function buildSessionTimeRankingHtml(s){
+  if(!s.trackTimes || !Array.isArray(s.participants)) return '';
+  const totals = s.participants.map(name=>{
+    let sumMs = 0, count = 0;
+    (s.trackTimes[name]||[]).forEach(t=>{
+      const ms = t ? parseTimeToMs(t) : null;
+      if(ms!==null){ sumMs += ms; count++; }
+    });
+    return { name, sumMs, count };
+  }).filter(t=>t.count>0).sort((a,b)=>a.sumMs-b.sumMs);
+  if(totals.length===0) return '';
+  const rows = totals.map((t,i)=>{
+    const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
+    const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+    return `<div class="result-row">
+      <div class="rank-badge ${cls}">${badge}</div>
+      <div class="name">${escapeHtml(t.name)}<div class="breakdown"><span>${t.count} Strecken gewertet</span></div></div>
+      <div class="pts">${formatDurationMsPrecise(t.sumMs)}</div>
+    </div>`;
+  }).join('');
+  return `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+    <h2 style="font-size:14px;margin:0 0 8px;">Fahrzeit-Ranking (gesamt)</h2>
+    <div class="standing-list">${rows}</div>
+  </div>`;
+}
+
+function formatDurationMsPrecise(ms){
+  if(ms===null||ms===undefined||isNaN(ms)) return '–';
+  const totalMs = Math.max(0, Math.round(ms));
+  const min = Math.floor(totalMs/60000);
+  const sec = Math.floor((totalMs%60000)/1000);
+  const msPart = totalMs%1000;
+  return `${min}:${String(sec).padStart(2,'0')},${String(msPart).padStart(3,'0')}`;
 }
 
 function daysSince(dateStr){
@@ -1740,6 +2046,130 @@ function wireShareCard(){
   }
 }
 
+async function uploadSessionPhoto(sessionId, file){
+  if(!storageReady){ showToast('Fotos sind gerade nicht verfügbar (Firebase Storage)'); return; }
+  const idx = state.sessions.findIndex(s=>s.id===sessionId);
+  if(idx<0) return;
+  showToast('Foto wird hochgeladen…');
+  try{
+    const extMatch = (file.name||'').match(/\.([a-zA-Z0-9]+)$/);
+    const ext = extMatch ? extMatch[1].toLowerCase() : 'jpg';
+    const path = `session-photos/${sessionId}-${Date.now()}.${ext}`;
+    const ref = storageRef.child(path);
+    await ref.put(file);
+    const url = await ref.getDownloadURL();
+    state.sessions[idx].photoUrl = url;
+    state.sessions[idx].photoPath = path;
+    await patchFirebase({ [`sessions/${idx}/photoUrl`]: url, [`sessions/${idx}/photoPath`]: path });
+    showToast('Foto gespeichert');
+    renderFotos();
+  }catch(e){
+    console.error('Photo upload failed:', e);
+    showToast('Upload fehlgeschlagen – ist Firebase Storage im Projekt aktiviert?');
+  }
+}
+
+async function removeSessionPhoto(sessionId){
+  const idx = state.sessions.findIndex(s=>s.id===sessionId);
+  if(idx<0) return;
+  const path = state.sessions[idx].photoPath;
+  try{
+    if(path && storageReady) await storageRef.child(path).delete();
+  }catch(e){
+    console.error('Photo delete from storage failed (removing reference anyway):', e);
+  }
+  delete state.sessions[idx].photoUrl;
+  delete state.sessions[idx].photoPath;
+  await patchFirebase({ [`sessions/${idx}/photoUrl`]: null, [`sessions/${idx}/photoPath`]: null });
+  showToast('Foto entfernt');
+  renderFotos();
+}
+
+function renderFotos(){
+  const el = document.getElementById('fotosContent');
+  if(!el || !state || !Array.isArray(state.sessions)) return;
+
+  if(!storageReady){
+    el.innerHTML = `<div class="card"><h2>Fotos</h2>
+      <p class="muted">Firebase Storage ist gerade nicht erreichbar. Prüfe in der Firebase-Konsole, ob Storage für dieses Projekt aktiviert ist, und ob <code>storageBucket</code> im Code (oben im Script) korrekt gesetzt ist.</p>
+    </div>`;
+    return;
+  }
+  if(state.sessions.length === 0){
+    el.innerHTML = '<div class="empty">Noch keine Rennen gespeichert.</div>';
+    return;
+  }
+
+  const sorted = state.sessions.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (b.id||'').localeCompare(a.id||''));
+  el.innerHTML = sorted.map(s=>{
+    const photoBlock = s.photoUrl
+      ? `<img src="${escapeHtml(s.photoUrl)}" style="width:100%;border-radius:10px;margin-bottom:10px;display:block;" />
+         <button class="danger" data-remove-photo="${s.id}">Foto entfernen</button>`
+      : `<input type="file" accept="image/*" id="photoInput-${s.id}" style="display:none;" data-upload-photo="${s.id}" />
+         <button data-trigger-upload="${s.id}">📷 Foto hochladen</button>`;
+    return `<div class="card">
+      <div class="session-head"><div class="info"><b>${formatDate(s.date)}</b> · ${escapeHtml((s.participants||[]).join(', '))}</div></div>
+      ${photoBlock}
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('[data-trigger-upload]').forEach(btn=>{
+    btn.onclick = ()=> document.getElementById('photoInput-'+btn.dataset.triggerUpload).click();
+  });
+  el.querySelectorAll('[data-upload-photo]').forEach(inp=>{
+    inp.onchange = ()=>{
+      if(inp.files && inp.files[0]) uploadSessionPhoto(inp.dataset.uploadPhoto, inp.files[0]);
+      inp.value = '';
+    };
+  });
+  el.querySelectorAll('[data-remove-photo]').forEach(btn=>{
+    btn.onclick = ()=> showConfirm('Foto wirklich entfernen?', ()=>removeSessionPhoto(btn.dataset.removePhoto));
+  });
+}
+
+function renderSettings(){
+  const el = document.getElementById('settingsContent');
+  if(!el || !state) return;
+  if(!state.settings) state.settings = { authUsername:'TM', authPassword:'TM2026', changeRequests:'' };
+  const s = state.settings;
+
+  el.innerHTML = `<div class="card">
+    <h2>Zugang</h2>
+    <p class="muted" style="margin:0 0 12px;">Einfacher Zugriffsschutz für die Gruppe – keine echte Sicherheit, der Code ist für jeden einsehbar. Hält nur Zufallsbesucher fern.</p>
+    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Benutzername</label>
+    <input type="text" id="settingsUserInput" value="${escapeHtml(s.authUsername||'TM')}" style="width:100%;margin-bottom:12px;" />
+    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Passwort</label>
+    <input type="text" id="settingsPassInput" value="${escapeHtml(s.authPassword||'TM2026')}" style="width:100%;margin-bottom:12px;" />
+    <button class="primary full" id="settingsSaveAuthBtn">Speichern</button>
+    <button class="full" id="settingsLogoutBtn" style="margin-top:8px;">Auf diesem Gerät abmelden</button>
+  </div>
+  <div class="card">
+    <h2>Änderungswünsche</h2>
+    <p class="muted" style="margin:0 0 12px;">Platz für Notizen/Ideen für die nächste Version – wird für alle gemeinsam gespeichert.</p>
+    <textarea id="changeRequestsInput" placeholder="z.B. neue Funktion, Bug, Idee…" style="width:100%;min-height:120px;resize:vertical;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:11px 12px;font-size:14px;font-family:var(--font-body);">${escapeHtml(s.changeRequests||'')}</textarea>
+  </div>`;
+
+  document.getElementById('settingsSaveAuthBtn').onclick = ()=>{
+    const u = document.getElementById('settingsUserInput').value.trim() || 'TM';
+    const p = document.getElementById('settingsPassInput').value.trim() || 'TM2026';
+    state.settings.authUsername = u;
+    state.settings.authPassword = p;
+    patchFirebase({ 'settings/authUsername': u, 'settings/authPassword': p });
+    showToast('Zugangsdaten gespeichert');
+  };
+  document.getElementById('settingsLogoutBtn').onclick = ()=>{
+    showConfirm('Auf diesem Gerät abmelden? Beim nächsten Öffnen muss man sich neu anmelden.', ()=>logout());
+  };
+
+  const notesInput = document.getElementById('changeRequestsInput');
+  const saveNotes = ()=>{
+    state.settings.changeRequests = notesInput.value;
+    patchFirebase({ 'settings/changeRequests': notesInput.value });
+  };
+  notesInput.addEventListener('change', saveNotes);
+  notesInput.addEventListener('blur', saveNotes);
+}
+
 function renderSicherung(){
   const el = document.getElementById('sicherungContent');
   const history = Array.isArray(state?.backupHistory) ? state.backupHistory.slice().reverse() : [];
@@ -1785,392 +2215,4 @@ function wireArchivFilterChips(){
   document.querySelectorAll('#archivFilterChips [data-archiv-filter-name]').forEach(chip=>{
     chip.onclick = ()=>{
       const n = chip.dataset.archivFilterName;
-      const i = archivFilter.indexOf(n);
-      if(i>=0) archivFilter.splice(i,1); else archivFilter.push(n);
-      renderArchiv();
-    };
-  });
-  const resetBtn = document.getElementById('archivFilterResetBtn');
-  if(resetBtn) resetBtn.onclick = ()=>{ archivFilter = []; renderArchiv(); };
-}
-
-function renderArchiv(){
-  const el = document.getElementById('archivContent');
-  if (!el || !state || !Array.isArray(state.sessions)) return;
-
-  const filtered = archivFilter.length
-    ? state.sessions.filter(s=> s && sameSet(s.participants, archivFilter))
-    : state.sessions;
-
-  if(state.sessions.length === 0){
-    el.innerHTML = '<div class="empty">Noch keine Rennen gespeichert.</div>';
-    return;
-  }
-  if(filtered.length === 0){
-    el.innerHTML = archivFilterCardHtml() + '<div class="empty">Keine Rennen mit genau dieser Besetzung.</div>';
-    wireArchivFilterChips();
-    return;
-  }
-  const sorted = filtered.slice().sort((a,b)=> (b.date || '').localeCompare(a.date || '') || (b.id || '').localeCompare(a.id || ''));
-
-  el.innerHTML = archivFilterCardHtml() + sorted.map(s=>{
-    const totals = sessionTotals(s);
-    const rankedStandings = Object.entries(totals).sort((a,b)=>a[1]-b[1]);
-    const winnerPts = rankedStandings.length ? rankedStandings[0][1] : null;
-
-    const complete = s && Array.isArray(s.participants) && s.grid && s.participants.every(n=> Array.isArray(s.grid[n]) && s.grid[n].every(v=>v!==null && v!==undefined));
-
-    return `<div class="card">
-      <div class="session-head" data-toggle-id="${s.id}" style="cursor:pointer;">
-        <div class="info"><b>${formatDate(s.date)}</b> · ${s.participants ? s.participants.length : 0} Fahrer${complete?'':' · unvollständig'}</div>
-        <div style="display:flex;gap:6px;">
-          <button data-edit-id="${s.id}">Bearbeiten</button>
-          <button class="danger" data-delete-id="${s.id}">Löschen</button>
-        </div>
-      </div>
-      <div class="match-standing" data-toggle-id="${s.id}" style="cursor:pointer;">${rankedStandings.map(([n,p])=>`<span class="${p===winnerPts?'win':''}">${escapeHtml(n)} ${p}</span>`).join('')}</div>
-      <div class="archiv-detail" id="detail-${s.id}" style="display:none;margin-top:12px;"></div>
-    </div>`;
-  }).join('');
-
-  wireArchivFilterChips();
-
-  el.querySelectorAll('[data-toggle-id]').forEach(elToggle=>{
-    elToggle.onclick = ()=>{
-      const id = elToggle.dataset.toggleId;
-      const detail = document.getElementById('detail-'+id);
-      const isOpen = detail.style.display !== 'none';
-      if(isOpen){
-        detail.style.display = 'none';
-        detail.innerHTML = '';
-      } else {
-        const session = state.sessions.find(x=>x.id===id);
-        detail.innerHTML = session ? buildReadOnlyGridHtml(session) : '';
-        detail.style.display = 'block';
-      }
-    };
-  });
-
-  el.querySelectorAll('[data-delete-id]').forEach(btn=>{
-    btn.onclick = ()=>{
-      const id = btn.dataset.deleteId;
-      showConfirm('Dieses Rennen wirklich löschen?', ()=>{
-        state.sessions = state.sessions.filter(x=>x.id!==id);
-        saveState();
-        renderArchiv();
-      });
-    };
-  });
-
-  el.querySelectorAll('[data-edit-id]').forEach(btn=>{
-    btn.onclick = ()=>{
-      const id = btn.dataset.editId;
-      const openNow = ()=>{
-        const session = state.sessions.find(x=>x.id===id);
-        if(!session) return;
-        const prevMatch = state.sessions
-          .filter(x=>x.id!==id && sameSet(x.participants, session.participants) && x.date <= session.date)
-          .slice().sort((a,b)=> (b.date || '').localeCompare(a.date || ''))[0] || null;
-        draft = JSON.parse(JSON.stringify(session));
-        const rounds = (draft.grid && draft.participants[0] && draft.grid[draft.participants[0]]) ? draft.grid[draft.participants[0]].length : 0;
-        if(!draft.penalties) draft.penalties = {};
-        draft.participants.forEach(n=>{ if(!(n in draft.penalties)) draft.penalties[n] = 0; });
-        if(!draft.trackNames) draft.trackNames = [];
-        while(draft.trackNames.length < rounds) draft.trackNames.push('');
-        if(!draft.trackTimes) draft.trackTimes = {};
-        draft.participants.forEach(n=>{
-          if(!draft.trackTimes[n]) draft.trackTimes[n] = [];
-          while(draft.trackTimes[n].length < rounds) draft.trackTimes[n].push(null);
-        });
-        if(typeof draft.note !== 'string') draft.note = '';
-        draft.lastMatchInfo = prevMatch ? { date: prevMatch.date, standing: sessionTotals(prevMatch) } : null;
-        rennenPhase = 'editing';
-        saveDraft();
-        switchView('rennen');
-      };
-      if(draft){
-        showConfirm('Es gibt bereits ein unfertiges Rennen in Bearbeitung. Dieses verwerfen und stattdessen das gewählte bearbeiten?', ()=>{
-          clearDraft().then(openNow);
-        });
-      } else {
-        openNow();
-      }
-    };
-  });
-}
-
-/* ---------------- STATISTIK ---------------- */
-let calendarViewMonth = null;
-
-const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-const WEEKDAY_LABELS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
-
-function buildActivityCalendarHtml(){
-  const today = new Date();
-  if(!calendarViewMonth) calendarViewMonth = { year: today.getFullYear(), month: today.getMonth() };
-  const { year, month } = calendarViewMonth;
-
-  const firstOfMonth = new Date(year, month, 1);
-  const daysInMonth = new Date(year, month+1, 0).getDate();
-  const startWeekday = (firstOfMonth.getDay()+6)%7;
-
-  const countByDate = {};
-  if (state && Array.isArray(state.sessions)) {
-    state.sessions.forEach(s=>{ countByDate[s.date] = (countByDate[s.date]||0) + 1; });
-  }
-  let maxCount = 1;
-  Object.values(countByDate).forEach(c=>{ if(c>maxCount) maxCount=c; });
-
-  const isCurrentOrFutureMonth = (year > today.getFullYear()) || (year === today.getFullYear() && month >= today.getMonth());
-
-  let cellsHtml = '';
-  for(let i=0;i<startWeekday;i++) cellsHtml += `<div></div>`;
-  for(let d=1; d<=daysInMonth; d++){
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const count = countByDate[dateStr] || 0;
-    const isToday = dateStr === todayStr();
-    let bg = 'rgba(255,255,255,0.05)', textColor = 'var(--muted)', fontWeight = '500';
-    if(count > 0){
-      const alpha = 0.3 + Math.min(1, count/maxCount)*0.6;
-      bg = `rgba(0,229,255,${alpha.toFixed(2)})`;
-      textColor = '#04222a';
-      fontWeight = '700';
-    }
-    const ring = isToday ? 'box-shadow:0 0 0 2px var(--accent) inset;' : '';
-    cellsHtml += `<div title="${escapeHtml(formatDate(dateStr))}: ${count} Rennen" style="aspect-ratio:1;border-radius:7px;background:${bg};${ring}
-      display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:${fontWeight};color:${textColor};">${d}</div>`;
-  }
-
-  return `<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <button id="calPrevBtn" style="padding:8px 16px;">‹</button>
-      <h2 style="margin:0;">${MONTH_NAMES[month]} ${year}</h2>
-      <button id="calNextBtn" style="padding:8px 16px;" ${isCurrentOrFutureMonth?'disabled':''}>›</button>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;">
-      ${WEEKDAY_LABELS.map(w=>`<div style="text-align:center;font-size:10px;color:var(--muted);letter-spacing:0.3px;">${w}</div>`).join('')}
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${cellsHtml}</div>
-    <p class="muted" style="margin-top:10px;">Je heller, desto mehr Rennen an diesem Tag</p>
-  </div>`;
-}
-
-function wireActivityCalendar(){
-  const prevBtn = document.getElementById('calPrevBtn');
-  const nextBtn = document.getElementById('calNextBtn');
-  if(prevBtn){
-    prevBtn.onclick = ()=>{
-      calendarViewMonth.month--;
-      if(calendarViewMonth.month < 0){ calendarViewMonth.month = 11; calendarViewMonth.year--; }
-      renderStatistik();
-    };
-  }
-  if(nextBtn && !nextBtn.disabled){
-    nextBtn.onclick = ()=>{
-      calendarViewMonth.month++;
-      if(calendarViewMonth.month > 11){ calendarViewMonth.month = 0; calendarViewMonth.year++; }
-      renderStatistik();
-    };
-  }
-}
-
-function renderStatistik(){
-  const el = document.getElementById('statistikContent');
-  if (!el || !state || !Array.isArray(state.sessions)) return;
-
-  const earliestDate = state.sessions.length
-    ? state.sessions.reduce((min,s)=> (s.date < min ? s.date : min), state.sessions[0].date)
-    : todayStr();
-  const effectiveFrom = statsFilter.from || earliestDate;
-  const effectiveTo = statsFilter.to || todayStr();
-
-  const filterCardHtml = `<div class="card">
-    <h2>Zeitraum</h2>
-    <div class="setup-row" style="display:flex;gap:10px;">
-      <div style="flex:1;">
-        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Von</label>
-        <input type="date" id="statsFromInput" value="${effectiveFrom}" />
-      </div>
-      <div style="flex:1;">
-        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Bis</label>
-        <input type="date" id="statsToInput" value="${effectiveTo}" />
-      </div>
-    </div>
-    ${(statsFilter.from || statsFilter.to) ? '<button class="add-toggle" id="statsResetBtn" style="margin-top:10px;">Zeitraum zurücksetzen</button>' : ''}
-  </div>`;
-
-  const sessions = state.sessions.filter(s=> s && s.date >= effectiveFrom && s.date <= effectiveTo);
-  const activityCardHtml = buildActivityCalendarHtml();
-
-  if(sessions.length===0){
-    el.innerHTML = filterCardHtml + activityCardHtml + '<div class="empty">Keine Rennen in diesem Zeitraum.<br>Trage Ergebnisse im Rennen-Tab ein oder wähle einen anderen Zeitraum.</div>';
-    wireStatsFilterInputs();
-    wireActivityCalendar();
-    return;
-  }
-
-  const stats = {};
-  function ensure(n){ if(!stats[n]) stats[n]={sessions:0, rounds:0, points:0, wins:0, podiums:0, dnfs:0, stars:0, sessionWins:0, recent:[], raceDates:new Set(), penalties:0, totalTimeMs:0}; return stats[n]; }
-  const comboCount = {};
-
-  sessions.forEach(s=>{
-    if (!s || !Array.isArray(s.participants)) return;
-    const key = [...s.participants].sort().join(' + ');
-    comboCount[key] = (comboCount[key]||0) + 1;
-    const N = s.participants.length;
-    s.participants.forEach(name=>{
-      const st = ensure(name);
-      st.sessions++;
-      st.raceDates.add(s.date);
-      const penalty = s.penalties && s.penalties[name];
-      if(penalty){
-        const p = Number(penalty) || 0;
-        st.penalties += p;
-        st.points += p;
-      }
-      if(s.trackTimes && s.trackTimes[name]){
-        s.trackTimes[name].forEach(t=>{
-          const ms = t ? parseTimeToMs(t) : null;
-          if(ms!==null) st.totalTimeMs += ms;
-        });
-      }
-      const arr = s.grid && s.grid[name] ? s.grid[name] : [];
-      arr.forEach(val=>{
-        if(val===null || val===undefined) return;
-        st.rounds++;
-        const isDnf = (val === 'DNF');
-        const num = isDnf ? null : asPlacementNumber(val);
-        const pts = isDnf ? N+1 : (num!==null ? num : 0);
-        st.points += pts;
-        st.recent.push({date:s.date, pts});
-        if(isDnf) st.dnfs++;
-        else{
-          if(num===1) st.wins++;
-          if(num!==null && num<=3) st.podiums++;
-        }
-        if(isStarredValue(val)) st.stars++;
-      });
-    });
-    const totals = sessionTotals(s);
-    const complete = s.participants.every(n=> Array.isArray(s.grid[n]) && s.grid[n].every(v=>v!==null && v!==undefined));
-    if(complete){
-      const winnerEntry = Object.entries(totals).sort((a,b)=>a[1]-b[1])[0];
-      if (winnerEntry) ensure(winnerEntry[0]).sessionWins++;
-    }
-  });
-
-  const totalSessions = sessions.length;
-  const totalRoundsPlayed = sessions.reduce((sum,s)=> sum + (s.participants ? Math.max(...s.participants.map(n=>(s.grid && s.grid[n]) ? s.grid[n].filter(v=>v!==null&&v!==undefined).length : 0),0) : 0), 0);
-
-  let html = `<div class="stat-grid">
-    <div class="stat-box"><div class="num">${totalSessions}</div><div class="lbl">Sessions</div></div>
-    <div class="stat-box"><div class="num">${totalRoundsPlayed}</div><div class="lbl">Tracks gesamt</div></div>
-  </div>`;
-
-  const statEntries = Object.entries(stats).filter(([,st])=>st.rounds>0);
-  const totalPointsAll = statEntries.reduce((a,[,st])=>a+st.points,0);
-  const totalRoundsAll = statEntries.reduce((a,[,st])=>a+st.rounds,0);
-  const groupAvg = totalRoundsAll ? totalPointsAll/totalRoundsAll : 0;
-  const C = 12;
-
-  const rankedByFair = statEntries.map(([name,st])=>{
-    const rawAvg = st.points/st.rounds;
-    const adjusted = (st.points + C*groupAvg) / (st.rounds + C);
-    return [name, st, rawAvg, adjusted];
-  }).sort((a,b)=> a[3]-b[3]);
-
-  const crownHolder = getStreakCrownHolder();
-  html += `<div class="card"><h2>Gesamtranking</h2><div class="standing-list">`;
-  html += rankedByFair.map(([name,st,rawAvg,adjusted],i)=>{
-    const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
-    const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
-    const crown = (crownHolder && crownHolder.name===name) ? ` 👑<span style="font-size:11px;color:var(--muted);"> (${crownHolder.streak}x in Folge)</span>` : '';
-    return `<div class="result-row">
-      <div class="rank-badge ${cls}">${badge}</div>
-      <div class="name">${escapeHtml(name)}${crown}</div>
-      <div class="pts">${adjusted.toFixed(2)}</div>
-    </div>`;
-  }).join('');
-  html += `</div><p class="muted" style="margin-top:10px;">
-    So wird gerechnet: <b style="color:var(--text);">bereinigter Schnitt = (eigene Punktesumme + ${C} × Gruppen-Durchschnitt) ÷ (eigene Streckenanzahl + ${C})</b>.
-    Der aktuelle Gruppen-Durchschnitt liegt bei ${groupAvg.toFixed(2)} Punkten pro Strecke.
-    Niedriger = besser.</p></div>`;
-
-  html += `<div class="card"><h2>Fahrer-Statistik</h2>
-    <div class="table-wrap"><table class="stats"><thead><tr>
-      <th>Name</th><th>Renntage</th><th>Strecken</th><th>Sess.-Sieg</th><th>Renn.-Sieg</th><th>Podest %</th><th>Ø Pkt</th><th>DNF %</th><th>Strafp.</th><th>⭐</th><th>Fahrzeit</th>
-    </tr></thead><tbody>`;
-  Object.entries(stats)
-    .sort((a,b)=> a[1].points - b[1].points)
-    .forEach(([name,st])=>{
-      const avg = st.rounds ? (st.points/st.rounds).toFixed(1) : '–';
-      const podiumPct = st.rounds ? Math.round(100*st.podiums/st.rounds) : 0;
-      const dnfPct = st.rounds ? Math.round(100*st.dnfs/st.rounds) : 0;
-      html += `<tr>
-        <td>${escapeHtml(name)}</td>
-        <td>${st.raceDates.size}</td>
-        <td>${st.rounds}</td>
-        <td>${st.sessionWins}</td>
-        <td>${st.wins}</td>
-        <td>${podiumPct}%</td>
-        <td>${avg}</td>
-        <td>${dnfPct}%</td>
-        <td>${st.penalties}</td>
-        <td>${st.stars}</td>
-        <td>${formatDurationMs(st.totalTimeMs)}</td>
-      </tr>`;
-    });
-  html += `</tbody></table></div>`;
-  html += `<p class="muted" style="margin-top:10px;">Ø Pkt = durchschnittliche Punkte pro Strecke (niedriger = besser) · Renntage = Anzahl unterschiedlicher Tage mit Teilnahme · Strecken = Anzahl gefahrener Rennstrecken gesamt · DNF % = Anteil nicht abgeschlossener Strecken · Strafp. = Summe aller erhaltenen Strafpunkte · ⭐ = Anzahl "letzter Tropfen Benzin"-Rettungen auf Platz 1 · Fahrzeit = Summe aller eingetragenen Streckenzeiten (h:mm:ss)</p>
-  </div>`;
-
-  const comboSorted = Object.entries(comboCount).sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0]));
-  html += `<div class="card"><h2>Besetzungen</h2>
-    <table class="stats"><thead><tr><th>Fahrer</th><th>Anzahl</th></tr></thead><tbody>`;
-  comboSorted.forEach(([combo,count])=>{
-    html += `<tr><td>${escapeHtml(combo)}</td><td>${count}×</td></tr>`;
-  });
-  html += `</tbody></table>
-  <p class="muted" style="margin-top:10px;">Wie oft jede Fahrer-Kombination bisher zusammen gefahren ist</p>
-  </div>`;
-
-  el.innerHTML = filterCardHtml + activityCardHtml + html;
-  wireStatsFilterInputs();
-  wireActivityCalendar();
-}
-
-function wireStatsFilterInputs(){
-  const fromInput = document.getElementById('statsFromInput');
-  const toInput = document.getElementById('statsToInput');
-  const resetBtn = document.getElementById('statsResetBtn');
-  if(fromInput){
-    fromInput.addEventListener('change', e=>{
-      statsFilter.from = e.target.value || null;
-      renderStatistik();
-    });
-  }
-  if(toInput){
-    toInput.addEventListener('change', e=>{
-      statsFilter.to = e.target.value || null;
-      renderStatistik();
-    });
-  }
-  if(resetBtn){
-    resetBtn.onclick = ()=>{
-      statsFilter = { from: null, to: null };
-      renderStatistik();
-    };
-  }
-}
-
-/* ---------------- NAV / INIT ---------------- */
-document.querySelectorAll('nav.bottom button').forEach(btn=>{ btn.onclick = ()=>switchView(btn.dataset.view); });
-
-document.getElementById('versionBadge').innerHTML = `<b>V${APP_VERSION}</b> · ${formatDate(APP_VERSION_DATE)}`;
-document.getElementById('versionBadge').style.cursor = 'pointer';
-document.getElementById('versionBadge').onclick = showVersionHistory;
-
-loadState();
-</script>
-</body>
-</html>
+      const i = archivFilter.indexOf(n
