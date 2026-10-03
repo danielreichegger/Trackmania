@@ -11,7 +11,6 @@
 <!-- Firebase Live-Sync SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
   :root{
@@ -326,10 +325,6 @@
     <div id="sicherungContent"></div>
   </section>
 
-  <section class="view" id="view-fotos">
-    <div id="fotosContent"></div>
-  </section>
-
   <section class="view" id="view-settings">
     <div id="settingsContent"></div>
   </section>
@@ -341,7 +336,6 @@
   <button data-view="archiv"><span class="ico">🗂️</span>Archiv</button>
   <button data-view="strecken"><span class="ico">🏁</span>Strecken</button>
   <button data-view="statistik"><span class="ico">🏆</span>Statistik</button>
-  <button data-view="fotos"><span class="ico">📷</span>Fotos</button>
   <button data-view="sicherung"><span class="ico">💾</span>Sicherung</button>
   <button data-view="settings"><span class="ico">⚙️</span>Settings</button>
 </nav>
@@ -353,7 +347,7 @@ const FIXED_DRIVERS = ['Max','Andy','Dani','Olly','Bär','Mky'];
 // A random id for THIS browser tab, used only to detect (and warn about,
 // not prevent) two people editing the same race at the same time.
 const CLIENT_ID = 'c' + Date.now() + Math.random().toString(36).slice(2,8);
-const APP_VERSION = 16;
+const APP_VERSION = 17;
 const APP_VERSION_DATE = '2026-10-02';
 const VERSION_HISTORY = [
   { v:1, date:'2026-09-10', notes:'Kompletter Funktionsstand: Rennen-Tabelle, Archiv, Statistik, Strafpunkte, Zeitraum-Filter, faires Gesamtranking.' },
@@ -371,7 +365,8 @@ const VERSION_HISTORY = [
   { v:13, date:'2026-10-02', notes:'Bug behoben: Im Track-Editor wurde beim Speichern manchmal die Zeit der falschen Person als Bestzeit-Basis verwendet (nicht die tatsächlich als Platz 1 markierte), wodurch für alle anderen Fahrer viel zu kleine "absolute" Zeiten im Strecken-Tab gespeichert wurden. Historien-Daten im Code entfernt – die Rennen liegen jetzt ausschließlich in Firebase, nicht mehr zusätzlich fest im Code.' },
   { v:14, date:'2026-10-02', notes:'Track-Editor: Reihenfolge folgt jetzt dem aktuellen Punktestand. Zeiteingabe braucht nur noch Ziffern (Doppelpunkt/Komma automatisch). Archiv & Statistik: neues Fahrzeit-Ranking (Gesamtzeit je Session, fair pro Strecke in der Statistik). 💩 für die längste Verlustserie neben der 👑. Parallel-Eingabe abgesichert (gezielte statt komplette Speicherzugriffe). Warnung bei gleichzeitiger Bearbeitung derselben Session. Neuer Fotos-Tab (Firebase Storage). Neuer Settings-Tab: Zugangsdaten-Login (Standard TM/TM2026) und Notizen für Änderungswünsche.' },
   { v:15, date:'2026-10-02', notes:'DNF zeigt im Strecken-Tab jetzt wirklich "DNF" statt einer falschen Zeit; zählt in der Statistik mit einstellbarer Ersatzzeit (Settings). Live-Zeit-Ranking unterhalb des Zwischenstands während der Eingabe. "Neues Rennen starten" führt direkt zur Punktetabelle. "Speichern" und "Fertig" zu einem Button zusammengelegt. Krone-Berechnung repariert (war zu streng). Kalender färbt Tage jetzt in der Farbe des Tagessiegers inkl. Namen. Fahrer-Farben überall in der App, einstellbar unter Settings. Settings erweitert um DNF-Zeitwertung und Jubiläumsfeier-Schalter.' },
-  { v:16, date:'2026-10-02', notes:'Bug behoben: Die Storage-Konfiguration (für Fotos) war in derselben Einstellung wie die Datenbank-Verbindung untergebracht – ein ungültiger Wert dort konnte die komplette App blockieren ("Verbinde…" ohne Ende), obwohl die Datenbank selbst nie das Problem war. Beides jetzt komplett getrennt. Jubiläumsfeier ist jetzt fix aktiviert (Einstellung dafür entfernt).' }
+  { v:16, date:'2026-10-02', notes:'Bug behoben: Die Storage-Konfiguration (für Fotos) war in derselben Einstellung wie die Datenbank-Verbindung untergebracht – ein ungültiger Wert dort konnte die komplette App blockieren ("Verbinde…" ohne Ende), obwohl die Datenbank selbst nie das Problem war. Beides jetzt komplett getrennt. Jubiläumsfeier ist jetzt fix aktiviert (Einstellung dafür entfernt).' },
+  { v:17, date:'2026-10-03', notes:'Fotos-Tab komplett entfernt (hätte einen kostenpflichtigen Firebase-Tarif erfordert). Statistik: neue Karte "Gesamtfahrzeit" – aufsummierte (nicht gemittelte) Zeit über alle gefahrenen Strecken, zusätzlich zum bestehenden fairen Ø-Zeit-Ranking.' }
 ];
 
 let state = null;
@@ -819,32 +814,15 @@ function showVersionHistory(){
 const firebaseConfig = {
   databaseURL: "https://trkmn-44c02-default-rtdb.europe-west1.firebasedatabase.app"
 };
-// Best guess for the Fotos tab's storage bucket, based on the project id in
-// the databaseURL above. Kept COMPLETELY separate from firebaseConfig on
-// purpose: initializeApp() validates its config up front, so a bad/unknown
-// storageBucket value in there could have broken the database connection
-// too, even though the database itself was never the problem. If photo
-// upload doesn't work, check Firebase Console → Project settings → General
-// → "Your apps" → the storageBucket value shown there, and paste the exact
-// value here - this can never affect the database connection above.
-const STORAGE_BUCKET = "trkmn-44c02.firebasestorage.app";
 
 let dbRef = null;
-let storageRef = null;
 let firebaseReady = false;
-let storageReady = false;
 try{
   firebase.initializeApp(firebaseConfig);
   dbRef = firebase.database().ref('tm_scoreboard_state');
   firebaseReady = true;
 }catch(e){
   console.error('Firebase init failed - check firebaseConfig at the top of the script.', e);
-}
-try{
-  storageRef = firebase.app().storage(`gs://${STORAGE_BUCKET}`).ref();
-  storageReady = true;
-}catch(e){
-  console.error('Firebase Storage init failed - check STORAGE_BUCKET near the top of the script, and that Storage is enabled in the Firebase console. This does not affect the race data/database connection.', e);
 }
 
 let saveInFlight = 0;
@@ -1173,7 +1151,6 @@ function renderCurrentView(){
   else if(currentView==='strecken') renderStrecken();
   else if(currentView==='statistik') renderStatistik();
   else if(currentView==='sicherung') renderSicherung();
-  else if(currentView==='fotos') renderFotos();
   else if(currentView==='settings') renderSettings();
 }
 
@@ -2100,87 +2077,6 @@ function wireShareCard(){
   }
 }
 
-async function uploadSessionPhoto(sessionId, file){
-  if(!storageReady){ showToast('Fotos sind gerade nicht verfügbar (Firebase Storage)'); return; }
-  const idx = state.sessions.findIndex(s=>s.id===sessionId);
-  if(idx<0) return;
-  showToast('Foto wird hochgeladen…');
-  try{
-    const extMatch = (file.name||'').match(/\.([a-zA-Z0-9]+)$/);
-    const ext = extMatch ? extMatch[1].toLowerCase() : 'jpg';
-    const path = `session-photos/${sessionId}-${Date.now()}.${ext}`;
-    const ref = storageRef.child(path);
-    await ref.put(file);
-    const url = await ref.getDownloadURL();
-    state.sessions[idx].photoUrl = url;
-    state.sessions[idx].photoPath = path;
-    await patchFirebase({ [`sessions/${idx}/photoUrl`]: url, [`sessions/${idx}/photoPath`]: path });
-    showToast('Foto gespeichert');
-    renderFotos();
-  }catch(e){
-    console.error('Photo upload failed:', e);
-    showToast('Upload fehlgeschlagen – ist Firebase Storage im Projekt aktiviert?');
-  }
-}
-
-async function removeSessionPhoto(sessionId){
-  const idx = state.sessions.findIndex(s=>s.id===sessionId);
-  if(idx<0) return;
-  const path = state.sessions[idx].photoPath;
-  try{
-    if(path && storageReady) await storageRef.child(path).delete();
-  }catch(e){
-    console.error('Photo delete from storage failed (removing reference anyway):', e);
-  }
-  delete state.sessions[idx].photoUrl;
-  delete state.sessions[idx].photoPath;
-  await patchFirebase({ [`sessions/${idx}/photoUrl`]: null, [`sessions/${idx}/photoPath`]: null });
-  showToast('Foto entfernt');
-  renderFotos();
-}
-
-function renderFotos(){
-  const el = document.getElementById('fotosContent');
-  if(!el || !state || !Array.isArray(state.sessions)) return;
-
-  if(!storageReady){
-    el.innerHTML = `<div class="card"><h2>Fotos</h2>
-      <p class="muted">Firebase Storage ist gerade nicht erreichbar. Prüfe in der Firebase-Konsole, ob Storage für dieses Projekt aktiviert ist, und ob <code>storageBucket</code> im Code (oben im Script) korrekt gesetzt ist.</p>
-    </div>`;
-    return;
-  }
-  if(state.sessions.length === 0){
-    el.innerHTML = '<div class="empty">Noch keine Rennen gespeichert.</div>';
-    return;
-  }
-
-  const sorted = state.sessions.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (b.id||'').localeCompare(a.id||''));
-  el.innerHTML = sorted.map(s=>{
-    const photoBlock = s.photoUrl
-      ? `<img src="${escapeHtml(s.photoUrl)}" style="width:100%;border-radius:10px;margin-bottom:10px;display:block;" />
-         <button class="danger" data-remove-photo="${s.id}">Foto entfernen</button>`
-      : `<input type="file" accept="image/*" id="photoInput-${s.id}" style="display:none;" data-upload-photo="${s.id}" />
-         <button data-trigger-upload="${s.id}">📷 Foto hochladen</button>`;
-    return `<div class="card">
-      <div class="session-head"><div class="info"><b>${formatDate(s.date)}</b> · ${escapeHtml((s.participants||[]).join(', '))}</div></div>
-      ${photoBlock}
-    </div>`;
-  }).join('');
-
-  el.querySelectorAll('[data-trigger-upload]').forEach(btn=>{
-    btn.onclick = ()=> document.getElementById('photoInput-'+btn.dataset.triggerUpload).click();
-  });
-  el.querySelectorAll('[data-upload-photo]').forEach(inp=>{
-    inp.onchange = ()=>{
-      if(inp.files && inp.files[0]) uploadSessionPhoto(inp.dataset.uploadPhoto, inp.files[0]);
-      inp.value = '';
-    };
-  });
-  el.querySelectorAll('[data-remove-photo]').forEach(btn=>{
-    btn.onclick = ()=> showConfirm('Foto wirklich entfernen?', ()=>removeSessionPhoto(btn.dataset.removePhoto));
-  });
-}
-
 function renderSettings(){
   const el = document.getElementById('settingsContent');
   if(!el || !state) return;
@@ -2655,12 +2551,26 @@ function renderStatistik(){
       const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
       return `<div class="result-row">
         <div class="rank-badge ${cls}">${badge}</div>
-        <div class="name">${escapeHtml(name)}<div class="breakdown"><span>${st.timedRounds} gewertete Strecken</span></div></div>
+        <div class="name">${driverNameHtml(name)}<div class="breakdown"><span>${st.timedRounds} gewertete Strecken</span></div></div>
         <div class="pts">${formatDurationMsPrecise(avgMs)}</div>
       </div>`;
     }).join('');
     html += `</div><p class="muted" style="margin-top:10px;">
       Durchschnittliche Zeit pro gefahrener Strecke (Gesamtzeit ÷ Anzahl gewerteter Strecken) – damit zählt nicht, wer öfter gefahren ist, sondern wer im Schnitt schneller war. Niedriger = besser.</p></div>`;
+
+    const rankedByTotal = timeEntries.map(([name,st])=>[name, st]).sort((a,b)=>b[1].totalTimeMs-a[1].totalTimeMs);
+    html += `<div class="card"><h2>Gesamtfahrzeit</h2><div class="standing-list">`;
+    html += rankedByTotal.map(([name,st],i)=>{
+      const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
+      const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+      return `<div class="result-row">
+        <div class="rank-badge ${cls}">${badge}</div>
+        <div class="name">${driverNameHtml(name)}<div class="breakdown"><span>${st.timedRounds} gewertete Strecken</span></div></div>
+        <div class="pts">${formatDurationMs(st.totalTimeMs)}</div>
+      </div>`;
+    }).join('');
+    html += `</div><p class="muted" style="margin-top:10px;">
+      Aufsummierte Zeit über alle gefahrenen Strecken (nicht gemittelt) – wer insgesamt am meisten Zeit auf der Strecke verbracht hat, steht oben.</p></div>`;
   }
 
   html += `<div class="card"><h2>Fahrer-Statistik</h2>
