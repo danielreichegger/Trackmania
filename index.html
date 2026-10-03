@@ -353,7 +353,7 @@ const FIXED_DRIVERS = ['Max','Andy','Dani','Olly','Bär','Mky'];
 // A random id for THIS browser tab, used only to detect (and warn about,
 // not prevent) two people editing the same race at the same time.
 const CLIENT_ID = 'c' + Date.now() + Math.random().toString(36).slice(2,8);
-const APP_VERSION = 14;
+const APP_VERSION = 15;
 const APP_VERSION_DATE = '2026-10-02';
 const VERSION_HISTORY = [
   { v:1, date:'2026-09-10', notes:'Kompletter Funktionsstand: Rennen-Tabelle, Archiv, Statistik, Strafpunkte, Zeitraum-Filter, faires Gesamtranking.' },
@@ -369,14 +369,15 @@ const VERSION_HISTORY = [
   { v:11, date:'2026-09-25', notes:'Aktivitäts-Kalender in der Statistik (letzte 14 Wochen als Heatmap). Automatischer Abend-Rückblick nach "Fertig" (Sieger, meiste Platz-1, DNFs, engstes Rennen). QR-Code + Link-Kopieren im Sicherungs-Tab. Streak-Krone 👑 für die längste aktuelle Siegesserie, sichtbar bei der Fahrerauswahl und im Gesamtranking.' },
   { v:12, date:'2026-10-02', notes:'Speicher-Backend auf Firebase Realtime Database umgestellt (Echtzeit-Sync statt 5-Sekunden-Abfrage), gehostet über GitHub Pages. Bug behoben: Bei einem Verbindungsfehler blieb die App bisher für immer bei "Verbinde…" hängen, ohne eine Erklärung zu zeigen – jetzt wird die genaue Fehlermeldung angezeigt. Außerdem: Absturz behoben, falls Teilnehmer und Punktetabelle einer Session nicht exakt zusammenpassten (z.B. durch ältere Testdaten) – solche Einträge werden jetzt automatisch repariert statt die App zum Abstürzen zu bringen.' },
   { v:13, date:'2026-10-02', notes:'Bug behoben: Im Track-Editor wurde beim Speichern manchmal die Zeit der falschen Person als Bestzeit-Basis verwendet (nicht die tatsächlich als Platz 1 markierte), wodurch für alle anderen Fahrer viel zu kleine "absolute" Zeiten im Strecken-Tab gespeichert wurden. Historien-Daten im Code entfernt – die Rennen liegen jetzt ausschließlich in Firebase, nicht mehr zusätzlich fest im Code.' },
-  { v:14, date:'2026-10-02', notes:'Track-Editor: Reihenfolge folgt jetzt dem aktuellen Punktestand. Zeiteingabe braucht nur noch Ziffern (Doppelpunkt/Komma automatisch). Archiv & Statistik: neues Fahrzeit-Ranking (Gesamtzeit je Session, fair pro Strecke in der Statistik). 💩 für die längste Verlustserie neben der 👑. Parallel-Eingabe abgesichert (gezielte statt komplette Speicherzugriffe). Warnung bei gleichzeitiger Bearbeitung derselben Session. Neuer Fotos-Tab (Firebase Storage). Neuer Settings-Tab: Zugangsdaten-Login (Standard TM/TM2026) und Notizen für Änderungswünsche.' }
+  { v:14, date:'2026-10-02', notes:'Track-Editor: Reihenfolge folgt jetzt dem aktuellen Punktestand. Zeiteingabe braucht nur noch Ziffern (Doppelpunkt/Komma automatisch). Archiv & Statistik: neues Fahrzeit-Ranking (Gesamtzeit je Session, fair pro Strecke in der Statistik). 💩 für die längste Verlustserie neben der 👑. Parallel-Eingabe abgesichert (gezielte statt komplette Speicherzugriffe). Warnung bei gleichzeitiger Bearbeitung derselben Session. Neuer Fotos-Tab (Firebase Storage). Neuer Settings-Tab: Zugangsdaten-Login (Standard TM/TM2026) und Notizen für Änderungswünsche.' },
+  { v:15, date:'2026-10-02', notes:'DNF zeigt im Strecken-Tab jetzt wirklich "DNF" statt einer falschen Zeit; zählt in der Statistik mit einstellbarer Ersatzzeit (Settings). Live-Zeit-Ranking unterhalb des Zwischenstands während der Eingabe. "Neues Rennen starten" führt direkt zur Punktetabelle. "Speichern" und "Fertig" zu einem Button zusammengelegt. Krone-Berechnung repariert (war zu streng). Kalender färbt Tage jetzt in der Farbe des Tagessiegers inkl. Namen. Fahrer-Farben überall in der App, einstellbar unter Settings. Settings erweitert um DNF-Zeitwertung und Jubiläumsfeier-Schalter.' }
 ];
 
 let state = null;
 let currentView = 'rennen';
 let statsFilter = { from: null, to: null }; // date-range filter for the Statistik tab, reset on reload
 let draft = null;           // in-progress race being entered, not yet saved to the archive
-let rennenPhase = 'idle';   // 'idle' | 'setup' | 'editing'
+let rennenPhase = 'idle';   // 'idle' (driver picker) | 'editing' (points table)
 let storageAvailable = null; // null = not yet checked, true/false after first attempt
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
@@ -407,7 +408,17 @@ function defaultState(){
     settings: {
       authUsername: 'TM',
       authPassword: 'TM2026',
-      changeRequests: ''
+      changeRequests: '',
+      dnfPenaltySeconds: 30,
+      milestonesEnabled: true,
+      driverColors: {
+        Max: '#00e5ff',
+        Andy: '#ff5b1f',
+        Dani: '#ffd166',
+        Olly: '#7ee787',
+        Bär: '#ff6b9d',
+        Mky: '#a78bfa'
+      }
     }
   };
 }
@@ -858,6 +869,11 @@ function loadState(){
     if(typeof fresh.settings.authUsername !== 'string') fresh.settings.authUsername = 'TM';
     if(typeof fresh.settings.authPassword !== 'string') fresh.settings.authPassword = 'TM2026';
     if(typeof fresh.settings.changeRequests !== 'string') fresh.settings.changeRequests = '';
+    if(typeof fresh.settings.dnfPenaltySeconds !== 'number' || isNaN(fresh.settings.dnfPenaltySeconds)) fresh.settings.dnfPenaltySeconds = 30;
+    if(typeof fresh.settings.milestonesEnabled !== 'boolean') fresh.settings.milestonesEnabled = true;
+    if(!fresh.settings.driverColors || typeof fresh.settings.driverColors !== 'object') fresh.settings.driverColors = {};
+    const defaultColors = { Max:'#00e5ff', Andy:'#ff5b1f', Dani:'#ffd166', Olly:'#7ee787', Bär:'#ff6b9d', Mky:'#a78bfa' };
+    Object.entries(defaultColors).forEach(([n,c])=>{ if(!fresh.settings.driverColors[n]) fresh.settings.driverColors[n] = c; });
     FIXED_DRIVERS.forEach(n=>{ if(!fresh.savedNames.includes(n)) fresh.savedNames.push(n); });
     fresh.savedNames = [...new Set(fresh.savedNames)];
     fresh.selectedNames = [...new Set(fresh.selectedNames)];
@@ -1042,11 +1058,21 @@ function sameSet(a,b){
   return sa.every((v,i)=>v===sb[i]);
 }
 
+function hasScorableResult(s){
+  // Deliberately lenient: a session counts toward streaks as soon as every
+  // participant has AT LEAST ONE scored round, rather than requiring every
+  // single track column to be filled for everyone. Real race nights often
+  // leave a trailing "+Zusatztrack" column blank for someone who left early,
+  // and that shouldn't silently erase the whole evening from streak history.
+  return s && Array.isArray(s.participants) && s.grid &&
+    s.participants.every(n => Array.isArray(s.grid[n]) && s.grid[n].some(v => v !== null && v !== undefined));
+}
+
 function getStreakCrownHolder(){
   if (!state || !Array.isArray(state.sessions)) return null;
 
   const complete = state.sessions
-    .filter(s => s && Array.isArray(s.participants) && s.grid && s.participants.every(n => Array.isArray(s.grid[n]) && s.grid[n].every(v => v !== null && v !== undefined)))
+    .filter(hasScorableResult)
     .slice().sort((a,b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
 
   const perDriverSeq = {};
@@ -1077,7 +1103,7 @@ function getStreakLoserHolder(){
   if (!state || !Array.isArray(state.sessions)) return null;
 
   const complete = state.sessions
-    .filter(s => s && Array.isArray(s.participants) && s.grid && s.participants.every(n => Array.isArray(s.grid[n]) && s.grid[n].every(v => v !== null && v !== undefined)))
+    .filter(hasScorableResult)
     .slice().sort((a,b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
 
   const perDriverSeq = {};
@@ -1100,6 +1126,19 @@ function getStreakLoserHolder(){
     if(streak > worstStreak){ worstStreak = streak; worstName = name; }
   });
   return worstName ? { name: worstName, streak: worstStreak } : null;
+}
+
+function getDriverColor(name){
+  const configured = state && state.settings && state.settings.driverColors && state.settings.driverColors[name];
+  if(configured) return configured;
+  // deterministic fallback for a name with no explicit color set yet (e.g. a
+  // freshly-added driver) - same name always gets the same generated color
+  let hash = 0;
+  for(let i=0;i<name.length;i++) hash = (hash*31 + name.charCodeAt(i)) % 360;
+  return `hsl(${hash}, 70%, 65%)`;
+}
+function driverNameHtml(name){
+  return `<span style="color:${getDriverColor(name)};">${escapeHtml(name)}</span>`;
 }
 
 function orderedSavedNames(){
@@ -1167,7 +1206,9 @@ function renderRennen(){
     let suffix = '';
     if(crownHolder && crownHolder.name===name) suffix += ' 👑';
     if(loserHolder && loserHolder.name===name) suffix += ' 💩';
-    chip.textContent = name + suffix;
+    // a color dot (not colored text) so the driver's color doesn't fight
+    // with the existing active/inactive selection-state text color
+    chip.innerHTML = `<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:10px;height:10px;border-radius:50%;background:${getDriverColor(name)};flex-shrink:0;"></span>${escapeHtml(name)}${escapeHtml(suffix)}</span>`;
     const titles = [];
     if(crownHolder && crownHolder.name===name) titles.push(`${crownHolder.streak}x in Folge gewonnen`);
     if(loserHolder && loserHolder.name===name) titles.push(`${loserHolder.streak}x in Folge verloren`);
@@ -1176,23 +1217,14 @@ function renderRennen(){
     grid.appendChild(chip);
   });
 
-  if(rennenPhase === 'idle'){
-    area.innerHTML = `<div class="card" style="text-align:center;">
-      <button class="primary full" id="startNewRaceBtn">Neues Rennen starten</button>
-    </div>`;
-    document.getElementById('startNewRaceBtn').onclick = ()=>{
-      rennenPhase = 'setup';
-      renderRennen();
-    };
-    return;
-  }
-
+  // One screen: pick drivers above, then go straight into the points table -
+  // no separate "Weiter" step in between anymore.
   const n = state.selectedNames.length;
-  area.innerHTML = `<div class="card">
+  area.innerHTML = `<div class="card" style="text-align:center;">
     <p class="muted" style="margin:0 0 12px;">${n<2 ? 'Wähle mindestens 2 Fahrer aus.' : `${n} Fahrer ausgewählt.`}</p>
-    <button class="primary full" id="continueSetupBtn" ${n<2?'disabled':''}>Weiter</button>
+    <button class="primary full" id="startNewRaceBtn" ${n<2?'disabled':''}>Neues Rennen starten</button>
   </div>`;
-  document.getElementById('continueSetupBtn').onclick = ()=>continueToEditing();
+  document.getElementById('startNewRaceBtn').onclick = ()=>continueToEditing();
 }
 
 function continueToEditing(){
@@ -1245,7 +1277,7 @@ function renderEditingPhase(area){
     html += `<div class="card"><h2>Letztes Rennen mit dieser Besetzung</h2>
       <div class="match-item">
         <div class="match-date">${formatDate(draft.lastMatchInfo.date)}</div>
-        <div class="match-standing">${sorted.map(([n,p])=>`<span class="${p===winnerPts?'win':''}">${escapeHtml(n)} ${p}</span>`).join('')}</div>
+        <div class="match-standing">${sorted.map(([n,p])=>`<span class="${p===winnerPts?'win':''}" style="border-left:3px solid ${getDriverColor(n)};">${escapeHtml(n)} ${p}</span>`).join('')}</div>
       </div>
     </div>`;
   }
@@ -1265,7 +1297,7 @@ function renderEditingPhase(area){
   html += `<th>Straf.</th><th class="sumcol">Σ</th></tr></thead><tbody>`;
 
   draft.participants.forEach(name=>{
-    html += `<tr><td class="namecol">${escapeHtml(name)}</td>`;
+    html += `<tr><td class="namecol">${driverNameHtml(name)}</td>`;
     const arr = draft.grid[name] || [];
     for(let r=0;r<rounds;r++){
       const val = arr[r];
@@ -1295,12 +1327,10 @@ function renderEditingPhase(area){
   </div>`;
 
   html += `<div class="card"><h2>Zwischenstand</h2><div class="standing-list" id="standingList"></div></div>`;
+  html += `<div class="card" id="liveTimeRankingCard" style="display:none;"><div id="liveTimeRankingContent"></div></div>`;
 
   html += `<div class="section-actions">
-    <button class="primary full" id="saveDraftBtn">Speichern</button>
-  </div>
-  <div class="section-actions">
-    <button class="full" id="finishRaceBtn">Fertig – zurück zum Start</button>
+    <button class="primary full" id="finishRaceBtn">Rennen abgeschlossen – Speichern</button>
   </div>`;
 
   area.innerHTML = html;
@@ -1342,12 +1372,6 @@ function renderEditingPhase(area){
     draft.trackNames.push('');
     saveDraft();
     renderRennen();
-  };
-  document.getElementById('saveDraftBtn').onclick = ()=>{
-    const { isNewSession } = commitDraftToArchive(false);
-    showToast('Gespeichert');
-    renderRennen();
-    if(isNewSession) maybeCelebrateMilestone(state.sessions.length);
   };
   document.getElementById('finishRaceBtn').onclick = ()=>{
     const { session, isNewSession } = commitDraftToArchive(true);
@@ -1481,12 +1505,6 @@ const RACING_QUOTES = [
   'Wer bremst, verliert. Wer crasht, verliert schneller.'
 ];
 
-function maybeCelebrateMilestone(newCount){
-  if(newCount < 60 || newCount % 10 !== 0) return;
-  const isBig = (newCount === 100 || newCount === 200);
-  showMilestoneModal(newCount, isBig);
-}
-
 function showMilestoneModal(count, isBig, extraHtml){
   const overlay = document.createElement('div');
   overlay.className = 'confirm-overlay';
@@ -1525,7 +1543,8 @@ function showMilestoneModal(count, isBig, extraHtml){
 
 function showFinishOverlay(session, isMilestone, sessionCount){
   const recapHtml = buildSessionRecapHtml(session);
-  if(isMilestone){
+  const milestonesOn = !state.settings || state.settings.milestonesEnabled !== false;
+  if(isMilestone && milestonesOn){
     const isBig = (sessionCount===100 || sessionCount===200);
     showMilestoneModal(sessionCount, isBig, recapHtml);
   } else if(recapHtml){
@@ -1592,7 +1611,7 @@ function buildSessionRecapHtml(s){
   });
 
   const lines = [];
-  lines.push(`🏆 Sieger des Abends: <b style="color:var(--text);">${escapeHtml(winner)}</b> (${ranked[0][1]} Punkte)`);
+  lines.push(`🏆 Sieger des Abends: <b style="color:${getDriverColor(winner)};">${escapeHtml(winner)}</b> (${ranked[0][1]} Punkte)`);
 
   const topWinner = Object.entries(winCounts).sort((a,b)=>b[1]-a[1])[0];
   if(topWinner && topWinner[1] > 0){
@@ -1665,10 +1684,24 @@ function updateSumsAndStandings(session){
       const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
       return `<div class="result-row">
         <div class="rank-badge ${cls}">${badge}</div>
-        <div class="name">${escapeHtml(name)}</div>
+        <div class="name">${driverNameHtml(name)}</div>
         <div class="pts">${pts}</div>
       </div>`;
     }).join('');
+  }
+
+  // live time ranking - so the gap in actual driving time matters too, not
+  // just the ordinal placement, while the race is still being entered
+  const timeCard = document.getElementById('liveTimeRankingCard');
+  const timeContent = document.getElementById('liveTimeRankingContent');
+  if(timeCard && timeContent){
+    const timeHtml = buildSessionTimeRankingHtml(session, 'Zeit-Ranking (laufend)');
+    if(timeHtml){
+      timeContent.innerHTML = timeHtml;
+      timeCard.style.display = 'block';
+    } else {
+      timeCard.style.display = 'none';
+    }
   }
 }
 
@@ -1697,6 +1730,17 @@ function parseTimeToMs(str){
     else { min = +dotParts[0]; sec = +dotParts[1]; ms = +(dotParts[2]||'0').padEnd(3,'0').slice(0,3); }
   }
   return min*60000 + sec*1000 + ms;
+}
+
+function isDnfForRound(session, driverName, roundIndex){
+  const val = session.grid && session.grid[driverName] ? session.grid[driverName][roundIndex] : null;
+  if(val === 'DNF') return true;
+  if(typeof val === 'number' && Array.isArray(session.participants) && val === session.participants.length + 1) return true;
+  return false;
+}
+function getDnfPenaltyMs(){
+  const secs = (state && state.settings && typeof state.settings.dnfPenaltySeconds === 'number') ? state.settings.dnfPenaltySeconds : 30;
+  return secs * 1000;
 }
 
 function getPersonalBestMs(driverName, trackNameRaw){
@@ -1728,14 +1772,20 @@ function renderStrecken(){
       const key = raw.toLowerCase();
       if(!tracks[key]) tracks[key] = { displayName: raw, entries: {} };
       s.participants.forEach(driver=>{
+        const dnf = isDnfForRound(s, driver, r);
         const timeStr = s.trackTimes && s.trackTimes[driver] && s.trackTimes[driver][r];
-        if(!timeStr) return;
-        const ms = parseTimeToMs(timeStr);
+        // Older data sometimes stored a literal placeholder time (e.g.
+        // "5:00.000") for a DNF instead of leaving it empty - the points
+        // grid is the real source of truth for whether a round was a DNF,
+        // so check that first rather than trusting whatever's in trackTimes.
+        if(!dnf && !timeStr) return;
+        const ms = dnf ? null : parseTimeToMs(timeStr);
         const cur = tracks[key].entries[driver];
-        const sortKey = ms===null ? Infinity : ms;
-        const curSortKey = cur ? (cur.ms===null ? Infinity : cur.ms) : Infinity;
+        // non-DNF always beats DNF; among non-DNF entries, faster wins
+        const sortKey = dnf ? Infinity : (ms===null ? Infinity : ms);
+        const curSortKey = !cur ? Infinity : (cur.dnf ? Infinity : (cur.ms===null ? Infinity : cur.ms));
         if(!cur || sortKey < curSortKey){
-          tracks[key].entries[driver] = { ms, timeStr, date: s.date };
+          tracks[key].entries[driver] = { ms, timeStr, dnf, date: s.date };
         }
       });
     });
@@ -1750,8 +1800,8 @@ function renderStrecken(){
   el.innerHTML = trackKeys.map(key=>{
     const t = tracks[key];
     const entries = Object.entries(t.entries).sort((a,b)=>{
-      const am = a[1].ms===null ? Infinity : a[1].ms;
-      const bm = b[1].ms===null ? Infinity : b[1].ms;
+      const am = a[1].dnf ? Infinity : (a[1].ms===null ? Infinity : a[1].ms);
+      const bm = b[1].dnf ? Infinity : (b[1].ms===null ? Infinity : b[1].ms);
       return am-bm;
     });
     return `<div class="card">
@@ -1760,11 +1810,11 @@ function renderStrecken(){
         ${entries.map(([driver,info],i)=>{
           const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
           const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
-          const timeLabel = info.ms===null ? (info.timeStr + ' ⚠︎') : info.timeStr;
+          const timeLabel = info.dnf ? 'DNF' : (info.ms===null ? (info.timeStr + ' ⚠︎') : info.timeStr);
           return `<div class="result-row">
             <div class="rank-badge ${cls}">${badge}</div>
-            <div class="name">${escapeHtml(driver)}<div class="breakdown"><span>${formatDate(info.date)}</span></div></div>
-            <div class="pts">${escapeHtml(timeLabel)}</div>
+            <div class="name">${driverNameHtml(driver)}<div class="breakdown"><span>${formatDate(info.date)}</span></div></div>
+            <div class="pts" style="${info.dnf?'color:var(--danger);':''}">${escapeHtml(timeLabel)}</div>
           </div>`;
         }).join('')}
       </div>
@@ -1785,7 +1835,7 @@ function buildReadOnlyGridHtml(s){
   html += `<th>Straf.</th><th class="sumcol">Σ</th></tr></thead><tbody>`;
   const totals = sessionTotals(s);
   s.participants.forEach(name=>{
-    html += `<tr><td class="namecol">${escapeHtml(name)}</td>`;
+    html += `<tr><td class="namecol">${driverNameHtml(name)}</td>`;
     const arr = s.grid[name] || [];
     for(let r=0;r<rounds;r++){
       const val = arr[r];
@@ -1805,11 +1855,12 @@ function buildReadOnlyGridHtml(s){
   return html;
 }
 
-function buildSessionTimeRankingHtml(s){
+function buildSessionTimeRankingHtml(s, title){
   if(!s.trackTimes || !Array.isArray(s.participants)) return '';
   const totals = s.participants.map(name=>{
     let sumMs = 0, count = 0;
-    (s.trackTimes[name]||[]).forEach(t=>{
+    (s.trackTimes[name]||[]).forEach((t,r)=>{
+      if(isDnfForRound(s, name, r)){ sumMs += getDnfPenaltyMs(); count++; return; }
       const ms = t ? parseTimeToMs(t) : null;
       if(ms!==null){ sumMs += ms; count++; }
     });
@@ -1821,13 +1872,14 @@ function buildSessionTimeRankingHtml(s){
     const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
     return `<div class="result-row">
       <div class="rank-badge ${cls}">${badge}</div>
-      <div class="name">${escapeHtml(t.name)}<div class="breakdown"><span>${t.count} Strecken gewertet</span></div></div>
+      <div class="name">${driverNameHtml(t.name)}<div class="breakdown"><span>${t.count} Strecken gewertet</span></div></div>
       <div class="pts">${formatDurationMsPrecise(t.sumMs)}</div>
     </div>`;
   }).join('');
   return `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
-    <h2 style="font-size:14px;margin:0 0 8px;">Fahrzeit-Ranking (gesamt)</h2>
+    <h2 style="font-size:14px;margin:0 0 8px;">${escapeHtml(title || 'Fahrzeit-Ranking (gesamt)')}</h2>
     <div class="standing-list">${rows}</div>
+    <p class="muted" style="margin-top:8px;font-size:11px;">DNF zählt als ${((getDnfPenaltyMs())/1000)}s (einstellbar unter Settings).</p>
   </div>`;
 }
 
@@ -2130,502 +2182,10 @@ function renderFotos(){
 function renderSettings(){
   const el = document.getElementById('settingsContent');
   if(!el || !state) return;
-  if(!state.settings) state.settings = { authUsername:'TM', authPassword:'TM2026', changeRequests:'' };
+  if(!state.settings) state.settings = { authUsername:'TM', authPassword:'TM2026', changeRequests:'', dnfPenaltySeconds:30, milestonesEnabled:true, driverColors:{} };
   const s = state.settings;
 
-  el.innerHTML = `<div class="card">
-    <h2>Zugang</h2>
-    <p class="muted" style="margin:0 0 12px;">Einfacher Zugriffsschutz für die Gruppe – keine echte Sicherheit, der Code ist für jeden einsehbar. Hält nur Zufallsbesucher fern.</p>
-    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Benutzername</label>
-    <input type="text" id="settingsUserInput" value="${escapeHtml(s.authUsername||'TM')}" style="width:100%;margin-bottom:12px;" />
-    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Passwort</label>
-    <input type="text" id="settingsPassInput" value="${escapeHtml(s.authPassword||'TM2026')}" style="width:100%;margin-bottom:12px;" />
-    <button class="primary full" id="settingsSaveAuthBtn">Speichern</button>
-    <button class="full" id="settingsLogoutBtn" style="margin-top:8px;">Auf diesem Gerät abmelden</button>
-  </div>
-  <div class="card">
-    <h2>Änderungswünsche</h2>
-    <p class="muted" style="margin:0 0 12px;">Platz für Notizen/Ideen für die nächste Version – wird für alle gemeinsam gespeichert.</p>
-    <textarea id="changeRequestsInput" placeholder="z.B. neue Funktion, Bug, Idee…" style="width:100%;min-height:120px;resize:vertical;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:11px 12px;font-size:14px;font-family:var(--font-body);">${escapeHtml(s.changeRequests||'')}</textarea>
-  </div>`;
-
-  document.getElementById('settingsSaveAuthBtn').onclick = ()=>{
-    const u = document.getElementById('settingsUserInput').value.trim() || 'TM';
-    const p = document.getElementById('settingsPassInput').value.trim() || 'TM2026';
-    state.settings.authUsername = u;
-    state.settings.authPassword = p;
-    patchFirebase({ 'settings/authUsername': u, 'settings/authPassword': p });
-    showToast('Zugangsdaten gespeichert');
-  };
-  document.getElementById('settingsLogoutBtn').onclick = ()=>{
-    showConfirm('Auf diesem Gerät abmelden? Beim nächsten Öffnen muss man sich neu anmelden.', ()=>logout());
-  };
-
-  const notesInput = document.getElementById('changeRequestsInput');
-  const saveNotes = ()=>{
-    state.settings.changeRequests = notesInput.value;
-    patchFirebase({ 'settings/changeRequests': notesInput.value });
-  };
-  notesInput.addEventListener('change', saveNotes);
-  notesInput.addEventListener('blur', saveNotes);
-}
-
-function renderSicherung(){
-  const el = document.getElementById('sicherungContent');
-  const history = Array.isArray(state?.backupHistory) ? state.backupHistory.slice().reverse() : [];
-
-  let html = buildShareCardHtml() + backupCardHtml();
-
-  html += `<div class="card"><h2>Verlauf</h2>`;
-  if(history.length === 0){
-    html += `<div class="empty" style="padding:16px 0;">Noch keine Sicherung exportiert oder importiert.</div>`;
-  } else {
-    html += `<div class="standing-list">` + history.map(ev=>{
-      const label = ev.type==='export' ? 'Exportiert (JSON)' : ev.type==='export-csv' ? 'Exportiert (CSV)' : 'Importiert';
-      const detail = ev.type==='import'
-        ? `${ev.addedCount!=null ? ev.addedCount+' Rennen ergänzt' : ''}${ev.sourceVersion ? ' · aus V'+ev.sourceVersion : ''}`
-        : `${ev.sessionCount!=null ? ev.sessionCount+' Rennen im Datenbestand' : ''}`;
-      return `<div class="result-row">
-        <div class="name">${label}<div class="breakdown"><span>${escapeHtml(formatDate(ev.date))}</span><span>V${ev.version}</span></div></div>
-        <div class="pts" style="font-size:12px;color:var(--muted);font-weight:500;">${escapeHtml(detail)}</div>
-      </div>`;
-    }).join('') + `</div>`;
-  }
-  html += `<p class="muted" style="margin-top:10px;">Zeigt, wann zuletzt exportiert/importiert wurde und mit welcher App-Version.</p></div>`;
-
-  el.innerHTML = html;
-  wireBackupButtons();
-  wireShareCard();
-}
-
-let archivFilter = [];
-
-function archivFilterCardHtml(){
-  const names = orderedSavedNames();
-  return `<div class="card">
-    <h2>Nach Besetzung filtern</h2>
-    <div class="chip-grid" id="archivFilterChips">
-      ${names.map(n=>`<div class="chip${archivFilter.includes(n)?' active':''}" data-archiv-filter-name="${escapeHtml(n)}">${escapeHtml(n)}</div>`).join('')}
-    </div>
-    ${archivFilter.length ? '<button class="add-toggle" id="archivFilterResetBtn" style="margin-top:8px;">Filter zurücksetzen</button>' : '<p class="muted" style="margin:8px 0 0;">Keine Auswahl = alle Rennen</p>'}
-  </div>`;
-}
-
-function wireArchivFilterChips(){
-  document.querySelectorAll('#archivFilterChips [data-archiv-filter-name]').forEach(chip=>{
-    chip.onclick = ()=>{
-      const n = chip.dataset.archivFilterName;
-      const i = archivFilter.indexOf(n);
-      if(i>=0) archivFilter.splice(i,1); else archivFilter.push(n);
-      renderArchiv();
-    };
-  });
-  const resetBtn = document.getElementById('archivFilterResetBtn');
-  if(resetBtn) resetBtn.onclick = ()=>{ archivFilter = []; renderArchiv(); };
-}
-
-function renderArchiv(){
-  const el = document.getElementById('archivContent');
-  if (!el || !state || !Array.isArray(state.sessions)) return;
-
-  const filtered = archivFilter.length
-    ? state.sessions.filter(s=> s && sameSet(s.participants, archivFilter))
-    : state.sessions;
-
-  if(state.sessions.length === 0){
-    el.innerHTML = '<div class="empty">Noch keine Rennen gespeichert.</div>';
-    return;
-  }
-  if(filtered.length === 0){
-    el.innerHTML = archivFilterCardHtml() + '<div class="empty">Keine Rennen mit genau dieser Besetzung.</div>';
-    wireArchivFilterChips();
-    return;
-  }
-  const sorted = filtered.slice().sort((a,b)=> (b.date || '').localeCompare(a.date || '') || (b.id || '').localeCompare(a.id || ''));
-
-  el.innerHTML = archivFilterCardHtml() + sorted.map(s=>{
-    const totals = sessionTotals(s);
-    const rankedStandings = Object.entries(totals).sort((a,b)=>a[1]-b[1]);
-    const winnerPts = rankedStandings.length ? rankedStandings[0][1] : null;
-
-    const complete = s && Array.isArray(s.participants) && s.grid && s.participants.every(n=> Array.isArray(s.grid[n]) && s.grid[n].every(v=>v!==null && v!==undefined));
-
-    return `<div class="card">
-      <div class="session-head" data-toggle-id="${s.id}" style="cursor:pointer;">
-        <div class="info"><b>${formatDate(s.date)}</b> · ${s.participants ? s.participants.length : 0} Fahrer${complete?'':' · unvollständig'}</div>
-        <div style="display:flex;gap:6px;">
-          <button data-edit-id="${s.id}">Bearbeiten</button>
-          <button class="danger" data-delete-id="${s.id}">Löschen</button>
-        </div>
-      </div>
-      <div class="match-standing" data-toggle-id="${s.id}" style="cursor:pointer;">${rankedStandings.map(([n,p])=>`<span class="${p===winnerPts?'win':''}">${escapeHtml(n)} ${p}</span>`).join('')}</div>
-      <div class="archiv-detail" id="detail-${s.id}" style="display:none;margin-top:12px;"></div>
-    </div>`;
-  }).join('');
-
-  wireArchivFilterChips();
-
-  el.querySelectorAll('[data-toggle-id]').forEach(elToggle=>{
-    elToggle.onclick = ()=>{
-      const id = elToggle.dataset.toggleId;
-      const detail = document.getElementById('detail-'+id);
-      const isOpen = detail.style.display !== 'none';
-      if(isOpen){
-        detail.style.display = 'none';
-        detail.innerHTML = '';
-      } else {
-        const session = state.sessions.find(x=>x.id===id);
-        detail.innerHTML = session ? buildReadOnlyGridHtml(session) : '';
-        detail.style.display = 'block';
-      }
-    };
-  });
-
-  el.querySelectorAll('[data-delete-id]').forEach(btn=>{
-    btn.onclick = ()=>{
-      const id = btn.dataset.deleteId;
-      showConfirm('Dieses Rennen wirklich löschen?', ()=>{
-        state.sessions = state.sessions.filter(x=>x.id!==id);
-        saveState();
-        renderArchiv();
-      });
-    };
-  });
-
-  el.querySelectorAll('[data-edit-id]').forEach(btn=>{
-    btn.onclick = ()=>{
-      const id = btn.dataset.editId;
-      const openNow = ()=>{
-        const session = state.sessions.find(x=>x.id===id);
-        if(!session) return;
-        const prevMatch = state.sessions
-          .filter(x=>x.id!==id && sameSet(x.participants, session.participants) && x.date <= session.date)
-          .slice().sort((a,b)=> (b.date || '').localeCompare(a.date || ''))[0] || null;
-        draft = JSON.parse(JSON.stringify(session));
-        const rounds = (draft.grid && draft.participants[0] && draft.grid[draft.participants[0]]) ? draft.grid[draft.participants[0]].length : 0;
-        if(!draft.penalties) draft.penalties = {};
-        draft.participants.forEach(n=>{ if(!(n in draft.penalties)) draft.penalties[n] = 0; });
-        if(!draft.trackNames) draft.trackNames = [];
-        while(draft.trackNames.length < rounds) draft.trackNames.push('');
-        if(!draft.trackTimes) draft.trackTimes = {};
-        draft.participants.forEach(n=>{
-          if(!draft.trackTimes[n]) draft.trackTimes[n] = [];
-          while(draft.trackTimes[n].length < rounds) draft.trackTimes[n].push(null);
-        });
-        if(typeof draft.note !== 'string') draft.note = '';
-        draft.lastMatchInfo = prevMatch ? { date: prevMatch.date, standing: sessionTotals(prevMatch) } : null;
-        draft.editorClientId = CLIENT_ID;
-        rennenPhase = 'editing';
-        saveDraft();
-        switchView('rennen');
-      };
-      if(draft){
-        showConfirm('Es gibt bereits ein unfertiges Rennen in Bearbeitung. Dieses verwerfen und stattdessen das gewählte bearbeiten?', ()=>{
-          clearDraft().then(openNow);
-        });
-      } else {
-        openNow();
-      }
-    };
-  });
-}
-
-/* ---------------- STATISTIK ---------------- */
-let calendarViewMonth = null;
-
-const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-const WEEKDAY_LABELS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
-
-function buildActivityCalendarHtml(){
-  const today = new Date();
-  if(!calendarViewMonth) calendarViewMonth = { year: today.getFullYear(), month: today.getMonth() };
-  const { year, month } = calendarViewMonth;
-
-  const firstOfMonth = new Date(year, month, 1);
-  const daysInMonth = new Date(year, month+1, 0).getDate();
-  const startWeekday = (firstOfMonth.getDay()+6)%7;
-
-  const countByDate = {};
-  if (state && Array.isArray(state.sessions)) {
-    state.sessions.forEach(s=>{ countByDate[s.date] = (countByDate[s.date]||0) + 1; });
-  }
-  let maxCount = 1;
-  Object.values(countByDate).forEach(c=>{ if(c>maxCount) maxCount=c; });
-
-  const isCurrentOrFutureMonth = (year > today.getFullYear()) || (year === today.getFullYear() && month >= today.getMonth());
-
-  let cellsHtml = '';
-  for(let i=0;i<startWeekday;i++) cellsHtml += `<div></div>`;
-  for(let d=1; d<=daysInMonth; d++){
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const count = countByDate[dateStr] || 0;
-    const isToday = dateStr === todayStr();
-    let bg = 'rgba(255,255,255,0.05)', textColor = 'var(--muted)', fontWeight = '500';
-    if(count > 0){
-      const alpha = 0.3 + Math.min(1, count/maxCount)*0.6;
-      bg = `rgba(0,229,255,${alpha.toFixed(2)})`;
-      textColor = '#04222a';
-      fontWeight = '700';
-    }
-    const ring = isToday ? 'box-shadow:0 0 0 2px var(--accent) inset;' : '';
-    cellsHtml += `<div title="${escapeHtml(formatDate(dateStr))}: ${count} Rennen" style="aspect-ratio:1;border-radius:7px;background:${bg};${ring}
-      display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:${fontWeight};color:${textColor};">${d}</div>`;
-  }
-
-  return `<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <button id="calPrevBtn" style="padding:8px 16px;">‹</button>
-      <h2 style="margin:0;">${MONTH_NAMES[month]} ${year}</h2>
-      <button id="calNextBtn" style="padding:8px 16px;" ${isCurrentOrFutureMonth?'disabled':''}>›</button>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;">
-      ${WEEKDAY_LABELS.map(w=>`<div style="text-align:center;font-size:10px;color:var(--muted);letter-spacing:0.3px;">${w}</div>`).join('')}
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${cellsHtml}</div>
-    <p class="muted" style="margin-top:10px;">Je heller, desto mehr Rennen an diesem Tag</p>
-  </div>`;
-}
-
-function wireActivityCalendar(){
-  const prevBtn = document.getElementById('calPrevBtn');
-  const nextBtn = document.getElementById('calNextBtn');
-  if(prevBtn){
-    prevBtn.onclick = ()=>{
-      calendarViewMonth.month--;
-      if(calendarViewMonth.month < 0){ calendarViewMonth.month = 11; calendarViewMonth.year--; }
-      renderStatistik();
-    };
-  }
-  if(nextBtn && !nextBtn.disabled){
-    nextBtn.onclick = ()=>{
-      calendarViewMonth.month++;
-      if(calendarViewMonth.month > 11){ calendarViewMonth.month = 0; calendarViewMonth.year++; }
-      renderStatistik();
-    };
-  }
-}
-
-function renderStatistik(){
-  const el = document.getElementById('statistikContent');
-  if (!el || !state || !Array.isArray(state.sessions)) return;
-
-  const earliestDate = state.sessions.length
-    ? state.sessions.reduce((min,s)=> (s.date < min ? s.date : min), state.sessions[0].date)
-    : todayStr();
-  const effectiveFrom = statsFilter.from || earliestDate;
-  const effectiveTo = statsFilter.to || todayStr();
-
-  const filterCardHtml = `<div class="card">
-    <h2>Zeitraum</h2>
-    <div class="setup-row" style="display:flex;gap:10px;">
-      <div style="flex:1;">
-        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Von</label>
-        <input type="date" id="statsFromInput" value="${effectiveFrom}" />
-      </div>
-      <div style="flex:1;">
-        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Bis</label>
-        <input type="date" id="statsToInput" value="${effectiveTo}" />
-      </div>
-    </div>
-    ${(statsFilter.from || statsFilter.to) ? '<button class="add-toggle" id="statsResetBtn" style="margin-top:10px;">Zeitraum zurücksetzen</button>' : ''}
-  </div>`;
-
-  const sessions = state.sessions.filter(s=> s && s.date >= effectiveFrom && s.date <= effectiveTo);
-  const activityCardHtml = buildActivityCalendarHtml();
-
-  if(sessions.length===0){
-    el.innerHTML = filterCardHtml + activityCardHtml + '<div class="empty">Keine Rennen in diesem Zeitraum.<br>Trage Ergebnisse im Rennen-Tab ein oder wähle einen anderen Zeitraum.</div>';
-    wireStatsFilterInputs();
-    wireActivityCalendar();
-    return;
-  }
-
-  const stats = {};
-  function ensure(n){ if(!stats[n]) stats[n]={sessions:0, rounds:0, points:0, wins:0, podiums:0, dnfs:0, stars:0, sessionWins:0, recent:[], raceDates:new Set(), penalties:0, totalTimeMs:0, timedRounds:0}; return stats[n]; }
-  const comboCount = {};
-
-  sessions.forEach(s=>{
-    if (!s || !Array.isArray(s.participants)) return;
-    const key = [...s.participants].sort().join(' + ');
-    comboCount[key] = (comboCount[key]||0) + 1;
-    const N = s.participants.length;
-    s.participants.forEach(name=>{
-      const st = ensure(name);
-      st.sessions++;
-      st.raceDates.add(s.date);
-      const penalty = s.penalties && s.penalties[name];
-      if(penalty){
-        const p = Number(penalty) || 0;
-        st.penalties += p;
-        st.points += p;
-      }
-      if(s.trackTimes && s.trackTimes[name]){
-        s.trackTimes[name].forEach(t=>{
-          const ms = t ? parseTimeToMs(t) : null;
-          if(ms!==null){ st.totalTimeMs += ms; st.timedRounds++; }
-        });
-      }
-      const arr = s.grid && s.grid[name] ? s.grid[name] : [];
-      arr.forEach(val=>{
-        if(val===null || val===undefined) return;
-        st.rounds++;
-        const isDnf = (val === 'DNF');
-        const num = isDnf ? null : asPlacementNumber(val);
-        const pts = isDnf ? N+1 : (num!==null ? num : 0);
-        st.points += pts;
-        st.recent.push({date:s.date, pts});
-        if(isDnf) st.dnfs++;
-        else{
-          if(num===1) st.wins++;
-          if(num!==null && num<=3) st.podiums++;
-        }
-        if(isStarredValue(val)) st.stars++;
-      });
-    });
-    const totals = sessionTotals(s);
-    const complete = s.participants.every(n=> Array.isArray(s.grid[n]) && s.grid[n].every(v=>v!==null && v!==undefined));
-    if(complete){
-      const winnerEntry = Object.entries(totals).sort((a,b)=>a[1]-b[1])[0];
-      if (winnerEntry) ensure(winnerEntry[0]).sessionWins++;
-    }
-  });
-
-  const totalSessions = sessions.length;
-  const totalRoundsPlayed = sessions.reduce((sum,s)=> sum + (s.participants ? Math.max(...s.participants.map(n=>(s.grid && s.grid[n]) ? s.grid[n].filter(v=>v!==null&&v!==undefined).length : 0),0) : 0), 0);
-
-  let html = `<div class="stat-grid">
-    <div class="stat-box"><div class="num">${totalSessions}</div><div class="lbl">Sessions</div></div>
-    <div class="stat-box"><div class="num">${totalRoundsPlayed}</div><div class="lbl">Tracks gesamt</div></div>
-  </div>`;
-
-  const statEntries = Object.entries(stats).filter(([,st])=>st.rounds>0);
-  const totalPointsAll = statEntries.reduce((a,[,st])=>a+st.points,0);
-  const totalRoundsAll = statEntries.reduce((a,[,st])=>a+st.rounds,0);
-  const groupAvg = totalRoundsAll ? totalPointsAll/totalRoundsAll : 0;
-  const C = 12;
-
-  const rankedByFair = statEntries.map(([name,st])=>{
-    const rawAvg = st.points/st.rounds;
-    const adjusted = (st.points + C*groupAvg) / (st.rounds + C);
-    return [name, st, rawAvg, adjusted];
-  }).sort((a,b)=> a[3]-b[3]);
-
-  const crownHolder = getStreakCrownHolder();
-  const loserHolder = getStreakLoserHolder();
-  html += `<div class="card"><h2>Gesamtranking</h2><div class="standing-list">`;
-  html += rankedByFair.map(([name,st,rawAvg,adjusted],i)=>{
-    const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
-    const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
-    let badges = '';
-    if(crownHolder && crownHolder.name===name) badges += ` 👑<span style="font-size:11px;color:var(--muted);"> (${crownHolder.streak}x in Folge)</span>`;
-    if(loserHolder && loserHolder.name===name) badges += ` 💩<span style="font-size:11px;color:var(--muted);"> (${loserHolder.streak}x in Folge)</span>`;
-    return `<div class="result-row">
-      <div class="rank-badge ${cls}">${badge}</div>
-      <div class="name">${escapeHtml(name)}${badges}</div>
-      <div class="pts">${adjusted.toFixed(2)}</div>
-    </div>`;
-  }).join('');
-  html += `</div><p class="muted" style="margin-top:10px;">
-    So wird gerechnet: <b style="color:var(--text);">bereinigter Schnitt = (eigene Punktesumme + ${C} × Gruppen-Durchschnitt) ÷ (eigene Streckenanzahl + ${C})</b>.
-    Der aktuelle Gruppen-Durchschnitt liegt bei ${groupAvg.toFixed(2)} Punkten pro Strecke.
-    Niedriger = besser.</p></div>`;
-
-  const timeEntries = Object.entries(stats).filter(([,st])=>st.timedRounds>0);
-  if(timeEntries.length>0){
-    const rankedByTime = timeEntries.map(([name,st])=>[name, st, st.totalTimeMs/st.timedRounds]).sort((a,b)=>a[2]-b[2]);
-    html += `<div class="card"><h2>Zeit-Ranking</h2><div class="standing-list">`;
-    html += rankedByTime.map(([name,st,avgMs],i)=>{
-      const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
-      const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
-      return `<div class="result-row">
-        <div class="rank-badge ${cls}">${badge}</div>
-        <div class="name">${escapeHtml(name)}<div class="breakdown"><span>${st.timedRounds} gewertete Strecken</span></div></div>
-        <div class="pts">${formatDurationMsPrecise(avgMs)}</div>
-      </div>`;
-    }).join('');
-    html += `</div><p class="muted" style="margin-top:10px;">
-      Durchschnittliche Zeit pro gefahrener Strecke (Gesamtzeit ÷ Anzahl gewerteter Strecken) – damit zählt nicht, wer öfter gefahren ist, sondern wer im Schnitt schneller war. Niedriger = besser.</p></div>`;
-  }
-
-  html += `<div class="card"><h2>Fahrer-Statistik</h2>
-    <div class="table-wrap"><table class="stats"><thead><tr>
-      <th>Name</th><th>Renntage</th><th>Strecken</th><th>Sess.-Sieg</th><th>Renn.-Sieg</th><th>Podest %</th><th>Ø Pkt</th><th>DNF %</th><th>Strafp.</th><th>⭐</th><th>Fahrzeit</th>
-    </tr></thead><tbody>`;
-  Object.entries(stats)
-    .sort((a,b)=> a[1].points - b[1].points)
-    .forEach(([name,st])=>{
-      const avg = st.rounds ? (st.points/st.rounds).toFixed(1) : '–';
-      const podiumPct = st.rounds ? Math.round(100*st.podiums/st.rounds) : 0;
-      const dnfPct = st.rounds ? Math.round(100*st.dnfs/st.rounds) : 0;
-      html += `<tr>
-        <td>${escapeHtml(name)}</td>
-        <td>${st.raceDates.size}</td>
-        <td>${st.rounds}</td>
-        <td>${st.sessionWins}</td>
-        <td>${st.wins}</td>
-        <td>${podiumPct}%</td>
-        <td>${avg}</td>
-        <td>${dnfPct}%</td>
-        <td>${st.penalties}</td>
-        <td>${st.stars}</td>
-        <td>${formatDurationMs(st.totalTimeMs)}</td>
-      </tr>`;
-    });
-  html += `</tbody></table></div>`;
-  html += `<p class="muted" style="margin-top:10px;">Ø Pkt = durchschnittliche Punkte pro Strecke (niedriger = besser) · Renntage = Anzahl unterschiedlicher Tage mit Teilnahme · Strecken = Anzahl gefahrener Rennstrecken gesamt · DNF % = Anteil nicht abgeschlossener Strecken · Strafp. = Summe aller erhaltenen Strafpunkte · ⭐ = Anzahl "letzter Tropfen Benzin"-Rettungen auf Platz 1 · Fahrzeit = Summe aller eingetragenen Streckenzeiten (h:mm:ss)</p>
-  </div>`;
-
-  const comboSorted = Object.entries(comboCount).sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0]));
-  html += `<div class="card"><h2>Besetzungen</h2>
-    <table class="stats"><thead><tr><th>Fahrer</th><th>Anzahl</th></tr></thead><tbody>`;
-  comboSorted.forEach(([combo,count])=>{
-    html += `<tr><td>${escapeHtml(combo)}</td><td>${count}×</td></tr>`;
-  });
-  html += `</tbody></table>
-  <p class="muted" style="margin-top:10px;">Wie oft jede Fahrer-Kombination bisher zusammen gefahren ist</p>
-  </div>`;
-
-  el.innerHTML = filterCardHtml + activityCardHtml + html;
-  wireStatsFilterInputs();
-  wireActivityCalendar();
-}
-
-function wireStatsFilterInputs(){
-  const fromInput = document.getElementById('statsFromInput');
-  const toInput = document.getElementById('statsToInput');
-  const resetBtn = document.getElementById('statsResetBtn');
-  if(fromInput){
-    fromInput.addEventListener('change', e=>{
-      statsFilter.from = e.target.value || null;
-      renderStatistik();
-    });
-  }
-  if(toInput){
-    toInput.addEventListener('change', e=>{
-      statsFilter.to = e.target.value || null;
-      renderStatistik();
-    });
-  }
-  if(resetBtn){
-    resetBtn.onclick = ()=>{
-      statsFilter = { from: null, to: null };
-      renderStatistik();
-    };
-  }
-}
-
-/* ---------------- NAV / INIT ---------------- */
-document.querySelectorAll('nav.bottom button').forEach(btn=>{ btn.onclick = ()=>switchView(btn.dataset.view); });
-
-document.getElementById('versionBadge').innerHTML = `<b>V${APP_VERSION}</b> · ${formatDate(APP_VERSION_DATE)}`;
-document.getElementById('versionBadge').style.cursor = 'pointer';
-document.getElementById('versionBadge').onclick = showVersionHistory;
-
-document.getElementById('loginSubmitBtn').onclick = attemptLogin;
-document.getElementById('loginPassInput').addEventListener('keydown', e=>{ if(e.key==='Enter') attemptLogin(); });
-document.getElementById('loginUserInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('loginPassInput').focus(); });
-
-loadState();
-</script>
-</body>
-</html>
+  const colorRowsHtml = orderedSavedNames().map(name=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <input type="color" data-color-name="${escapeHtml(name)}" value="${getDriverColor(name)}" style="width:40px;height:36px;padding:2px;border-radius:8px;cursor:pointer;flex-shrink:0;" />
+ 
