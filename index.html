@@ -353,7 +353,7 @@ const FIXED_DRIVERS = ['Max','Andy','Dani','Olly','Bär','Mky'];
 // A random id for THIS browser tab, used only to detect (and warn about,
 // not prevent) two people editing the same race at the same time.
 const CLIENT_ID = 'c' + Date.now() + Math.random().toString(36).slice(2,8);
-const APP_VERSION = 15;
+const APP_VERSION = 16;
 const APP_VERSION_DATE = '2026-10-02';
 const VERSION_HISTORY = [
   { v:1, date:'2026-09-10', notes:'Kompletter Funktionsstand: Rennen-Tabelle, Archiv, Statistik, Strafpunkte, Zeitraum-Filter, faires Gesamtranking.' },
@@ -370,7 +370,8 @@ const VERSION_HISTORY = [
   { v:12, date:'2026-10-02', notes:'Speicher-Backend auf Firebase Realtime Database umgestellt (Echtzeit-Sync statt 5-Sekunden-Abfrage), gehostet über GitHub Pages. Bug behoben: Bei einem Verbindungsfehler blieb die App bisher für immer bei "Verbinde…" hängen, ohne eine Erklärung zu zeigen – jetzt wird die genaue Fehlermeldung angezeigt. Außerdem: Absturz behoben, falls Teilnehmer und Punktetabelle einer Session nicht exakt zusammenpassten (z.B. durch ältere Testdaten) – solche Einträge werden jetzt automatisch repariert statt die App zum Abstürzen zu bringen.' },
   { v:13, date:'2026-10-02', notes:'Bug behoben: Im Track-Editor wurde beim Speichern manchmal die Zeit der falschen Person als Bestzeit-Basis verwendet (nicht die tatsächlich als Platz 1 markierte), wodurch für alle anderen Fahrer viel zu kleine "absolute" Zeiten im Strecken-Tab gespeichert wurden. Historien-Daten im Code entfernt – die Rennen liegen jetzt ausschließlich in Firebase, nicht mehr zusätzlich fest im Code.' },
   { v:14, date:'2026-10-02', notes:'Track-Editor: Reihenfolge folgt jetzt dem aktuellen Punktestand. Zeiteingabe braucht nur noch Ziffern (Doppelpunkt/Komma automatisch). Archiv & Statistik: neues Fahrzeit-Ranking (Gesamtzeit je Session, fair pro Strecke in der Statistik). 💩 für die längste Verlustserie neben der 👑. Parallel-Eingabe abgesichert (gezielte statt komplette Speicherzugriffe). Warnung bei gleichzeitiger Bearbeitung derselben Session. Neuer Fotos-Tab (Firebase Storage). Neuer Settings-Tab: Zugangsdaten-Login (Standard TM/TM2026) und Notizen für Änderungswünsche.' },
-  { v:15, date:'2026-10-02', notes:'DNF zeigt im Strecken-Tab jetzt wirklich "DNF" statt einer falschen Zeit; zählt in der Statistik mit einstellbarer Ersatzzeit (Settings). Live-Zeit-Ranking unterhalb des Zwischenstands während der Eingabe. "Neues Rennen starten" führt direkt zur Punktetabelle. "Speichern" und "Fertig" zu einem Button zusammengelegt. Krone-Berechnung repariert (war zu streng). Kalender färbt Tage jetzt in der Farbe des Tagessiegers inkl. Namen. Fahrer-Farben überall in der App, einstellbar unter Settings. Settings erweitert um DNF-Zeitwertung und Jubiläumsfeier-Schalter.' }
+  { v:15, date:'2026-10-02', notes:'DNF zeigt im Strecken-Tab jetzt wirklich "DNF" statt einer falschen Zeit; zählt in der Statistik mit einstellbarer Ersatzzeit (Settings). Live-Zeit-Ranking unterhalb des Zwischenstands während der Eingabe. "Neues Rennen starten" führt direkt zur Punktetabelle. "Speichern" und "Fertig" zu einem Button zusammengelegt. Krone-Berechnung repariert (war zu streng). Kalender färbt Tage jetzt in der Farbe des Tagessiegers inkl. Namen. Fahrer-Farben überall in der App, einstellbar unter Settings. Settings erweitert um DNF-Zeitwertung und Jubiläumsfeier-Schalter.' },
+  { v:16, date:'2026-10-02', notes:'Bug behoben: Die Storage-Konfiguration (für Fotos) war in derselben Einstellung wie die Datenbank-Verbindung untergebracht – ein ungültiger Wert dort konnte die komplette App blockieren ("Verbinde…" ohne Ende), obwohl die Datenbank selbst nie das Problem war. Beides jetzt komplett getrennt. Jubiläumsfeier ist jetzt fix aktiviert (Einstellung dafür entfernt).' }
 ];
 
 let state = null;
@@ -410,7 +411,6 @@ function defaultState(){
       authPassword: 'TM2026',
       changeRequests: '',
       dnfPenaltySeconds: 30,
-      milestonesEnabled: true,
       driverColors: {
         Max: '#00e5ff',
         Andy: '#ff5b1f',
@@ -817,13 +817,17 @@ function showVersionHistory(){
    ============================================================
 */
 const firebaseConfig = {
-  databaseURL: "https://trkmn-44c02-default-rtdb.europe-west1.firebasedatabase.app",
-  // Needed for the Fotos tab (Firebase Storage). Best guess based on your
-  // project id from the databaseURL above - if photo upload doesn't work,
-  // check Firebase Console → Project settings → General → "Your apps" →
-  // the storageBucket value shown there, and paste the exact value here.
-  storageBucket: "trkmn-44c02.firebasestorage.app"
+  databaseURL: "https://trkmn-44c02-default-rtdb.europe-west1.firebasedatabase.app"
 };
+// Best guess for the Fotos tab's storage bucket, based on the project id in
+// the databaseURL above. Kept COMPLETELY separate from firebaseConfig on
+// purpose: initializeApp() validates its config up front, so a bad/unknown
+// storageBucket value in there could have broken the database connection
+// too, even though the database itself was never the problem. If photo
+// upload doesn't work, check Firebase Console → Project settings → General
+// → "Your apps" → the storageBucket value shown there, and paste the exact
+// value here - this can never affect the database connection above.
+const STORAGE_BUCKET = "trkmn-44c02.firebasestorage.app";
 
 let dbRef = null;
 let storageRef = null;
@@ -837,10 +841,10 @@ try{
   console.error('Firebase init failed - check firebaseConfig at the top of the script.', e);
 }
 try{
-  storageRef = firebase.storage().ref();
+  storageRef = firebase.app().storage(`gs://${STORAGE_BUCKET}`).ref();
   storageReady = true;
 }catch(e){
-  console.error('Firebase Storage init failed - check storageBucket in firebaseConfig, and that Storage is enabled in the Firebase console.', e);
+  console.error('Firebase Storage init failed - check STORAGE_BUCKET near the top of the script, and that Storage is enabled in the Firebase console. This does not affect the race data/database connection.', e);
 }
 
 let saveInFlight = 0;
@@ -870,7 +874,6 @@ function loadState(){
     if(typeof fresh.settings.authPassword !== 'string') fresh.settings.authPassword = 'TM2026';
     if(typeof fresh.settings.changeRequests !== 'string') fresh.settings.changeRequests = '';
     if(typeof fresh.settings.dnfPenaltySeconds !== 'number' || isNaN(fresh.settings.dnfPenaltySeconds)) fresh.settings.dnfPenaltySeconds = 30;
-    if(typeof fresh.settings.milestonesEnabled !== 'boolean') fresh.settings.milestonesEnabled = true;
     if(!fresh.settings.driverColors || typeof fresh.settings.driverColors !== 'object') fresh.settings.driverColors = {};
     const defaultColors = { Max:'#00e5ff', Andy:'#ff5b1f', Dani:'#ffd166', Olly:'#7ee787', Bär:'#ff6b9d', Mky:'#a78bfa' };
     Object.entries(defaultColors).forEach(([n,c])=>{ if(!fresh.settings.driverColors[n]) fresh.settings.driverColors[n] = c; });
@@ -1543,8 +1546,7 @@ function showMilestoneModal(count, isBig, extraHtml){
 
 function showFinishOverlay(session, isMilestone, sessionCount){
   const recapHtml = buildSessionRecapHtml(session);
-  const milestonesOn = !state.settings || state.settings.milestonesEnabled !== false;
-  if(isMilestone && milestonesOn){
+  if(isMilestone){
     const isBig = (sessionCount===100 || sessionCount===200);
     showMilestoneModal(sessionCount, isBig, recapHtml);
   } else if(recapHtml){
@@ -2182,7 +2184,7 @@ function renderFotos(){
 function renderSettings(){
   const el = document.getElementById('settingsContent');
   if(!el || !state) return;
-  if(!state.settings) state.settings = { authUsername:'TM', authPassword:'TM2026', changeRequests:'', dnfPenaltySeconds:30, milestonesEnabled:true, driverColors:{} };
+  if(!state.settings) state.settings = { authUsername:'TM', authPassword:'TM2026', changeRequests:'', dnfPenaltySeconds:30, driverColors:{} };
   const s = state.settings;
 
   const colorRowsHtml = orderedSavedNames().map(name=>`
@@ -2214,16 +2216,6 @@ function renderSettings(){
     <div style="display:flex;align-items:center;gap:10px;">
       <input type="number" min="0" id="dnfPenaltyInput" value="${s.dnfPenaltySeconds!=null?s.dnfPenaltySeconds:30}" style="width:90px;" />
       <span class="muted">Sekunden</span>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Jubiläumsfeier</h2>
-    <div style="display:flex;align-items:center;justify-content:space-between;">
-      <p class="muted" style="margin:0;">Pop-up bei runden Renn-Anzahlen (60, 70, 80, … 100, 200, …)</p>
-      <label style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-        <input type="checkbox" id="milestonesToggle" ${s.milestonesEnabled!==false?'checked':''} style="width:18px;height:18px;" />
-      </label>
     </div>
   </div>
 
@@ -2264,10 +2256,6 @@ function renderSettings(){
     showToast('DNF-Zeitwertung gespeichert');
   });
 
-  document.getElementById('milestonesToggle').addEventListener('change', (e)=>{
-    state.settings.milestonesEnabled = e.target.checked;
-    patchFirebase({ 'settings/milestonesEnabled': e.target.checked });
-  });
 
   const notesInput = document.getElementById('changeRequestsInput');
   const saveNotes = ()=>{
