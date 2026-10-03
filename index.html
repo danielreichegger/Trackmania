@@ -2188,4 +2188,572 @@ function renderSettings(){
   const colorRowsHtml = orderedSavedNames().map(name=>`
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
       <input type="color" data-color-name="${escapeHtml(name)}" value="${getDriverColor(name)}" style="width:40px;height:36px;padding:2px;border-radius:8px;cursor:pointer;flex-shrink:0;" />
- 
+      <div style="flex:1;font-size:14px;">${escapeHtml(name)}</div>
+    </div>`).join('');
+
+  el.innerHTML = `<div class="card">
+    <h2>Zugang</h2>
+    <p class="muted" style="margin:0 0 12px;">Einfacher Zugriffsschutz für die Gruppe – keine echte Sicherheit, der Code ist für jeden einsehbar. Hält nur Zufallsbesucher fern.</p>
+    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Benutzername</label>
+    <input type="text" id="settingsUserInput" value="${escapeHtml(s.authUsername||'TM')}" style="width:100%;margin-bottom:12px;" />
+    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Passwort</label>
+    <input type="text" id="settingsPassInput" value="${escapeHtml(s.authPassword||'TM2026')}" style="width:100%;margin-bottom:12px;" />
+    <button class="primary full" id="settingsSaveAuthBtn">Speichern</button>
+    <button class="full" id="settingsLogoutBtn" style="margin-top:8px;">Auf diesem Gerät abmelden</button>
+  </div>
+
+  <div class="card">
+    <h2>Fahrer-Farben</h2>
+    <p class="muted" style="margin:0 0 12px;">Wird überall in der App verwendet (Tabelle, Rankings, Kalender, Chips).</p>
+    ${colorRowsHtml}
+  </div>
+
+  <div class="card">
+    <h2>DNF-Zeitwertung</h2>
+    <p class="muted" style="margin:0 0 12px;">Wie viele Sekunden ein DNF in den Zeit-Summen (Statistik, Fahrzeit-Ranking) zählt – ein DNF hat ja keine echte Zeit.</p>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <input type="number" min="0" id="dnfPenaltyInput" value="${s.dnfPenaltySeconds!=null?s.dnfPenaltySeconds:30}" style="width:90px;" />
+      <span class="muted">Sekunden</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Jubiläumsfeier</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <p class="muted" style="margin:0;">Pop-up bei runden Renn-Anzahlen (60, 70, 80, … 100, 200, …)</p>
+      <label style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        <input type="checkbox" id="milestonesToggle" ${s.milestonesEnabled!==false?'checked':''} style="width:18px;height:18px;" />
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Änderungswünsche</h2>
+    <p class="muted" style="margin:0 0 12px;">Platz für Notizen/Ideen für die nächste Version – wird für alle gemeinsam gespeichert.</p>
+    <textarea id="changeRequestsInput" placeholder="z.B. neue Funktion, Bug, Idee…" style="width:100%;min-height:120px;resize:vertical;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:11px 12px;font-size:14px;font-family:var(--font-body);">${escapeHtml(s.changeRequests||'')}</textarea>
+  </div>`;
+
+  document.getElementById('settingsSaveAuthBtn').onclick = ()=>{
+    const u = document.getElementById('settingsUserInput').value.trim() || 'TM';
+    const p = document.getElementById('settingsPassInput').value.trim() || 'TM2026';
+    state.settings.authUsername = u;
+    state.settings.authPassword = p;
+    patchFirebase({ 'settings/authUsername': u, 'settings/authPassword': p });
+    showToast('Zugangsdaten gespeichert');
+  };
+  document.getElementById('settingsLogoutBtn').onclick = ()=>{
+    showConfirm('Auf diesem Gerät abmelden? Beim nächsten Öffnen muss man sich neu anmelden.', ()=>logout());
+  };
+
+  document.querySelectorAll('[data-color-name]').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const name = inp.dataset.colorName;
+      if(!state.settings.driverColors) state.settings.driverColors = {};
+      state.settings.driverColors[name] = inp.value;
+      patchFirebase({ [`settings/driverColors/${name}`]: inp.value });
+      showToast(`Farbe für ${name} gespeichert`);
+    });
+  });
+
+  document.getElementById('dnfPenaltyInput').addEventListener('change', (e)=>{
+    const n = parseInt(e.target.value, 10);
+    const val = (isNaN(n) || n<0) ? 30 : n;
+    e.target.value = val;
+    state.settings.dnfPenaltySeconds = val;
+    patchFirebase({ 'settings/dnfPenaltySeconds': val });
+    showToast('DNF-Zeitwertung gespeichert');
+  });
+
+  document.getElementById('milestonesToggle').addEventListener('change', (e)=>{
+    state.settings.milestonesEnabled = e.target.checked;
+    patchFirebase({ 'settings/milestonesEnabled': e.target.checked });
+  });
+
+  const notesInput = document.getElementById('changeRequestsInput');
+  const saveNotes = ()=>{
+    state.settings.changeRequests = notesInput.value;
+    patchFirebase({ 'settings/changeRequests': notesInput.value });
+  };
+  notesInput.addEventListener('change', saveNotes);
+  notesInput.addEventListener('blur', saveNotes);
+}
+
+function renderSicherung(){
+  const el = document.getElementById('sicherungContent');
+  const history = Array.isArray(state?.backupHistory) ? state.backupHistory.slice().reverse() : [];
+
+  let html = buildShareCardHtml() + backupCardHtml();
+
+  html += `<div class="card"><h2>Verlauf</h2>`;
+  if(history.length === 0){
+    html += `<div class="empty" style="padding:16px 0;">Noch keine Sicherung exportiert oder importiert.</div>`;
+  } else {
+    html += `<div class="standing-list">` + history.map(ev=>{
+      const label = ev.type==='export' ? 'Exportiert (JSON)' : ev.type==='export-csv' ? 'Exportiert (CSV)' : 'Importiert';
+      const detail = ev.type==='import'
+        ? `${ev.addedCount!=null ? ev.addedCount+' Rennen ergänzt' : ''}${ev.sourceVersion ? ' · aus V'+ev.sourceVersion : ''}`
+        : `${ev.sessionCount!=null ? ev.sessionCount+' Rennen im Datenbestand' : ''}`;
+      return `<div class="result-row">
+        <div class="name">${label}<div class="breakdown"><span>${escapeHtml(formatDate(ev.date))}</span><span>V${ev.version}</span></div></div>
+        <div class="pts" style="font-size:12px;color:var(--muted);font-weight:500;">${escapeHtml(detail)}</div>
+      </div>`;
+    }).join('') + `</div>`;
+  }
+  html += `<p class="muted" style="margin-top:10px;">Zeigt, wann zuletzt exportiert/importiert wurde und mit welcher App-Version.</p></div>`;
+
+  el.innerHTML = html;
+  wireBackupButtons();
+  wireShareCard();
+}
+
+let archivFilter = [];
+
+function archivFilterCardHtml(){
+  const names = orderedSavedNames();
+  return `<div class="card">
+    <h2>Nach Besetzung filtern</h2>
+    <div class="chip-grid" id="archivFilterChips">
+      ${names.map(n=>`<div class="chip${archivFilter.includes(n)?' active':''}" data-archiv-filter-name="${escapeHtml(n)}">${escapeHtml(n)}</div>`).join('')}
+    </div>
+    ${archivFilter.length ? '<button class="add-toggle" id="archivFilterResetBtn" style="margin-top:8px;">Filter zurücksetzen</button>' : '<p class="muted" style="margin:8px 0 0;">Keine Auswahl = alle Rennen</p>'}
+  </div>`;
+}
+
+function wireArchivFilterChips(){
+  document.querySelectorAll('#archivFilterChips [data-archiv-filter-name]').forEach(chip=>{
+    chip.onclick = ()=>{
+      const n = chip.dataset.archivFilterName;
+      const i = archivFilter.indexOf(n);
+      if(i>=0) archivFilter.splice(i,1); else archivFilter.push(n);
+      renderArchiv();
+    };
+  });
+  const resetBtn = document.getElementById('archivFilterResetBtn');
+  if(resetBtn) resetBtn.onclick = ()=>{ archivFilter = []; renderArchiv(); };
+}
+
+function renderArchiv(){
+  const el = document.getElementById('archivContent');
+  if (!el || !state || !Array.isArray(state.sessions)) return;
+
+  const filtered = archivFilter.length
+    ? state.sessions.filter(s=> s && sameSet(s.participants, archivFilter))
+    : state.sessions;
+
+  if(state.sessions.length === 0){
+    el.innerHTML = '<div class="empty">Noch keine Rennen gespeichert.</div>';
+    return;
+  }
+  if(filtered.length === 0){
+    el.innerHTML = archivFilterCardHtml() + '<div class="empty">Keine Rennen mit genau dieser Besetzung.</div>';
+    wireArchivFilterChips();
+    return;
+  }
+  const sorted = filtered.slice().sort((a,b)=> (b.date || '').localeCompare(a.date || '') || (b.id || '').localeCompare(a.id || ''));
+
+  el.innerHTML = archivFilterCardHtml() + sorted.map(s=>{
+    const totals = sessionTotals(s);
+    const rankedStandings = Object.entries(totals).sort((a,b)=>a[1]-b[1]);
+    const winnerPts = rankedStandings.length ? rankedStandings[0][1] : null;
+
+    const complete = s && Array.isArray(s.participants) && s.grid && s.participants.every(n=> Array.isArray(s.grid[n]) && s.grid[n].every(v=>v!==null && v!==undefined));
+
+    return `<div class="card">
+      <div class="session-head" data-toggle-id="${s.id}" style="cursor:pointer;">
+        <div class="info"><b>${formatDate(s.date)}</b> · ${s.participants ? s.participants.length : 0} Fahrer${complete?'':' · unvollständig'}</div>
+        <div style="display:flex;gap:6px;">
+          <button data-edit-id="${s.id}">Bearbeiten</button>
+          <button class="danger" data-delete-id="${s.id}">Löschen</button>
+        </div>
+      </div>
+      <div class="match-standing" data-toggle-id="${s.id}" style="cursor:pointer;">${rankedStandings.map(([n,p])=>`<span class="${p===winnerPts?'win':''}" style="border-left:3px solid ${getDriverColor(n)};">${escapeHtml(n)} ${p}</span>`).join('')}</div>
+      <div class="archiv-detail" id="detail-${s.id}" style="display:none;margin-top:12px;"></div>
+    </div>`;
+  }).join('');
+
+  wireArchivFilterChips();
+
+  el.querySelectorAll('[data-toggle-id]').forEach(elToggle=>{
+    elToggle.onclick = ()=>{
+      const id = elToggle.dataset.toggleId;
+      const detail = document.getElementById('detail-'+id);
+      const isOpen = detail.style.display !== 'none';
+      if(isOpen){
+        detail.style.display = 'none';
+        detail.innerHTML = '';
+      } else {
+        const session = state.sessions.find(x=>x.id===id);
+        detail.innerHTML = session ? buildReadOnlyGridHtml(session) : '';
+        detail.style.display = 'block';
+      }
+    };
+  });
+
+  el.querySelectorAll('[data-delete-id]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const id = btn.dataset.deleteId;
+      showConfirm('Dieses Rennen wirklich löschen?', ()=>{
+        state.sessions = state.sessions.filter(x=>x.id!==id);
+        saveState();
+        renderArchiv();
+      });
+    };
+  });
+
+  el.querySelectorAll('[data-edit-id]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const id = btn.dataset.editId;
+      const openNow = ()=>{
+        const session = state.sessions.find(x=>x.id===id);
+        if(!session) return;
+        const prevMatch = state.sessions
+          .filter(x=>x.id!==id && sameSet(x.participants, session.participants) && x.date <= session.date)
+          .slice().sort((a,b)=> (b.date || '').localeCompare(a.date || ''))[0] || null;
+        draft = JSON.parse(JSON.stringify(session));
+        const rounds = (draft.grid && draft.participants[0] && draft.grid[draft.participants[0]]) ? draft.grid[draft.participants[0]].length : 0;
+        if(!draft.penalties) draft.penalties = {};
+        draft.participants.forEach(n=>{ if(!(n in draft.penalties)) draft.penalties[n] = 0; });
+        if(!draft.trackNames) draft.trackNames = [];
+        while(draft.trackNames.length < rounds) draft.trackNames.push('');
+        if(!draft.trackTimes) draft.trackTimes = {};
+        draft.participants.forEach(n=>{
+          if(!draft.trackTimes[n]) draft.trackTimes[n] = [];
+          while(draft.trackTimes[n].length < rounds) draft.trackTimes[n].push(null);
+        });
+        if(typeof draft.note !== 'string') draft.note = '';
+        draft.lastMatchInfo = prevMatch ? { date: prevMatch.date, standing: sessionTotals(prevMatch) } : null;
+        draft.editorClientId = CLIENT_ID;
+        rennenPhase = 'editing';
+        saveDraft();
+        switchView('rennen');
+      };
+      if(draft){
+        showConfirm('Es gibt bereits ein unfertiges Rennen in Bearbeitung. Dieses verwerfen und stattdessen das gewählte bearbeiten?', ()=>{
+          clearDraft().then(openNow);
+        });
+      } else {
+        openNow();
+      }
+    };
+  });
+}
+
+/* ---------------- STATISTIK ---------------- */
+let calendarViewMonth = null;
+
+const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const WEEKDAY_LABELS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+function buildActivityCalendarHtml(){
+  const today = new Date();
+  if(!calendarViewMonth) calendarViewMonth = { year: today.getFullYear(), month: today.getMonth() };
+  const { year, month } = calendarViewMonth;
+
+  const firstOfMonth = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const startWeekday = (firstOfMonth.getDay()+6)%7;
+
+  const countByDate = {};
+  const winnerByDate = {};
+  if (state && Array.isArray(state.sessions)) {
+    const byDate = {};
+    state.sessions.forEach(s=>{
+      countByDate[s.date] = (countByDate[s.date]||0) + 1;
+      (byDate[s.date] = byDate[s.date] || []).push(s);
+    });
+    Object.entries(byDate).forEach(([date, sessionsThatDay])=>{
+      const scorable = sessionsThatDay.filter(hasScorableResult).sort((a,b)=> (a.id||'').localeCompare(b.id||''));
+      if(scorable.length===0) return;
+      const totals = sessionTotals(scorable[0]);
+      const winnerEntry = Object.entries(totals).sort((a,b)=>a[1]-b[1])[0];
+      if(winnerEntry) winnerByDate[date] = winnerEntry[0];
+    });
+  }
+
+  const isCurrentOrFutureMonth = (year > today.getFullYear()) || (year === today.getFullYear() && month >= today.getMonth());
+
+  let cellsHtml = '';
+  for(let i=0;i<startWeekday;i++) cellsHtml += `<div></div>`;
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const count = countByDate[dateStr] || 0;
+    const winner = winnerByDate[dateStr];
+    const isToday = dateStr === todayStr();
+    let bg = 'rgba(255,255,255,0.05)', textColor = 'var(--muted)', fontWeight = '500';
+    if(winner){
+      const color = getDriverColor(winner);
+      bg = color;
+      textColor = '#04222a';
+      fontWeight = '700';
+    } else if(count > 0){
+      bg = 'rgba(255,255,255,0.18)';
+      textColor = 'var(--text)';
+      fontWeight = '700';
+    }
+    const ring = isToday ? 'box-shadow:0 0 0 2px var(--accent) inset;' : '';
+    const nameLabel = winner ? `<div style="font-size:8px;line-height:1;margin-top:1px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(winner)}</div>` : '';
+    cellsHtml += `<div title="${escapeHtml(formatDate(dateStr))}: ${count} Rennen${winner?' · Sieger: '+escapeHtml(winner):''}" style="aspect-ratio:1;border-radius:7px;background:${bg};${ring}
+      display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:${fontWeight};color:${textColor};padding:2px;overflow:hidden;">${d}${nameLabel}</div>`;
+  }
+
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <button id="calPrevBtn" style="padding:8px 16px;">‹</button>
+      <h2 style="margin:0;">${MONTH_NAMES[month]} ${year}</h2>
+      <button id="calNextBtn" style="padding:8px 16px;" ${isCurrentOrFutureMonth?'disabled':''}>›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;">
+      ${WEEKDAY_LABELS.map(w=>`<div style="text-align:center;font-size:10px;color:var(--muted);letter-spacing:0.3px;">${w}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${cellsHtml}</div>
+    <p class="muted" style="margin-top:10px;">Je heller, desto mehr Rennen an diesem Tag</p>
+  </div>`;
+}
+
+function wireActivityCalendar(){
+  const prevBtn = document.getElementById('calPrevBtn');
+  const nextBtn = document.getElementById('calNextBtn');
+  if(prevBtn){
+    prevBtn.onclick = ()=>{
+      calendarViewMonth.month--;
+      if(calendarViewMonth.month < 0){ calendarViewMonth.month = 11; calendarViewMonth.year--; }
+      renderStatistik();
+    };
+  }
+  if(nextBtn && !nextBtn.disabled){
+    nextBtn.onclick = ()=>{
+      calendarViewMonth.month++;
+      if(calendarViewMonth.month > 11){ calendarViewMonth.month = 0; calendarViewMonth.year++; }
+      renderStatistik();
+    };
+  }
+}
+
+function renderStatistik(){
+  const el = document.getElementById('statistikContent');
+  if (!el || !state || !Array.isArray(state.sessions)) return;
+
+  const earliestDate = state.sessions.length
+    ? state.sessions.reduce((min,s)=> (s.date < min ? s.date : min), state.sessions[0].date)
+    : todayStr();
+  const effectiveFrom = statsFilter.from || earliestDate;
+  const effectiveTo = statsFilter.to || todayStr();
+
+  const filterCardHtml = `<div class="card">
+    <h2>Zeitraum</h2>
+    <div class="setup-row" style="display:flex;gap:10px;">
+      <div style="flex:1;">
+        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Von</label>
+        <input type="date" id="statsFromInput" value="${effectiveFrom}" />
+      </div>
+      <div style="flex:1;">
+        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Bis</label>
+        <input type="date" id="statsToInput" value="${effectiveTo}" />
+      </div>
+    </div>
+    ${(statsFilter.from || statsFilter.to) ? '<button class="add-toggle" id="statsResetBtn" style="margin-top:10px;">Zeitraum zurücksetzen</button>' : ''}
+  </div>`;
+
+  const sessions = state.sessions.filter(s=> s && s.date >= effectiveFrom && s.date <= effectiveTo);
+  const activityCardHtml = buildActivityCalendarHtml();
+
+  if(sessions.length===0){
+    el.innerHTML = filterCardHtml + activityCardHtml + '<div class="empty">Keine Rennen in diesem Zeitraum.<br>Trage Ergebnisse im Rennen-Tab ein oder wähle einen anderen Zeitraum.</div>';
+    wireStatsFilterInputs();
+    wireActivityCalendar();
+    return;
+  }
+
+  const stats = {};
+  function ensure(n){ if(!stats[n]) stats[n]={sessions:0, rounds:0, points:0, wins:0, podiums:0, dnfs:0, stars:0, sessionWins:0, recent:[], raceDates:new Set(), penalties:0, totalTimeMs:0, timedRounds:0}; return stats[n]; }
+  const comboCount = {};
+
+  sessions.forEach(s=>{
+    if (!s || !Array.isArray(s.participants)) return;
+    const key = [...s.participants].sort().join(' + ');
+    comboCount[key] = (comboCount[key]||0) + 1;
+    const N = s.participants.length;
+    s.participants.forEach(name=>{
+      const st = ensure(name);
+      st.sessions++;
+      st.raceDates.add(s.date);
+      const penalty = s.penalties && s.penalties[name];
+      if(penalty){
+        const p = Number(penalty) || 0;
+        st.penalties += p;
+        st.points += p;
+      }
+      if(s.trackTimes && s.trackTimes[name]){
+        s.trackTimes[name].forEach((t,r)=>{
+          if(isDnfForRound(s, name, r)){
+            st.totalTimeMs += getDnfPenaltyMs();
+            st.timedRounds++;
+            return;
+          }
+          const ms = t ? parseTimeToMs(t) : null;
+          if(ms!==null){ st.totalTimeMs += ms; st.timedRounds++; }
+        });
+      }
+      const arr = s.grid && s.grid[name] ? s.grid[name] : [];
+      arr.forEach(val=>{
+        if(val===null || val===undefined) return;
+        st.rounds++;
+        const isDnf = (val === 'DNF');
+        const num = isDnf ? null : asPlacementNumber(val);
+        const pts = isDnf ? N+1 : (num!==null ? num : 0);
+        st.points += pts;
+        st.recent.push({date:s.date, pts});
+        if(isDnf) st.dnfs++;
+        else{
+          if(num===1) st.wins++;
+          if(num!==null && num<=3) st.podiums++;
+        }
+        if(isStarredValue(val)) st.stars++;
+      });
+    });
+    const totals = sessionTotals(s);
+    if(hasScorableResult(s)){
+      const winnerEntry = Object.entries(totals).sort((a,b)=>a[1]-b[1])[0];
+      if (winnerEntry) ensure(winnerEntry[0]).sessionWins++;
+    }
+  });
+
+  const totalSessions = sessions.length;
+  const totalRoundsPlayed = sessions.reduce((sum,s)=> sum + (s.participants ? Math.max(...s.participants.map(n=>(s.grid && s.grid[n]) ? s.grid[n].filter(v=>v!==null&&v!==undefined).length : 0),0) : 0), 0);
+
+  let html = `<div class="stat-grid">
+    <div class="stat-box"><div class="num">${totalSessions}</div><div class="lbl">Sessions</div></div>
+    <div class="stat-box"><div class="num">${totalRoundsPlayed}</div><div class="lbl">Tracks gesamt</div></div>
+  </div>`;
+
+  const statEntries = Object.entries(stats).filter(([,st])=>st.rounds>0);
+  const totalPointsAll = statEntries.reduce((a,[,st])=>a+st.points,0);
+  const totalRoundsAll = statEntries.reduce((a,[,st])=>a+st.rounds,0);
+  const groupAvg = totalRoundsAll ? totalPointsAll/totalRoundsAll : 0;
+  const C = 12;
+
+  const rankedByFair = statEntries.map(([name,st])=>{
+    const rawAvg = st.points/st.rounds;
+    const adjusted = (st.points + C*groupAvg) / (st.rounds + C);
+    return [name, st, rawAvg, adjusted];
+  }).sort((a,b)=> a[3]-b[3]);
+
+  const crownHolder = getStreakCrownHolder();
+  const loserHolder = getStreakLoserHolder();
+  html += `<div class="card"><h2>Gesamtranking</h2><div class="standing-list">`;
+  html += rankedByFair.map(([name,st,rawAvg,adjusted],i)=>{
+    const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
+    const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+    let badges = '';
+    if(crownHolder && crownHolder.name===name) badges += ` 👑<span style="font-size:11px;color:var(--muted);"> (${crownHolder.streak}x in Folge)</span>`;
+    if(loserHolder && loserHolder.name===name) badges += ` 💩<span style="font-size:11px;color:var(--muted);"> (${loserHolder.streak}x in Folge)</span>`;
+    return `<div class="result-row">
+      <div class="rank-badge ${cls}">${badge}</div>
+      <div class="name">${driverNameHtml(name)}${badges}</div>
+      <div class="pts">${adjusted.toFixed(2)}</div>
+    </div>`;
+  }).join('');
+  html += `</div><p class="muted" style="margin-top:10px;">
+    So wird gerechnet: <b style="color:var(--text);">bereinigter Schnitt = (eigene Punktesumme + ${C} × Gruppen-Durchschnitt) ÷ (eigene Streckenanzahl + ${C})</b>.
+    Der aktuelle Gruppen-Durchschnitt liegt bei ${groupAvg.toFixed(2)} Punkten pro Strecke.
+    Niedriger = besser.</p></div>`;
+
+  const timeEntries = Object.entries(stats).filter(([,st])=>st.timedRounds>0);
+  if(timeEntries.length>0){
+    const rankedByTime = timeEntries.map(([name,st])=>[name, st, st.totalTimeMs/st.timedRounds]).sort((a,b)=>a[2]-b[2]);
+    html += `<div class="card"><h2>Zeit-Ranking</h2><div class="standing-list">`;
+    html += rankedByTime.map(([name,st,avgMs],i)=>{
+      const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
+      const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+      return `<div class="result-row">
+        <div class="rank-badge ${cls}">${badge}</div>
+        <div class="name">${escapeHtml(name)}<div class="breakdown"><span>${st.timedRounds} gewertete Strecken</span></div></div>
+        <div class="pts">${formatDurationMsPrecise(avgMs)}</div>
+      </div>`;
+    }).join('');
+    html += `</div><p class="muted" style="margin-top:10px;">
+      Durchschnittliche Zeit pro gefahrener Strecke (Gesamtzeit ÷ Anzahl gewerteter Strecken) – damit zählt nicht, wer öfter gefahren ist, sondern wer im Schnitt schneller war. Niedriger = besser.</p></div>`;
+  }
+
+  html += `<div class="card"><h2>Fahrer-Statistik</h2>
+    <div class="table-wrap"><table class="stats"><thead><tr>
+      <th>Name</th><th>Renntage</th><th>Strecken</th><th>Sess.-Sieg</th><th>Renn.-Sieg</th><th>Podest %</th><th>Ø Pkt</th><th>DNF %</th><th>Strafp.</th><th>⭐</th><th>Fahrzeit</th>
+    </tr></thead><tbody>`;
+  Object.entries(stats)
+    .sort((a,b)=> a[1].points - b[1].points)
+    .forEach(([name,st])=>{
+      const avg = st.rounds ? (st.points/st.rounds).toFixed(1) : '–';
+      const podiumPct = st.rounds ? Math.round(100*st.podiums/st.rounds) : 0;
+      const dnfPct = st.rounds ? Math.round(100*st.dnfs/st.rounds) : 0;
+      html += `<tr>
+        <td>${driverNameHtml(name)}</td>
+        <td>${st.raceDates.size}</td>
+        <td>${st.rounds}</td>
+        <td>${st.sessionWins}</td>
+        <td>${st.wins}</td>
+        <td>${podiumPct}%</td>
+        <td>${avg}</td>
+        <td>${dnfPct}%</td>
+        <td>${st.penalties}</td>
+        <td>${st.stars}</td>
+        <td>${formatDurationMs(st.totalTimeMs)}</td>
+      </tr>`;
+    });
+  html += `</tbody></table></div>`;
+  html += `<p class="muted" style="margin-top:10px;">Ø Pkt = durchschnittliche Punkte pro Strecke (niedriger = besser) · Renntage = Anzahl unterschiedlicher Tage mit Teilnahme · Strecken = Anzahl gefahrener Rennstrecken gesamt · DNF % = Anteil nicht abgeschlossener Strecken · Strafp. = Summe aller erhaltenen Strafpunkte · ⭐ = Anzahl "letzter Tropfen Benzin"-Rettungen auf Platz 1 · Fahrzeit = Summe aller eingetragenen Streckenzeiten (h:mm:ss)</p>
+  </div>`;
+
+  const comboSorted = Object.entries(comboCount).sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0]));
+  html += `<div class="card"><h2>Besetzungen</h2>
+    <table class="stats"><thead><tr><th>Fahrer</th><th>Anzahl</th></tr></thead><tbody>`;
+  comboSorted.forEach(([combo,count])=>{
+    html += `<tr><td>${escapeHtml(combo)}</td><td>${count}×</td></tr>`;
+  });
+  html += `</tbody></table>
+  <p class="muted" style="margin-top:10px;">Wie oft jede Fahrer-Kombination bisher zusammen gefahren ist</p>
+  </div>`;
+
+  el.innerHTML = filterCardHtml + activityCardHtml + html;
+  wireStatsFilterInputs();
+  wireActivityCalendar();
+}
+
+function wireStatsFilterInputs(){
+  const fromInput = document.getElementById('statsFromInput');
+  const toInput = document.getElementById('statsToInput');
+  const resetBtn = document.getElementById('statsResetBtn');
+  if(fromInput){
+    fromInput.addEventListener('change', e=>{
+      statsFilter.from = e.target.value || null;
+      renderStatistik();
+    });
+  }
+  if(toInput){
+    toInput.addEventListener('change', e=>{
+      statsFilter.to = e.target.value || null;
+      renderStatistik();
+    });
+  }
+  if(resetBtn){
+    resetBtn.onclick = ()=>{
+      statsFilter = { from: null, to: null };
+      renderStatistik();
+    };
+  }
+}
+
+/* ---------------- NAV / INIT ---------------- */
+document.querySelectorAll('nav.bottom button').forEach(btn=>{ btn.onclick = ()=>switchView(btn.dataset.view); });
+
+document.getElementById('versionBadge').innerHTML = `<b>V${APP_VERSION}</b> · ${formatDate(APP_VERSION_DATE)}`;
+document.getElementById('versionBadge').style.cursor = 'pointer';
+document.getElementById('versionBadge').onclick = showVersionHistory;
+
+document.getElementById('loginSubmitBtn').onclick = attemptLogin;
+document.getElementById('loginPassInput').addEventListener('keydown', e=>{ if(e.key==='Enter') attemptLogin(); });
+document.getElementById('loginUserInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('loginPassInput').focus(); });
+
+loadState();
+</script>
+</body>
+</html>
