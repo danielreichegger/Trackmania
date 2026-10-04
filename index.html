@@ -229,11 +229,11 @@
     border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);z-index:20;
   }
   nav.bottom button{
-    flex:1;background:none;border:none;border-radius:0;padding:12px 4px 10px;
-    color:var(--muted);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:4px;
+    flex:1;background:none;border:none;border-radius:0;padding:12px 1px 10px;
+    color:var(--muted);font-size:10px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;
     position:relative;font-weight:600;letter-spacing:0.3px;
   }
-  nav.bottom button .ico{font-size:19px;}
+  nav.bottom button .ico{font-size:17px;}
   nav.bottom button.active{color:var(--accent);text-shadow:0 0 10px rgba(0,229,255,0.5);}
   nav.bottom button.active::after{
     content:'';position:absolute;top:0;left:30%;right:30%;height:2px;
@@ -290,7 +290,11 @@
 
   <div class="storage-banner" id="storageBanner" style="display:none;"></div>
 
-  <section class="view active" id="view-rennen">
+  <section class="view active" id="view-live">
+    <div id="liveContent"></div>
+  </section>
+
+  <section class="view" id="view-rennen">
     <div class="card" id="dateCard">
       <h2>Datum</h2>
       <input type="date" id="dateInput" />
@@ -332,7 +336,8 @@
 </main>
 
 <nav class="bottom">
-  <button data-view="rennen" class="active"><span class="ico">🏎️</span>Rennen</button>
+  <button data-view="live" class="active"><span class="ico">🔴</span>LIVE</button>
+  <button data-view="rennen"><span class="ico">🏎️</span>Rennen</button>
   <button data-view="archiv"><span class="ico">🗂️</span>Archiv</button>
   <button data-view="strecken"><span class="ico">🏁</span>Strecken</button>
   <button data-view="statistik"><span class="ico">🏆</span>Statistik</button>
@@ -347,8 +352,8 @@ const FIXED_DRIVERS = ['Max','Andy','Dani','Olly','Bär','Mky'];
 // A random id for THIS browser tab, used only to detect (and warn about,
 // not prevent) two people editing the same race at the same time.
 const CLIENT_ID = 'c' + Date.now() + Math.random().toString(36).slice(2,8);
-const APP_VERSION = 17;
-const APP_VERSION_DATE = '2026-10-02';
+const APP_VERSION = 18;
+const APP_VERSION_DATE = '2026-10-03';
 const VERSION_HISTORY = [
   { v:1, date:'2026-09-10', notes:'Kompletter Funktionsstand: Rennen-Tabelle, Archiv, Statistik, Strafpunkte, Zeitraum-Filter, faires Gesamtranking.' },
   { v:2, date:'2026-09-10', notes:'Datum startet immer auf heute. Punktetabelle jetzt live für alle sichtbar, schon während der Eingabe (nicht erst nach Speichern).' },
@@ -366,11 +371,12 @@ const VERSION_HISTORY = [
   { v:14, date:'2026-10-02', notes:'Track-Editor: Reihenfolge folgt jetzt dem aktuellen Punktestand. Zeiteingabe braucht nur noch Ziffern (Doppelpunkt/Komma automatisch). Archiv & Statistik: neues Fahrzeit-Ranking (Gesamtzeit je Session, fair pro Strecke in der Statistik). 💩 für die längste Verlustserie neben der 👑. Parallel-Eingabe abgesichert (gezielte statt komplette Speicherzugriffe). Warnung bei gleichzeitiger Bearbeitung derselben Session. Neuer Fotos-Tab (Firebase Storage). Neuer Settings-Tab: Zugangsdaten-Login (Standard TM/TM2026) und Notizen für Änderungswünsche.' },
   { v:15, date:'2026-10-02', notes:'DNF zeigt im Strecken-Tab jetzt wirklich "DNF" statt einer falschen Zeit; zählt in der Statistik mit einstellbarer Ersatzzeit (Settings). Live-Zeit-Ranking unterhalb des Zwischenstands während der Eingabe. "Neues Rennen starten" führt direkt zur Punktetabelle. "Speichern" und "Fertig" zu einem Button zusammengelegt. Krone-Berechnung repariert (war zu streng). Kalender färbt Tage jetzt in der Farbe des Tagessiegers inkl. Namen. Fahrer-Farben überall in der App, einstellbar unter Settings. Settings erweitert um DNF-Zeitwertung und Jubiläumsfeier-Schalter.' },
   { v:16, date:'2026-10-02', notes:'Bug behoben: Die Storage-Konfiguration (für Fotos) war in derselben Einstellung wie die Datenbank-Verbindung untergebracht – ein ungültiger Wert dort konnte die komplette App blockieren ("Verbinde…" ohne Ende), obwohl die Datenbank selbst nie das Problem war. Beides jetzt komplett getrennt. Jubiläumsfeier ist jetzt fix aktiviert (Einstellung dafür entfernt).' },
-  { v:17, date:'2026-10-03', notes:'Fotos-Tab komplett entfernt (hätte einen kostenpflichtigen Firebase-Tarif erfordert). Statistik: neue Karte "Gesamtfahrzeit" – aufsummierte (nicht gemittelte) Zeit über alle gefahrenen Strecken, zusätzlich zum bestehenden fairen Ø-Zeit-Ranking.' }
+  { v:17, date:'2026-10-03', notes:'Fotos-Tab komplett entfernt (hätte einen kostenpflichtigen Firebase-Tarif erfordert). Statistik: neue Karte "Gesamtfahrzeit" – aufsummierte (nicht gemittelte) Zeit über alle gefahrenen Strecken, zusätzlich zum bestehenden fairen Ø-Zeit-Ranking.' },
+  { v:18, date:'2026-10-03', notes:'Neuer LIVE-Tab ganz links: Zuschauen ohne Bearbeiten. Der Rennen-Tab ist jetzt exklusiv - es kann immer nur ein Gerät eingeben (mit Übernahme-Funktion), das verhindert Speicherkonflikte. Neuer Speichern-Knopf unter der Punktetabelle: sichert Punkte, Zeiten und Namen ins Archiv und prüft nach, dass es angekommen ist. Behoben: Die Punktetabelle klappte nach dem Verlassen des Tabs zusammen und Einträge konnten verloren gehen (Firebase schneidet leere Felder am Ende von Listen ab) - die Spaltenanzahl wird jetzt fest gespeichert. Track-Editor: Namen nach Platzierung der aktuellen Strecke, Plausibilitätsprüfungen für Zeiten. Alle Speichervorgänge schreiben nur noch gezielt ihre eigenen Felder. Krone/Kackhaufen: bei Punktegleichstand wird niemand mehr gleichzeitig Sieger und Letzter.' }
 ];
 
 let state = null;
-let currentView = 'rennen';
+let currentView = 'live';
 let statsFilter = { from: null, to: null }; // date-range filter for the Statistik tab, reset on reload
 let draft = null;           // in-progress race being entered, not yet saved to the archive
 let rennenPhase = 'idle';   // 'idle' (driver picker) | 'editing' (points table)
@@ -420,7 +426,7 @@ function defaultState(){
 
 function migrateLegacyNames(state){
   const RENAME = { 'Andi': 'Andy', 'Mäcky': 'Mky', 'Mäkky': 'Mky' };
-  const renameIn = (arr) => Array.isArray(arr) ? arr.map(n => RENAME[n] || n) : [];
+  const renameIn = (arr) => normalizeArrayish(arr).map(n => RENAME[n] || n);
   state.savedNames = renameIn(state.savedNames);
   state.selectedNames = renameIn(state.selectedNames);
   const migrateSessionLike = (s)=>{
@@ -447,31 +453,74 @@ function migrateLegacyNames(state){
   if(state.liveDraft) migrateSessionLike(state.liveDraft);
 }
 
-function sanitizeSessionLike(s){
-  // Returns false if the session is unusable (caller should drop it);
-  // otherwise guarantees every participant has a grid array of equal,
-  // consistent length - the one invariant every other function relies on.
-  // This is a defense-in-depth layer: several render functions already
-  // guard themselves individually, but repairing the data once here,
-  // right after it arrives from Firebase, means every function (including
-  // ones added later) can safely assume well-formed sessions.
-  if(!s || !Array.isArray(s.participants) || s.participants.length===0 || !s.grid || typeof s.grid !== 'object') return false;
-  let rounds = 1;
-  s.participants.forEach(p=>{
-    if(Array.isArray(s.grid[p])) rounds = Math.max(rounds, s.grid[p].length);
-  });
-  s.participants.forEach(p=>{
-    if(!Array.isArray(s.grid[p])) s.grid[p] = [];
-    while(s.grid[p].length < rounds) s.grid[p].push(null);
-  });
-  if(s.trackTimes && typeof s.trackTimes === 'object'){
-    s.participants.forEach(p=>{
-      if(!Array.isArray(s.trackTimes[p])) s.trackTimes[p] = [];
-      while(s.trackTimes[p].length < rounds) s.trackTimes[p].push(null);
-    });
+function normalizeArrayish(x){
+  if(Array.isArray(x)) return x.filter(v=>v!==null && v!==undefined);
+  if(x && typeof x === 'object'){
+    return Object.keys(x).filter(k=>/^\d+$/.test(k))
+      .sort((a,b)=>parseInt(a,10)-parseInt(b,10))
+      .map(k=>x[k]).filter(v=>v!==null && v!==undefined);
   }
-  if(s.trackNames && Array.isArray(s.trackNames)){
-    while(s.trackNames.length < rounds) s.trackNames.push('');
+  return [];
+}
+
+// Track columns: positions matter, so nulls are kept. Firebase returns such
+// lists as arrays OR - when they have gaps - as objects with numeric keys, and
+// silently drops empty entries at the END. Always rebuild to a fixed length.
+function toFixedArray(x, len){
+  const out = [];
+  if(Array.isArray(x)){
+    for(let i=0;i<x.length;i++) out[i] = (x[i]===undefined ? null : x[i]);
+  } else if(x && typeof x === 'object'){
+    Object.keys(x).forEach(k=>{ if(/^\d+$/.test(k)) out[parseInt(k,10)] = x[k]; });
+  }
+  for(let i=0;i<out.length;i++) if(out[i]===undefined) out[i] = null;
+  while(out.length < len) out.push(null);
+  return out;
+}
+
+// Number of track columns. Stored explicitly as `rounds` (Firebase keeps numbers),
+// with the array lengths only as a fallback for older data.
+function getRoundsCount(s){
+  if(!s) return 0;
+  let n = (typeof s.rounds === 'number' && s.rounds > 0) ? Math.floor(s.rounds) : 0;
+  const consider = (a)=>{ const l = toFixedArray(a, 0).length; if(l > n) n = l; };
+  if(s.grid && typeof s.grid === 'object') Object.values(s.grid).forEach(consider);
+  if(s.trackTimes && typeof s.trackTimes === 'object') Object.values(s.trackTimes).forEach(consider);
+  if(s.trackNames) consider(s.trackNames);
+  return n;
+}
+
+// Key-order independent comparison; null and missing count as equal inside
+// objects (that is how Firebase stores them), array positions stay significant.
+function stableStringify(v){
+  if(v === null || v === undefined) return 'null';
+  if(typeof v !== 'object') return JSON.stringify(v);
+  if(Array.isArray(v)) return '[' + v.map(stableStringify).join(',') + ']';
+  return '{' + Object.keys(v).sort().filter(k=>v[k]!==undefined && v[k]!==null)
+    .map(k=>JSON.stringify(k)+':'+stableStringify(v[k])).join(',') + '}';
+}
+
+function withTimeout(promise, ms, fallback){
+  return Promise.race([promise, new Promise(res=>setTimeout(()=>res(fallback), ms))]);
+}
+
+function sanitizeSessionLike(s){
+  // Returns false if unusable; otherwise guarantees: participants is a real
+  // array, and every participant has a grid array of exactly `rounds` entries.
+  if(!s || typeof s !== 'object') return false;
+  s.participants = normalizeArrayish(s.participants);
+  if(s.participants.length === 0) return false;
+  if(!s.grid || typeof s.grid !== 'object') s.grid = {};
+  const rounds = Math.max(1, getRoundsCount(s));
+  s.rounds = rounds;
+  s.participants.forEach(p=>{ s.grid[p] = toFixedArray(s.grid[p], rounds); });
+  if(s.trackTimes && typeof s.trackTimes === 'object'){
+    s.participants.forEach(p=>{ s.trackTimes[p] = toFixedArray(s.trackTimes[p], rounds); });
+  } else if(s.trackTimes){
+    delete s.trackTimes;
+  }
+  if(s.trackNames !== undefined && s.trackNames !== null){
+    s.trackNames = toFixedArray(s.trackNames, rounds).map(v=> (v===null || v===undefined) ? '' : v);
   }
   return true;
 }
@@ -555,17 +604,20 @@ function showTrackEditor(roundIndex){
   const currentName = (draft.trackNames && draft.trackNames[roundIndex]) || '';
   const N = draft.participants.length;
 
-  // Order the rows by the CURRENT overall standing (lowest points first),
-  // not the fixed participant list - so the editor matches what's already
-  // on screen and you don't have to hunt for names in a different order.
-  const currentTotals = sessionTotals(draft);
-  const orderedNames = draft.participants.slice().sort((a,b)=> (currentTotals[a]||0) - (currentTotals[b]||0));
+  // Rows are ordered by the placement in THIS track (1st at the top ... DNF and
+  // not-yet-placed at the bottom): 1st place enters the full time, everybody
+  // else the gap to 1st place.
+  const placeOf = (n)=>{
+    if(isDnfForRound(draft, n, roundIndex)) return 1000;
+    const p = asPlacementNumber(draft.grid[n] ? draft.grid[n][roundIndex] : null);
+    return p === null ? 999 : p;
+  };
+  const placeLabel = (n)=>{ const p = placeOf(n); return p === 1000 ? 'DNF' : (p === 999 ? '–' : p + '.'); };
+  const orderedNames = draft.participants.slice().sort((a,b)=> placeOf(a)-placeOf(b) || draft.participants.indexOf(a)-draft.participants.indexOf(b));
+  const hasPlacedLeader = orderedNames.some(n=> placeOf(n) === 1);
 
   let leaderName = null;
-  orderedNames.forEach(name=>{
-    const pv = draft.grid[name] ? draft.grid[name][roundIndex] : null;
-    if(asPlacementNumber(pv) === 1) leaderName = name;
-  });
+  orderedNames.forEach(name=>{ if(placeOf(name) === 1 && !leaderName) leaderName = name; });
   if(!leaderName) leaderName = orderedNames[0];
 
   const overlay = document.createElement('div');
@@ -574,7 +626,8 @@ function showTrackEditor(roundIndex){
     <h2 style="font-family:var(--font-display);font-size:16px;margin:0 0 12px;">Track ${roundIndex+1}</h2>
     <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Streckenname</label>
     <input type="text" id="trackNameInputModal" value="${escapeHtml(currentName)}" placeholder="z.B. Canyon Speed" style="width:100%;margin-bottom:14px;" />
-    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:8px;">Zeiten (1. Platz = Bestzeit, alle anderen = Rückstand)</label>
+    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:8px;">Zeiten (1. Platz = Gesamtzeit, alle anderen = Rückstand auf Platz 1)</label>
+    ${hasPlacedLeader ? '' : '<div class="muted" style="font-size:11px;margin-bottom:8px;">Tipp: Erst die Platzierungen in der Tabelle eintragen – dann stehen die Namen hier automatisch in der richtigen Reihenfolge (oben = 1. Platz).</div>'}
     <div id="trackRowsContainer"></div>
     <div class="confirm-actions" style="margin-top:10px;">
       <button id="trackEditorCancelBtn">Abbrechen</button>
@@ -633,7 +686,7 @@ function showTrackEditor(roundIndex){
           <label style="display:flex;align-items:center;gap:4px;flex-shrink:0;" title="Als 1. Platz / Bestzeit-Referenz festlegen">
             <input type="radio" name="leaderRadio" class="leader-radio" data-track-name="${escapeHtml(name)}" ${isLeader?'checked':''} />
           </label>
-          <div style="flex:1;font-size:14px;">${escapeHtml(name)}</div>
+          <div style="flex:1;font-size:14px;"><span class="muted" style="display:inline-block;min-width:28px;">${placeLabel(name)}</span>${driverNameHtml(name)}</div>
           <input type="text" inputmode="numeric" class="track-time-input" data-track-name="${escapeHtml(name)}" data-is-leader="${isLeader}"
             placeholder="${isLeader?'mm:ss,SSS':'ss,SSS'}" value="${escapeHtml(fieldValue)}"
             style="width:110px;text-align:center;" ${!isLeader && dnfDefault ? 'disabled':''} />
@@ -715,6 +768,21 @@ function showTrackEditor(roundIndex){
       showToast('Bitte Zeitformat korrigieren (Komma statt Punkt, siehe Hinweis)');
       return;
     }
+    // sanity checks on the first place
+    const leaderInpCheck = overlay.querySelector(`.track-time-input[data-track-name="${cssEscape(leaderName)}"]`);
+    const leaderDnfBox = overlay.querySelector(`.track-dnf-check[data-track-name="${cssEscape(leaderName)}"]`);
+    if(leaderInpCheck && !leaderInpCheck.disabled && leaderInpCheck.value){
+      const secPart = parseInt(leaderInpCheck.value.split(':')[1], 10);
+      if(secPart >= 60){
+        leaderInpCheck.classList.add('time-invalid');
+        showToast('Die Sekunden müssen unter 60 liegen (z. B. 1:05,200 statt 0:65,200)', 5000);
+        return;
+      }
+    }
+    if(leaderDnfBox && leaderDnfBox.checked && [...overlay.querySelectorAll('.track-time-input')].some(i=>!i.disabled && i.dataset.isLeader !== 'true' && i.value)){
+      showToast('Platz 1 kann kein DNF sein – bitte Platzierung bzw. Haken prüfen', 5000);
+      return;
+    }
 
     const name = document.getElementById('trackNameInputModal').value.trim();
     if(!draft.trackNames) draft.trackNames = [];
@@ -747,11 +815,18 @@ function showTrackEditor(roundIndex){
       draft.trackTimes[pname][roundIndex] = finalMs===null ? null : formatMsToTime(finalMs);
       newTimesMs[pname] = finalMs;
     });
+    // plausibility: a worse placement must not have a faster time
+    let timesInconsistent = false;
+    {
+      const timed = orderedNames.filter(n=> newTimesMs[n] !== null && newTimesMs[n] !== undefined);
+      for(let i=1;i<timed.length;i++){ if(newTimesMs[timed[i]] < newTimesMs[timed[i-1]]){ timesInconsistent = true; break; } }
+    }
     saveDraft();
     close();
     renderRennen();
+    if(timesInconsistent) showToast('⚠️ Eine Zeit passt nicht zur Platzierung (schlechter platziert, aber schneller) – bitte prüfen', 7000);
 
-    if(name){
+    if(name && !timesInconsistent){
       const achievers = draft.participants.filter(pname=>
         newTimesMs[pname]!==null && previousBests[pname]!==null && newTimesMs[pname] < previousBests[pname]
       );
@@ -843,10 +918,13 @@ function loadState(){
     const val = snapshot.val();
     const fresh = (val && typeof val === 'object') ? val : defaultState();
 
+    // Firebase returns lists with gaps as objects and drops empty ones - normalise first
+    fresh.sessions = normalizeArrayish(fresh.sessions);
+    fresh.savedNames = normalizeArrayish(fresh.savedNames);
+    fresh.selectedNames = normalizeArrayish(fresh.selectedNames);
+    fresh.backupHistory = normalizeArrayish(fresh.backupHistory);
     migrateLegacyNames(fresh);
-    if(!Array.isArray(fresh.savedNames)) fresh.savedNames = [...FIXED_DRIVERS];
-    if(!Array.isArray(fresh.selectedNames)) fresh.selectedNames = [...FIXED_DRIVERS];
-    if(!Array.isArray(fresh.sessions)) fresh.sessions = [];
+    if(!firstLoadDone && !fresh.selectedNames.length) fresh.selectedNames = [...FIXED_DRIVERS];
     if(!fresh.settings || typeof fresh.settings !== 'object') fresh.settings = {};
     if(typeof fresh.settings.authUsername !== 'string') fresh.settings.authUsername = 'TM';
     if(typeof fresh.settings.authPassword !== 'string') fresh.settings.authPassword = 'TM2026';
@@ -874,14 +952,14 @@ function loadState(){
       let needsSave = false;
       if(state.selectedDate !== todayStr()){ state.selectedDate = todayStr(); needsSave = true; }
       syncDraftFromState();
-      if(needsSave) saveState();
+      if(needsSave) patchFirebase({ selectedDate: state.selectedDate });
       checkAuthGate();
       return;
     }
 
     if(isTypingNow()) return;
     if(saveInFlight > 0) return;
-    if(JSON.stringify(fresh) !== JSON.stringify(state)){
+    if(stableStringify(fresh) !== stableStringify(state)){
       state = fresh;
       syncDraftFromState();
       render();
@@ -918,49 +996,147 @@ async function clearDraft(){
   await patchFirebase({ liveDraft: null });
 }
 
-async function saveState(){
-  if(!firebaseReady){
-    storageAvailable = false;
-    showStorageBanner();
-    return;
-  }
-  saveInFlight++;
-  try{
-    await dbRef.set(state);
-    storageAvailable = true;
-    hideStorageBanner();
-  }catch(e){
-    console.error('Firebase save failed:', e);
-    storageAvailable = false;
-    showStorageBanner();
-  }finally{
-    saveInFlight--;
-  }
-}
 
 // Writes ONLY the given paths (e.g. {"liveDraft/grid/Max/0": 1}) via Firebase's
 // multi-location update - this is the key to safe concurrent editing: two
 // people entering points for DIFFERENT fields at the same time each touch
 // only their own leaf, so neither write can ever clobber the other's,
-// unlike a full saveState() which re-sends (and could overwrite) everything.
+// unlike a full-state write, which would re-send (and could overwrite) everything.
 async function patchFirebase(updates){
   if(!firebaseReady){
     storageAvailable = false;
     showStorageBanner();
-    return;
+    return false;
   }
   saveInFlight++;
   try{
-    await dbRef.update(updates);
+    // plain JSON copy: drops undefined (which Firebase rejects) and NaN
+    await dbRef.update(JSON.parse(JSON.stringify(updates)));
     storageAvailable = true;
     hideStorageBanner();
+    return true;
   }catch(e){
     console.error('Firebase patch failed:', e);
     storageAvailable = false;
-    showStorageBanner();
+    showStorageBanner(e);
+    return false;
   }finally{
     saveInFlight--;
   }
+}
+
+/* ============================================================
+   EXCLUSIVE EDITING LOCK - only one device at a time in the Rennen tab
+   ============================================================
+   Lives OUTSIDE the main state path (a full write of the state must never be
+   able to wipe it). onDisconnect makes the server free the lock by itself when
+   the holder closes the page or loses the connection. */
+let lockRef = null;
+try{ lockRef = firebase.database().ref('tm_scoreboard_lock'); }catch(e){ console.error('Lock init failed', e); }
+let lockInfo = null;        // what the database says right now: null or {clientId, since, sinceText}
+let iHoldLock = false;
+let lockChecking = false;
+
+function lockPayload(){
+  return { clientId: CLIENT_ID, since: Date.now(), sinceText: new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}) };
+}
+
+async function acquireLock(){
+  if(!lockRef){ iHoldLock = true; return true; }
+  let res = null;
+  try{
+    res = await withTimeout(lockRef.transaction(cur=>{
+      if(cur === null || cur === undefined || cur.clientId === CLIENT_ID) return lockPayload();
+      return undefined; // somebody else holds it -> abort
+    }), 6000, null);
+  }catch(e){ console.error('acquireLock failed', e); }
+  if(res && res.committed){
+    try{ lockRef.onDisconnect().remove(); }catch(e){}
+    iHoldLock = true;
+    return true;
+  }
+  if(res && !res.committed){ iHoldLock = false; return false; } // really held by someone else
+  // Error or timeout (connection / database rules): never lock people out of
+  // their own data entry just because the lock itself cannot be checked.
+  showToast('⚠️ Sperre nicht verfügbar (Verbindung/Regeln?) – Doppeleingaben werden gerade nicht verhindert', 7000);
+  iHoldLock = true;
+  return true;
+}
+
+async function releaseLock(){
+  if(!iHoldLock) return;
+  iHoldLock = false;
+  if(!lockRef) return;
+  try{
+    await lockRef.transaction(cur=> (cur && cur.clientId === CLIENT_ID) ? null : undefined);
+    lockRef.onDisconnect().cancel(); // otherwise our later disconnect could wipe SOMEONE ELSE'S lock
+  }catch(e){ console.error('releaseLock failed', e); }
+}
+
+async function forceTakeLock(){
+  if(lockRef){
+    await lockRef.set(lockPayload());
+    try{ lockRef.onDisconnect().remove(); }catch(e){}
+  }
+  iHoldLock = true;
+}
+
+function startLockListener(){
+  if(!lockRef) return;
+  lockRef.on('value', snap=>{
+    lockInfo = snap.val();
+    if(iHoldLock && lockInfo && lockInfo.clientId !== CLIENT_ID){
+      // somebody took over
+      iHoldLock = false;
+      try{ lockRef.onDisconnect().cancel(); }catch(e){}
+      if(currentView === 'rennen'){
+        showToast('Ein anderes Gerät hat die Bearbeitung übernommen – du siehst jetzt nur noch zu', 5000);
+        switchView('live');
+        return;
+      }
+    } else if(iHoldLock && !lockInfo && currentView === 'rennen' && !lockChecking){
+      // the server dropped our lock (e.g. after a reconnect) - quietly take it back
+      acquireLock().then(ok=>{ if(!ok && currentView === 'rennen') switchView('live'); });
+    }
+    if(state && (currentView === 'live' || (currentView === 'rennen' && !iHoldLock))) renderCurrentView();
+  });
+}
+
+function renderLive(){
+  const el = document.getElementById('liveContent');
+  if(!el || !state) return;
+  const d = state.liveDraft;
+  const otherEditing = !!(lockInfo && lockInfo.clientId !== CLIENT_ID);
+  const status = otherEditing
+    ? `✏️ Ein anderes Gerät trägt gerade ein (seit ${escapeHtml(lockInfo.sinceText || '?')} Uhr).`
+    : 'Aktuell trägt niemand ein.';
+  const goBtn = `<button class="primary full" id="liveGoRennenBtn" style="margin-top:12px;">${otherEditing ? 'Zum Rennen-Tab (gerade belegt)' : 'Zum Rennen-Tab – selbst eintragen'}</button>`;
+  const wire = ()=>{ const b = document.getElementById('liveGoRennenBtn'); if(b) b.onclick = ()=>switchView('rennen'); };
+
+  if(!d || !Array.isArray(d.participants) || !d.participants.length){
+    el.innerHTML = `<div class="card"><h2>🔴 LIVE</h2>
+      <p class="muted" style="margin:0;">Gerade läuft kein Rennen.</p>
+      <p class="muted" style="margin:6px 0 0;">${status}</p>${goBtn}</div>`;
+    wire();
+    return;
+  }
+  const totals = sessionTotals(d);
+  const sorted = Object.entries(totals).sort((a,b)=>a[1]-b[1]);
+  const standing = sorted.map(([name,pts],i)=>{
+    const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
+    const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+    return `<div class="result-row">
+      <div class="rank-badge ${cls}">${badge}</div>
+      <div class="name">${driverNameHtml(name)}</div>
+      <div class="pts">${pts}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="card"><h2>🔴 LIVE · ${escapeHtml(formatDate(d.date))}</h2>
+      <p class="muted" style="margin:0;">${status}</p>
+      <p class="muted" style="margin:6px 0 0;">Nur Ansicht – eingetragen wird im Rennen-Tab.</p>${goBtn}</div>
+    <div class="card"><h2>Punktetabelle</h2>${buildReadOnlyGridHtml(d, { timeTitle: 'Zeit-Ranking (laufend)' })}</div>
+    <div class="card"><h2>Zwischenstand</h2><div class="standing-list">${standing}</div></div>`;
+  wire();
 }
 
 function isTypingNow(){
@@ -1049,65 +1225,39 @@ function hasScorableResult(s){
     s.participants.every(n => Array.isArray(s.grid[n]) && s.grid[n].some(v => v !== null && v !== undefined));
 }
 
-function getStreakCrownHolder(){
+// Current streak = in how many of the MOST RECENT race nights in a row a driver
+// was (co-)first (crown) or (co-)last (poop). The count restarts from zero the
+// moment the streak is broken. A night where everybody has exactly the same total
+// counts for nobody. Whoever has the longest current streak (at least 2) gets the
+// icon; equally long streaks share it.
+function currentStreakHolders(target){ // 'min' = wins, 'max' = losses
   if (!state || !Array.isArray(state.sessions)) return null;
-
-  const complete = state.sessions
+  const nights = state.sessions
     .filter(hasScorableResult)
     .slice().sort((a,b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
 
-  const perDriverSeq = {};
-  complete.forEach(s => {
+  const seqs = {};
+  nights.forEach(s => {
     const totals = sessionTotals(s);
-    const winnerEntry = Object.entries(totals).sort((a,b) => a[1] - b[1])[0];
-    if (!winnerEntry) return;
-    const winner = winnerEntry[0];
-    s.participants.forEach(name => {
-      (perDriverSeq[name] = perDriverSeq[name] || []).push(name === winner);
-    });
+    const vals = Object.values(totals);
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const want = target === 'min' ? min : max;
+    const picked = (min === max) ? [] : Object.keys(totals).filter(n => totals[n] === want);
+    s.participants.forEach(name => { (seqs[name] = seqs[name] || []).push(picked.includes(name)); });
   });
 
-  let bestName = null, bestStreak = 1;
-  Object.entries(perDriverSeq).forEach(([name, seq]) => {
+  let best = 1, names = [];
+  Object.entries(seqs).forEach(([name, seq]) => {
     let streak = 0;
-    for(let i = seq.length - 1; i >= 0; i--){
-      if(seq[i]) streak++; else break;
-    }
-    if(streak > bestStreak){ bestStreak = streak; bestName = name; }
+    for(let i = seq.length - 1; i >= 0; i--){ if(seq[i]) streak++; else break; }
+    if(streak > best){ best = streak; names = [name]; }
+    else if(streak === best && streak > 1){ names.push(name); }
   });
-  return bestName ? { name: bestName, streak: bestStreak } : null;
+  return names.length ? { name: names[0], names, streak: best } : null;
 }
+function getStreakCrownHolder(){ return currentStreakHolders('min'); }
 
-function getStreakLoserHolder(){
-  // same idea as the crown, but for the longest current run of LAST-place
-  // finishes (highest total that session) in a row.
-  if (!state || !Array.isArray(state.sessions)) return null;
-
-  const complete = state.sessions
-    .filter(hasScorableResult)
-    .slice().sort((a,b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
-
-  const perDriverSeq = {};
-  complete.forEach(s => {
-    const totals = sessionTotals(s);
-    const loserEntry = Object.entries(totals).sort((a,b) => b[1] - a[1])[0];
-    if (!loserEntry) return;
-    const loser = loserEntry[0];
-    s.participants.forEach(name => {
-      (perDriverSeq[name] = perDriverSeq[name] || []).push(name === loser);
-    });
-  });
-
-  let worstName = null, worstStreak = 1;
-  Object.entries(perDriverSeq).forEach(([name, seq]) => {
-    let streak = 0;
-    for(let i = seq.length - 1; i >= 0; i--){
-      if(seq[i]) streak++; else break;
-    }
-    if(streak > worstStreak){ worstStreak = streak; worstName = name; }
-  });
-  return worstName ? { name: worstName, streak: worstStreak } : null;
-}
+function getStreakLoserHolder(){ return currentStreakHolders('max'); }
 
 function getDriverColor(name){
   const configured = state && state.settings && state.settings.driverColors && state.settings.driverColors[name];
@@ -1138,15 +1288,28 @@ function formatDate(iso){
 function cssEscape(s){ return String(s).replace(/(["\\])/g,'\\$1'); }
 
 function switchView(v){
+  const prev = currentView;
   currentView = v;
   document.querySelectorAll('section.view').forEach(s=>s.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   document.querySelectorAll('nav.bottom button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
+  if(prev === 'rennen' && v !== 'rennen') releaseLock();
+  if(v === 'rennen' && !iHoldLock){
+    lockChecking = true;
+    renderCurrentView(); // shows "checking ..." for a moment
+    acquireLock().then(()=>{
+      lockChecking = false;
+      if(currentView !== 'rennen'){ releaseLock(); return; } // user already moved on
+      renderCurrentView();
+    });
+    return;
+  }
   renderCurrentView();
 }
 
 function renderCurrentView(){
-  if(currentView==='rennen') renderRennen();
+  if(currentView==='live') renderLive();
+  else if(currentView==='rennen') renderRennen();
   else if(currentView==='archiv') renderArchiv();
   else if(currentView==='strecken') renderStrecken();
   else if(currentView==='statistik') renderStatistik();
@@ -1166,6 +1329,40 @@ function renderRennen(){
   const driversCard = document.getElementById('driversCard');
   const area = document.getElementById('raceArea');
 
+  if(lockChecking){
+    dateCard.style.display = 'none';
+    driversCard.style.display = 'none';
+    area.innerHTML = '<div class="empty">Prüfe, ob gerade jemand anderes das Rennen bearbeitet …</div>';
+    return;
+  }
+  if(!iHoldLock){
+    dateCard.style.display = 'none';
+    driversCard.style.display = 'none';
+    const holder = !!(lockInfo && lockInfo.clientId !== CLIENT_ID);
+    area.innerHTML = `<div class="card">
+      <h2>🔒 Rennen-Tab belegt</h2>
+      <p class="muted" style="margin:0 0 12px;">${holder
+        ? `Ein anderes Gerät bearbeitet gerade das Rennen (seit ${escapeHtml(lockInfo.sinceText || '?')} Uhr). Es darf immer nur eine Person gleichzeitig eingeben, damit nichts überschrieben wird. Zuschauen kannst du im LIVE-Tab.`
+        : 'Die Sperre konnte nicht geprüft werden (Internetverbindung?).'}</p>
+      <button class="primary full" id="goLiveBtn">Zum LIVE-Tab</button>
+      <button class="full" id="retryLockBtn" style="margin-top:8px;">${holder ? 'Sperre übernehmen (nur wenn dort niemand mehr eingibt)' : 'Erneut versuchen'}</button>
+    </div>`;
+    document.getElementById('goLiveBtn').onclick = ()=>switchView('live');
+    document.getElementById('retryLockBtn').onclick = ()=>{
+      if(holder){
+        showConfirm('Wirklich übernehmen? Das andere Gerät wird dabei aus dem Rennen-Tab geworfen. Nur tun, wenn dort niemand mehr eingibt.', async ()=>{
+          await forceTakeLock();
+          renderCurrentView();
+        });
+      } else {
+        lockChecking = true;
+        renderRennen();
+        acquireLock().then(()=>{ lockChecking = false; if(currentView === 'rennen') renderCurrentView(); });
+      }
+    };
+    return;
+  }
+
   if(rennenPhase === 'editing' && draft){
     dateCard.style.display = 'none';
     driversCard.style.display = 'none';
@@ -1184,14 +1381,14 @@ function renderRennen(){
     const chip = document.createElement('div');
     chip.className = 'chip' + (active?' active':'');
     let suffix = '';
-    if(crownHolder && crownHolder.name===name) suffix += ' 👑';
-    if(loserHolder && loserHolder.name===name) suffix += ' 💩';
+    if(crownHolder && crownHolder.names.includes(name)) suffix += ' 👑';
+    if(loserHolder && loserHolder.names.includes(name)) suffix += ' 💩';
     // a color dot (not colored text) so the driver's color doesn't fight
     // with the existing active/inactive selection-state text color
     chip.innerHTML = `<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:10px;height:10px;border-radius:50%;background:${getDriverColor(name)};flex-shrink:0;"></span>${escapeHtml(name)}${escapeHtml(suffix)}</span>`;
     const titles = [];
-    if(crownHolder && crownHolder.name===name) titles.push(`${crownHolder.streak}x in Folge gewonnen`);
-    if(loserHolder && loserHolder.name===name) titles.push(`${loserHolder.streak}x in Folge verloren`);
+    if(crownHolder && crownHolder.names.includes(name)) titles.push(`${crownHolder.streak}x in Folge gewonnen`);
+    if(loserHolder && loserHolder.names.includes(name)) titles.push(`${loserHolder.streak}x in Folge verloren`);
     if(titles.length) chip.title = titles.join(' · ');
     chip.onclick = ()=>toggleSelected(name);
     grid.appendChild(chip);
@@ -1223,17 +1420,19 @@ function continueToEditing(){
     order = [...state.selectedNames];
   }
 
+  // as many tracks as players + 1; the count is stored explicitly (see getRoundsCount)
+  const rounds = order.length + 1;
   const g = {};
   const penalties = {};
-  const trackNames = new Array(order.length+1).fill('');
+  const trackNames = new Array(rounds).fill('');
   const trackTimes = {};
   order.forEach(n=>{
-    g[n] = new Array(order.length+1).fill(null);
+    g[n] = new Array(rounds).fill(null);
     penalties[n] = 0;
-    trackTimes[n] = new Array(order.length+1).fill(null);
+    trackTimes[n] = new Array(rounds).fill(null);
   });
 
-  draft = { id: null, date: state.selectedDate, participants: order, grid: g, penalties, trackNames, trackTimes, note: '', lastMatchInfo, editorClientId: CLIENT_ID };
+  draft = { id: null, date: state.selectedDate, participants: order, rounds, grid: g, penalties, trackNames, trackTimes, note: '', lastMatchInfo, editorClientId: CLIENT_ID, isNewRace: true };
   rennenPhase = 'editing';
   saveDraft();
   renderRennen();
@@ -1241,15 +1440,9 @@ function continueToEditing(){
 
 function renderEditingPhase(area){
   const N = draft.participants.length;
-  const rounds = draft.grid[draft.participants[0]] ? draft.grid[draft.participants[0]].length : 0;
+  const rounds = getRoundsCount(draft);
 
   let html = '';
-
-  if(draft.editorClientId && draft.editorClientId !== CLIENT_ID){
-    html += `<div class="warn-note" style="background:rgba(255,181,69,0.1);border:1px solid var(--warn);border-radius:10px;padding:10px 14px;margin-bottom:14px;">
-      ⚠️ Ein anderes Gerät hat dieses Rennen zuletzt geöffnet und bearbeitet möglicherweise gerade mit. Sprecht euch kurz ab, sonst können sich Änderungen gegenseitig überschreiben.
-    </div>`;
-  }
 
   if(draft.lastMatchInfo){
     const sorted = Object.entries(draft.lastMatchInfo.standing).sort((a,b)=>a[1]-b[1]);
@@ -1299,6 +1492,10 @@ function renderEditingPhase(area){
     <div class="section-actions">
       <button id="addExtraRoundBtn">+ Zusatztrack</button>
     </div>
+    <div class="section-actions">
+      <button class="primary full" id="saveNowBtn">💾 Speichern</button>
+    </div>
+    <p class="muted" style="margin-top:8px;font-size:12px;">Speichern sichert die komplette Tabelle (Punkte, Zeiten, Streckennamen) sofort im Archiv und prüft nach, dass sie wirklich angekommen ist – das Rennen bleibt offen. „Rennen abgeschlossen“ (ganz unten) sichert genauso und beendet das Rennen.</p>
     </div>`;
 
   html += `<div class="card">
@@ -1310,7 +1507,7 @@ function renderEditingPhase(area){
   html += `<div class="card" id="liveTimeRankingCard" style="display:none;"><div id="liveTimeRankingContent"></div></div>`;
 
   html += `<div class="section-actions">
-    <button class="primary full" id="finishRaceBtn">Rennen abgeschlossen – Speichern</button>
+    <button class="full" id="finishRaceBtn">🏁 Rennen abgeschlossen – sichern &amp; beenden</button>
   </div>`;
 
   area.innerHTML = html;
@@ -1341,24 +1538,53 @@ function renderEditingPhase(area){
     });
   };
   document.getElementById('addExtraRoundBtn').onclick = ()=>{
+    const newRounds = getRoundsCount(draft) + 1;
+    draft.rounds = newRounds;
     draft.participants.forEach(name=>{
-      if (!draft.grid[name]) draft.grid[name] = [];
-      draft.grid[name].push(null);
+      draft.grid[name] = toFixedArray(draft.grid[name], newRounds);
       if(!draft.trackTimes) draft.trackTimes = {};
-      if(!draft.trackTimes[name]) draft.trackTimes[name] = [];
-      draft.trackTimes[name].push(null);
+      draft.trackTimes[name] = toFixedArray(draft.trackTimes[name], newRounds);
     });
-    if(!draft.trackNames) draft.trackNames = [];
-    draft.trackNames.push('');
+    draft.trackNames = toFixedArray(draft.trackNames, newRounds).map(v=> v==null ? '' : v);
     saveDraft();
     renderRennen();
   };
-  document.getElementById('finishRaceBtn').onclick = ()=>{
-    const { session, isNewSession } = commitDraftToArchive(true);
-    showToast('Rennen abgeschlossen');
-    renderRennen();
-    const isMilestone = isNewSession && state.sessions.length >= 60 && state.sessions.length % 10 === 0;
-    showFinishOverlay(session, isMilestone, state.sessions.length);
+
+  // Save = write the WHOLE table to the archive and verify it arrived. Race stays open.
+  document.getElementById('saveNowBtn').onclick = async ()=>{
+    const btn = document.getElementById('saveNowBtn');
+    if(btn) btn.disabled = true;
+    if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); // flush a half-typed cell
+    const res = commitDraftToArchive();
+    const ok = await res.promise;
+    const verified = ok ? await verifySessionSaved(res.idx, res.session) : false;
+    const btn2 = document.getElementById('saveNowBtn');
+    if(btn2) btn2.disabled = false;
+    if(ok && verified) showToast('✅ Gespeichert – Punkte, Zeiten und Namen sind gesichert', 3500);
+    else showToast('❌ Speichern NICHT bestätigt – bitte Verbindung prüfen und nochmal drücken', 7000);
+  };
+
+  // Finish = save + verify, and only THEN close the race and free the Rennen tab.
+  document.getElementById('finishRaceBtn').onclick = async ()=>{
+    const btn = document.getElementById('finishRaceBtn');
+    if(btn) btn.disabled = true;
+    if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    const wasNewRace = !!draft.isNewRace;
+    const res = commitDraftToArchive();
+    const ok = await res.promise;
+    const verified = ok ? await verifySessionSaved(res.idx, res.session) : false;
+    if(!(ok && verified)){
+      const b = document.getElementById('finishRaceBtn');
+      if(b) b.disabled = false;
+      showToast('❌ Speichern NICHT bestätigt – das Rennen bleibt offen. Verbindung prüfen und nochmal drücken.', 7000);
+      return;
+    }
+    await clearDraft();
+    const count = state.sessions.length;
+    const isMilestone = wasNewRace && count >= 60 && count % 10 === 0;
+    showToast('Rennen abgeschlossen ✓');
+    showFinishOverlay(res.session, isMilestone, count);
+    switchView('live'); // frees the Rennen tab for the next person
   };
 
   updateSumsAndStandings(draft);
@@ -1367,7 +1593,7 @@ function renderEditingPhase(area){
 function toggleSelected(name){
   const i = state.selectedNames.indexOf(name);
   if(i>=0) state.selectedNames.splice(i,1); else state.selectedNames.push(name);
-  saveState(); renderRennen();
+  patchFirebase({ selectedNames: state.selectedNames.length ? state.selectedNames : null }); renderRennen();
 }
 
 document.getElementById('addToggleBtn').onclick = ()=>{
@@ -1378,17 +1604,18 @@ document.getElementById('addNameBtn').onclick = ()=>{
   const input = document.getElementById('newNameInput');
   const name = input.value.trim();
   if(!name) return;
+  if(/[.$#\[\]\/]/.test(name)){ showToast('Im Namen sind diese Zeichen nicht erlaubt: . $ # [ ] /', 4000); return; }
   if(state.savedNames.includes(name)){ showToast('Name existiert bereits'); return; }
   state.savedNames.push(name);
   state.selectedNames.push(name);
   input.value = '';
-  saveState(); renderRennen();
+  patchFirebase({ savedNames: state.savedNames, selectedNames: state.selectedNames }); renderRennen();
 };
 document.getElementById('newNameInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('addNameBtn').click(); });
 
 document.getElementById('dateInput').addEventListener('change', e=>{
   state.selectedDate = e.target.value || todayStr();
-  saveState(); renderRennen();
+  patchFirebase({ selectedDate: state.selectedDate }); renderRennen();
 });
 
 function sessionTotals(session){
@@ -1531,10 +1758,16 @@ function showFinishOverlay(session, isMilestone, sessionCount){
   }
 }
 
-function commitDraftToArchive(clearAfter){
+function commitDraftToArchive(){
+  // Writes the complete current table into the archive (insert or update by id)
+  // AND the live draft, in ONE multi-path update. Returns immediately with a
+  // `promise` that resolves true once the database acknowledged the write.
   const copy = JSON.parse(JSON.stringify(draft));
-  let isNewSession = false;
+  sanitizeSessionLike(copy);
+  delete copy.editorClientId;
+  delete copy.isNewRace;
   let idx;
+  let isNewSession = false;
   if(draft.id){
     idx = state.sessions.findIndex(s=>s.id===draft.id);
     if(idx>=0) state.sessions[idx] = copy;
@@ -1546,24 +1779,44 @@ function commitDraftToArchive(clearAfter){
     state.sessions.push(copy);
     isNewSession = true;
   }
-  // BUG FIX: writing the session AND clearing/keeping the liveDraft used to
-  // be two separate, un-awaited Firebase writes (commitDraftToArchive then
-  // a following clearDraft()) - whichever one's network round-trip happened
-  // to finish last would "win" and could silently bring the liveDraft back,
-  // even after Fertig was clicked. Doing both paths in ONE atomic multi-path
-  // update removes that race entirely.
-  const patch = { [`sessions/${idx}`]: copy };
-  if(clearAfter){
-    draft = null;
-    rennenPhase = 'idle';
-    state.liveDraft = null;
-    patch.liveDraft = null;
-  } else {
-    state.liveDraft = draft;
-    patch.liveDraft = draft;
+  state.liveDraft = draft;
+  const promise = withTimeout(patchFirebase({ [`sessions/${idx}`]: copy, liveDraft: draft }), 8000, false);
+  return { session: copy, idx, isNewSession, promise };
+}
+
+// canonical form of a session, so what we meant to write and what the database
+// gives back can be compared even though Firebase trims empty list entries
+function canonSession(s){
+  const c = JSON.parse(JSON.stringify(s));
+  if(!sanitizeSessionLike(c)) return 'INVALID';
+  const out = {
+    id: c.id, date: c.date, participants: c.participants, rounds: c.rounds,
+    grid: c.grid,
+    penalties: {}, trackNames: toFixedArray(c.trackNames, c.rounds).map(v=>v||''),
+    trackTimes: {}, note: c.note || ''
+  };
+  c.participants.forEach(p=>{
+    out.penalties[p] = Number(c.penalties && c.penalties[p]) || 0;
+    out.trackTimes[p] = toFixedArray(c.trackTimes && c.trackTimes[p], c.rounds);
+  });
+  return stableStringify(out);
+}
+
+async function verifySessionSaved(idx, expected){
+  if(!firebaseReady) return false;
+  try{
+    const ref = dbRef.child('sessions/' + idx);
+    const snap = await withTimeout(typeof ref.get === 'function' ? ref.get() : ref.once('value'), 8000, null);
+    if(!snap) return false;
+    const got = snap.val();
+    if(!got) return false;
+    const same = canonSession(got) === canonSession(expected);
+    if(!same) console.error('Verify mismatch', canonSession(got), canonSession(expected));
+    return same;
+  }catch(e){
+    console.error('verifySessionSaved failed', e);
+    return false;
   }
-  patchFirebase(patch); // fire-and-forget: local state above is already correct for an instant UI update
-  return { session: copy, isNewSession };
 }
 
 function buildSessionRecapHtml(s){
@@ -1605,7 +1858,7 @@ function buildSessionRecapHtml(s){
   }
 
   let closest = null;
-  const rounds = s.participants.length && s.grid[s.participants[0]] ? s.grid[s.participants[0]].length : 0;
+  const rounds = getRoundsCount(s);
   for(let r=0;r<rounds;r++){
     const times = s.participants
       .map(name=> ({ name, ms: s.trackTimes && s.trackTimes[name] ? parseTimeToMs(s.trackTimes[name][r]) : null }))
@@ -1626,7 +1879,7 @@ function buildSessionRecapHtml(s){
 function updateSumsAndStandings(session){
   if (!session || !Array.isArray(session.participants)) return;
   const N = session.participants.length;
-  const rounds = (N > 0 && session.grid[session.participants[0]]) ? session.grid[session.participants[0]].length : N + 1;
+  const rounds = getRoundsCount(session) || (N + 1);
   const totals = sessionTotals(session);
 
   session.participants.forEach(name=>{
@@ -1801,11 +2054,11 @@ function renderStrecken(){
   }).join('');
 }
 
-function buildReadOnlyGridHtml(s){
+function buildReadOnlyGridHtml(s, opts){
   if (!s || !s.grid || !Array.isArray(s.participants) || !s.participants[0] || !s.grid[s.participants[0]]) {
     return '<div class="empty">Keine Daten verfügbar.</div>';
   }
-  const rounds = s.grid[s.participants[0]].length;
+  const rounds = getRoundsCount(s);
   let html = `<div class="table-wrap"><table class="grid"><thead><tr><th class="namecol">Fahrer</th>`;
   for(let r=1;r<=rounds;r++){
     const tname = (s.trackNames && s.trackNames[r-1]) ? s.trackNames[r-1] : '';
@@ -1827,7 +2080,7 @@ function buildReadOnlyGridHtml(s){
     html += `<td class="sumcol">${totals[name] || 0}</td></tr>`;
   });
   html += `</tbody></table></div>`;
-  html += buildSessionTimeRankingHtml(s);
+  html += buildSessionTimeRankingHtml(s, opts && opts.timeTitle);
   if(s.note){
     html += `<p class="muted" style="margin-top:10px;white-space:pre-wrap;">📝 ${escapeHtml(s.note)}</p>`;
   }
@@ -1846,12 +2099,13 @@ function buildSessionTimeRankingHtml(s, title){
     return { name, sumMs, count };
   }).filter(t=>t.count>0).sort((a,b)=>a.sumMs-b.sumMs);
   if(totals.length===0) return '';
+  const maxCount = Math.max(...totals.map(t=>t.count));
   const rows = totals.map((t,i)=>{
     const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
     const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
     return `<div class="result-row">
       <div class="rank-badge ${cls}">${badge}</div>
-      <div class="name">${driverNameHtml(t.name)}<div class="breakdown"><span>${t.count} Strecken gewertet</span></div></div>
+      <div class="name">${driverNameHtml(t.name)}<div class="breakdown"><span>${t.count} Strecken gewertet${t.count < maxCount ? ' · ⚠️ unvollständig' : ''}</span></div></div>
       <div class="pts">${formatDurationMsPrecise(t.sumMs)}</div>
     </div>`;
   }).join('');
@@ -1927,7 +2181,7 @@ function csvEscapeField(v){
 
 function exportCsv(){
   const sessions = (state?.sessions || []).slice().sort((a,b)=> a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
-  const maxRounds = sessions.reduce((m,s)=> Math.max(m, (s.participants && s.grid && s.grid[s.participants[0]]) ? s.grid[s.participants[0]].length : 0), 1);
+  const maxRounds = sessions.reduce((m,s)=> Math.max(m, getRoundsCount(s)), 1);
 
   const headers = ['Datum','Fahrer','Besetzung'];
   for(let i=1;i<=maxRounds;i++) headers.push('Track'+i);
@@ -1965,7 +2219,7 @@ function exportCsv(){
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   logBackupEvent('export-csv', { sessionCount: sessions.length });
-  saveState();
+  patchFirebase({ backupHistory: state.backupHistory });
   showToast('CSV heruntergeladen');
   renderCurrentView();
 }
@@ -1995,7 +2249,7 @@ function exportBackup(){
   URL.revokeObjectURL(url);
   state.lastExportDate = todayStr();
   logBackupEvent('export', { sessionCount: state.sessions.length });
-  saveState();
+  patchFirebase({ lastExportDate: state.lastExportDate, backupHistory: state.backupHistory });
   showToast('Sicherung heruntergeladen');
   renderCurrentView();
 }
@@ -2017,12 +2271,12 @@ function importBackupFile(file){
     const existingIds = new Set(state.sessions.map(s=>s.id));
     const toAdd = backup.sessions.filter(s=>s && s.id && !existingIds.has(s.id));
     showConfirm(`${toAdd.length} fehlende Renn-Einträge aus der Sicherung ergänzen? Bestehende Einträge werden nicht verändert.`, ()=>{
-      toAdd.forEach(s=> state.sessions.push(s));
+      toAdd.forEach(s=>{ if(sanitizeSessionLike(s)) state.sessions.push(s); });
       if(Array.isArray(backup.savedNames)){
         backup.savedNames.forEach(n=>{ if(!state.savedNames.includes(n)) state.savedNames.push(n); });
       }
       logBackupEvent('import', { addedCount: toAdd.length, sourceVersion: backup.exportedFromVersion || null });
-      saveState();
+      patchFirebase({ sessions: state.sessions, savedNames: state.savedNames, backupHistory: state.backupHistory });
       showToast(`${toAdd.length} Rennen wiederhergestellt`);
       renderCurrentView();
     });
@@ -2278,7 +2532,7 @@ function renderArchiv(){
       const id = btn.dataset.deleteId;
       showConfirm('Dieses Rennen wirklich löschen?', ()=>{
         state.sessions = state.sessions.filter(x=>x.id!==id);
-        saveState();
+        patchFirebase({ sessions: state.sessions.length ? state.sessions : null });
         renderArchiv();
       });
     };
@@ -2287,14 +2541,20 @@ function renderArchiv(){
   el.querySelectorAll('[data-edit-id]').forEach(btn=>{
     btn.onclick = ()=>{
       const id = btn.dataset.editId;
-      const openNow = ()=>{
+      if(!iHoldLock && lockInfo && lockInfo.clientId !== CLIENT_ID){
+        showToast('🔒 Das Rennen wird gerade von einem anderen Gerät bearbeitet – bitte warten oder im LIVE-Tab zuschauen', 5000);
+        return;
+      }
+      const openNow = async ()=>{
+        if(!(await acquireLock())){ showToast('🔒 Das Rennen wird gerade von einem anderen Gerät bearbeitet', 5000); return; }
         const session = state.sessions.find(x=>x.id===id);
-        if(!session) return;
+        if(!session){ releaseLock(); return; }
         const prevMatch = state.sessions
           .filter(x=>x.id!==id && sameSet(x.participants, session.participants) && x.date <= session.date)
           .slice().sort((a,b)=> (b.date || '').localeCompare(a.date || ''))[0] || null;
         draft = JSON.parse(JSON.stringify(session));
-        const rounds = (draft.grid && draft.participants[0] && draft.grid[draft.participants[0]]) ? draft.grid[draft.participants[0]].length : 0;
+        const rounds = getRoundsCount(draft);
+        draft.rounds = rounds;
         if(!draft.penalties) draft.penalties = {};
         draft.participants.forEach(n=>{ if(!(n in draft.penalties)) draft.penalties[n] = 0; });
         if(!draft.trackNames) draft.trackNames = [];
@@ -2529,8 +2789,8 @@ function renderStatistik(){
     const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
     const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
     let badges = '';
-    if(crownHolder && crownHolder.name===name) badges += ` 👑<span style="font-size:11px;color:var(--muted);"> (${crownHolder.streak}x in Folge)</span>`;
-    if(loserHolder && loserHolder.name===name) badges += ` 💩<span style="font-size:11px;color:var(--muted);"> (${loserHolder.streak}x in Folge)</span>`;
+    if(crownHolder && crownHolder.names.includes(name)) badges += ` 👑<span style="font-size:11px;color:var(--muted);"> (${crownHolder.streak}x in Folge)</span>`;
+    if(loserHolder && loserHolder.names.includes(name)) badges += ` 💩<span style="font-size:11px;color:var(--muted);"> (${loserHolder.streak}x in Folge)</span>`;
     return `<div class="result-row">
       <div class="rank-badge ${cls}">${badge}</div>
       <div class="name">${driverNameHtml(name)}${badges}</div>
@@ -2651,6 +2911,7 @@ document.getElementById('loginSubmitBtn').onclick = attemptLogin;
 document.getElementById('loginPassInput').addEventListener('keydown', e=>{ if(e.key==='Enter') attemptLogin(); });
 document.getElementById('loginUserInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('loginPassInput').focus(); });
 
+startLockListener();
 loadState();
 </script>
 </body>
