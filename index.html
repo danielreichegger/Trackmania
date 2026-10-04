@@ -291,7 +291,7 @@
   <div class="storage-banner" id="storageBanner" style="display:none;"></div>
 
   <section class="view active" id="view-live">
-    <div id="liveContent"></div>
+    <div id="liveContent"><div class="empty">Verbinde …</div></div>
   </section>
 
   <section class="view" id="view-rennen">
@@ -372,7 +372,7 @@ const VERSION_HISTORY = [
   { v:15, date:'2026-10-02', notes:'DNF zeigt im Strecken-Tab jetzt wirklich "DNF" statt einer falschen Zeit; zählt in der Statistik mit einstellbarer Ersatzzeit (Settings). Live-Zeit-Ranking unterhalb des Zwischenstands während der Eingabe. "Neues Rennen starten" führt direkt zur Punktetabelle. "Speichern" und "Fertig" zu einem Button zusammengelegt. Krone-Berechnung repariert (war zu streng). Kalender färbt Tage jetzt in der Farbe des Tagessiegers inkl. Namen. Fahrer-Farben überall in der App, einstellbar unter Settings. Settings erweitert um DNF-Zeitwertung und Jubiläumsfeier-Schalter.' },
   { v:16, date:'2026-10-02', notes:'Bug behoben: Die Storage-Konfiguration (für Fotos) war in derselben Einstellung wie die Datenbank-Verbindung untergebracht – ein ungültiger Wert dort konnte die komplette App blockieren ("Verbinde…" ohne Ende), obwohl die Datenbank selbst nie das Problem war. Beides jetzt komplett getrennt. Jubiläumsfeier ist jetzt fix aktiviert (Einstellung dafür entfernt).' },
   { v:17, date:'2026-10-03', notes:'Fotos-Tab komplett entfernt (hätte einen kostenpflichtigen Firebase-Tarif erfordert). Statistik: neue Karte "Gesamtfahrzeit" – aufsummierte (nicht gemittelte) Zeit über alle gefahrenen Strecken, zusätzlich zum bestehenden fairen Ø-Zeit-Ranking.' },
-  { v:18, date:'2026-10-03', notes:'Neuer LIVE-Tab ganz links: Zuschauen ohne Bearbeiten. Der Rennen-Tab ist jetzt exklusiv - es kann immer nur ein Gerät eingeben (mit Übernahme-Funktion), das verhindert Speicherkonflikte. Neuer Speichern-Knopf unter der Punktetabelle: sichert Punkte, Zeiten und Namen ins Archiv und prüft nach, dass es angekommen ist. Behoben: Die Punktetabelle klappte nach dem Verlassen des Tabs zusammen und Einträge konnten verloren gehen (Firebase schneidet leere Felder am Ende von Listen ab) - die Spaltenanzahl wird jetzt fest gespeichert. Track-Editor: Namen nach Platzierung der aktuellen Strecke, Plausibilitätsprüfungen für Zeiten. Alle Speichervorgänge schreiben nur noch gezielt ihre eigenen Felder. Krone/Kackhaufen: bei Punktegleichstand wird niemand mehr gleichzeitig Sieger und Letzter.' }
+  { v:18, date:'2026-10-03', notes:'Neuer LIVE-Tab ganz links: Zuschauen ohne Bearbeiten. Der Rennen-Tab ist jetzt exklusiv - es kann immer nur ein Gerät eingeben (mit Übernahme-Funktion), das verhindert Speicherkonflikte. Neuer Speichern-Knopf unter der Punktetabelle: sichert Punkte, Zeiten und Namen ins Archiv und prüft nach, dass es angekommen ist. Behoben: Die Punktetabelle klappte nach dem Verlassen des Tabs zusammen und Einträge konnten verloren gehen (Firebase schneidet leere Felder am Ende von Listen ab) - die Spaltenanzahl wird jetzt fest gespeichert. Track-Editor: Namen nach Platzierung der aktuellen Strecke, Plausibilitätsprüfungen für Zeiten. Alle Speichervorgänge schreiben nur noch gezielt ihre eigenen Felder. Krone/Kackhaufen: bei Punktegleichstand wird niemand mehr gleichzeitig Sieger und Letzter. Zusätzlich abgesichert: Löschen, Import und Speichern arbeiten auf dem aktuellen Datenbestand und über die Renn-ID (nichts wird mehr durch eine veraltete Ansicht überschrieben); neuer Bereich Sicherung → Zuletzt gelöscht zum Wiederherstellen; Rennen-Tab wird nach 30 Minuten Inaktivität wieder freigegeben; im Track-Editor gehen Zeiten nicht mehr still verloren; Anführungszeichen in Passwort/Streckennamen; Datum um Mitternacht; Ladeanzeige beim Start.' }
 ];
 
 let state = null;
@@ -382,7 +382,8 @@ let draft = null;           // in-progress race being entered, not yet saved to 
 let rennenPhase = 'idle';   // 'idle' (driver picker) | 'editing' (points table)
 let storageAvailable = null; // null = not yet checked, true/false after first attempt
 
-function todayStr(){ return new Date().toISOString().slice(0,10); }
+// LOCAL date (toISOString would give yesterday between 00:00 and 02:00 local time)
+function todayStr(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 
 function showStorageBanner(err){
   const b = document.getElementById('storageBanner');
@@ -407,6 +408,7 @@ function defaultState(){
     liveDraft: null, // in-progress race, shared so everyone can watch it live
     lastExportDate: null,
     backupHistory: [],
+    trash: [],
     settings: {
       authUsername: 'TM',
       authPassword: 'TM2026',
@@ -674,11 +676,15 @@ function showTrackEditor(roundIndex){
       const dnfDefault = pv==='DNF' || (typeof pv==='number' && pv===N+1);
       const isLeader = name===leaderName;
       let fieldValue = '';
+      let keepOld = '';
+      const storedMs = parseTimeToMs((draft.trackTimes && draft.trackTimes[name] && draft.trackTimes[name][roundIndex]) || '');
       if(isLeader){
         fieldValue = leaderTimeDisplay;
-      } else if(!dnfDefault && leaderMs!==null){
-        const ownMs = parseTimeToMs((draft.trackTimes && draft.trackTimes[name] && draft.trackTimes[name][roundIndex]) || '');
-        if(ownMs!==null && ownMs>=leaderMs) fieldValue = formatGapDisplay(ownMs-leaderMs);
+      } else if(!dnfDefault){
+        if(leaderMs!==null && storedMs!==null && storedMs>=leaderMs) fieldValue = formatGapDisplay(storedMs-leaderMs);
+        // a stored time that cannot be shown as a gap (e.g. faster than the marked 1st place):
+        // keep it on save unless something is typed - it must not vanish silently
+        else if(storedMs!==null) keepOld = formatMsToTime(storedMs);
       }
       const errMsg = isLeader ? 'Format: mm:ss,SSS (z.B. 0:47,325)' : 'Format: ss,SSS (z.B. 01,500)';
       return `<div class="track-time-field" style="margin-bottom:10px;">
@@ -688,7 +694,7 @@ function showTrackEditor(roundIndex){
           </label>
           <div style="flex:1;font-size:14px;"><span class="muted" style="display:inline-block;min-width:28px;">${placeLabel(name)}</span>${driverNameHtml(name)}</div>
           <input type="text" inputmode="numeric" class="track-time-input" data-track-name="${escapeHtml(name)}" data-is-leader="${isLeader}"
-            placeholder="${isLeader?'mm:ss,SSS':'ss,SSS'}" value="${escapeHtml(fieldValue)}"
+            placeholder="${keepOld ? 'bisher ' + keepOld : (isLeader?'mm:ss,SSS':'ss,SSS')}" value="${escapeHtml(fieldValue)}" data-keep-old="${escapeHtml(keepOld)}"
             style="width:110px;text-align:center;" ${!isLeader && dnfDefault ? 'disabled':''} />
           <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);flex-shrink:0;">
             <input type="checkbox" class="track-dnf-check" data-track-name="${escapeHtml(name)}" ${dnfDefault?'checked':''} /> DNF
@@ -783,6 +789,14 @@ function showTrackEditor(roundIndex){
       showToast('Platz 1 kann kein DNF sein – bitte Platzierung bzw. Haken prüfen', 5000);
       return;
     }
+    {
+      const leaderHasTime = !!(leaderInpCheck && !leaderInpCheck.disabled && leaderInpCheck.value);
+      const gapsTyped = [...overlay.querySelectorAll('.track-time-input')].filter(i=>!i.disabled && i.dataset.isLeader !== 'true' && i.value);
+      if(!leaderHasTime && gapsTyped.length){
+        showToast('Bitte zuerst die Gesamtzeit von Platz 1 eintragen – sonst gehen die Rückstände verloren', 6000);
+        return;
+      }
+    }
 
     const name = document.getElementById('trackNameInputModal').value.trim();
     if(!draft.trackNames) draft.trackNames = [];
@@ -811,6 +825,8 @@ function showTrackEditor(roundIndex){
       } else if(raw && leaderMs!==null){
         const gapMs = parseTimeToMs(raw);
         finalMs = gapMs===null ? null : leaderMs + gapMs;
+      } else if(!raw && inp.dataset.keepOld){
+        finalMs = parseTimeToMs(inp.dataset.keepOld); // untouched stored time stays
       }
       draft.trackTimes[pname][roundIndex] = finalMs===null ? null : formatMsToTime(finalMs);
       newTimesMs[pname] = finalMs;
@@ -923,6 +939,7 @@ function loadState(){
     fresh.savedNames = normalizeArrayish(fresh.savedNames);
     fresh.selectedNames = normalizeArrayish(fresh.selectedNames);
     fresh.backupHistory = normalizeArrayish(fresh.backupHistory);
+    fresh.trash = normalizeArrayish(fresh.trash);
     migrateLegacyNames(fresh);
     if(!firstLoadDone && !fresh.selectedNames.length) fresh.selectedNames = [...FIXED_DRIVERS];
     if(!fresh.settings || typeof fresh.settings !== 'object') fresh.settings = {};
@@ -957,13 +974,10 @@ function loadState(){
       return;
     }
 
-    if(isTypingNow()) return;
-    if(saveInFlight > 0) return;
-    if(stableStringify(fresh) !== stableStringify(state)){
-      state = fresh;
-      syncDraftFromState();
-      render();
-    }
+    // Never apply while the user is typing or one of our own writes is in flight -
+    // but REMEMBER the update and apply it as soon as that is over (it used to be dropped).
+    deferredFresh = fresh;
+    applyDeferredState();
   }, (err)=>{
     console.error('Firebase sync error:', err);
     storageAvailable = false;
@@ -1022,8 +1036,176 @@ async function patchFirebase(updates){
     return false;
   }finally{
     saveInFlight--;
+    if(saveInFlight === 0) setTimeout(applyDeferredState, 0);
   }
 }
+
+/* ============================================================
+   SAFE WRITES FOR THE SHARED RACE LIST
+   ============================================================
+   The list of finished races is shared by everybody. Replacing it wholesale from a
+   possibly outdated local copy could silently wipe a race somebody else just saved,
+   and addressing a race by its list POSITION could hit the wrong one. So every change
+   to the list is a transaction (compare-and-swap on the database's CURRENT content)
+   and addresses races by their id. */
+let deferredFresh = null;
+function applyDeferredState(){
+  if(!deferredFresh) return;
+  if(isTypingNow() || saveInFlight > 0) return; // try again when typing / saving is over
+  const fresh = deferredFresh;
+  deferredFresh = null;
+  if(stableStringify(fresh) !== stableStringify(state)){
+    state = fresh;
+    syncDraftFromState();
+    render();
+  }
+}
+document.addEventListener('focusout', ()=>setTimeout(applyDeferredState, 60));
+document.addEventListener('blur', ()=>setTimeout(applyDeferredState, 60), true);
+setInterval(applyDeferredState, 2000);
+
+async function upsertSessionAndDraft(copy, draftObj){
+  if(!firebaseReady){ storageAvailable = false; showStorageBanner(); return false; }
+  saveInFlight++;
+  try{
+    const res = await dbRef.child('sessions').transaction(cur=>{
+      const arr = normalizeArrayish(cur);
+      const i = arr.findIndex(s=> s && s.id === copy.id);
+      if(i >= 0) arr[i] = JSON.parse(JSON.stringify(copy)); else arr.push(JSON.parse(JSON.stringify(copy)));
+      return arr;
+    });
+    if(!res || !res.committed) throw new Error('race list could not be updated');
+    await dbRef.update(JSON.parse(JSON.stringify({ liveDraft: draftObj })));
+    storageAvailable = true;
+    hideStorageBanner();
+    return true;
+  }catch(e){
+    console.error('upsertSessionAndDraft failed:', e);
+    storageAvailable = false;
+    showStorageBanner(e);
+    return false;
+  }finally{
+    saveInFlight--;
+    if(saveInFlight === 0) setTimeout(applyDeferredState, 0);
+  }
+}
+
+async function deleteSessionById(id){
+  const removed = state.sessions.find(s=>s.id === id);
+  if(!removed) return true;
+  if(!firebaseReady){ showStorageBanner(); return false; }
+  await trashPush(removed, 'session'); // safety copy FIRST
+  saveInFlight++;
+  try{
+    const res = await dbRef.child('sessions').transaction(cur=>{
+      if(cur === null || cur === undefined) return undefined; // unknown state: never act on it
+      const arr = normalizeArrayish(cur).filter(s=> s && s.id !== id);
+      return arr.length ? arr : null;
+    });
+    return !!(res && res.committed);
+  }catch(e){
+    console.error('deleteSessionById failed:', e);
+    showStorageBanner(e);
+    return false;
+  }finally{
+    saveInFlight--;
+    if(saveInFlight === 0) setTimeout(applyDeferredState, 0);
+  }
+}
+
+async function mergeSessionsIntoDb(list){
+  if(!list.length) return true;
+  if(!firebaseReady){ showStorageBanner(); return false; }
+  saveInFlight++;
+  try{
+    const res = await dbRef.child('sessions').transaction(cur=>{
+      const arr = normalizeArrayish(cur);
+      const have = new Set(arr.map(s=> s && s.id));
+      list.forEach(s=>{ if(!have.has(s.id)){ arr.push(JSON.parse(JSON.stringify(s))); have.add(s.id); } });
+      return arr;
+    });
+    return !!(res && res.committed);
+  }catch(e){
+    console.error('mergeSessionsIntoDb failed:', e);
+    showStorageBanner(e);
+    return false;
+  }finally{
+    saveInFlight--;
+    if(saveInFlight === 0) setTimeout(applyDeferredState, 0);
+  }
+}
+
+/* ---------- "Zuletzt gelöscht": nothing is gone for good ---------- */
+async function trashPush(sessionLike, kind){
+  if(!firebaseReady) return;
+  try{
+    const entry = { deletedAt: Date.now(), kind, session: JSON.parse(JSON.stringify(sessionLike)) };
+    delete entry.session.editorClientId;
+    delete entry.session.isNewRace;
+    await dbRef.child('trash').transaction(cur=>{
+      const arr = normalizeArrayish(cur);
+      arr.push(entry);
+      return arr.slice(-30);
+    });
+  }catch(e){ console.error('trashPush failed:', e); }
+}
+
+function hasDraftEntries(d){
+  if(!d || !Array.isArray(d.participants)) return false;
+  const anyGrid = d.participants.some(p=> toFixedArray(d.grid && d.grid[p], 0).some(v=> v !== null && v !== undefined));
+  const anyTime = !!(d.trackTimes && Object.values(d.trackTimes).some(a=> toFixedArray(a, 0).some(v=> v)));
+  const anyName = toFixedArray(d.trackNames, 0).some(v=> v);
+  const anyPen = !!(d.penalties && Object.values(d.penalties).some(v=> Number(v) > 0));
+  return !!(anyGrid || anyTime || anyName || anyPen || (d.note && String(d.note).trim()));
+}
+async function trashDraftIfUsed(d){
+  // a race that was never saved to the archive and has entries: keep a copy
+  if(d && !d.id && hasDraftEntries(d)) await trashPush(d, 'draft');
+}
+
+async function restoreFromTrash(deletedAt){
+  const t = (state.trash || []).find(x=> x && x.deletedAt === deletedAt);
+  if(!t) return false;
+  const s = JSON.parse(JSON.stringify(t.session));
+  if(!s.id) s.id = 's' + Date.now();
+  if(!sanitizeSessionLike(s)) return false;
+  if(!firebaseReady){ showStorageBanner(); return false; }
+  saveInFlight++;
+  try{
+    const res = await dbRef.child('sessions').transaction(cur=>{
+      const arr = normalizeArrayish(cur);
+      const copy = JSON.parse(JSON.stringify(s));
+      if(arr.some(x=> x && x.id === copy.id)) copy.id = copy.id + 'r' + Date.now();
+      arr.push(copy);
+      return arr;
+    });
+    if(!(res && res.committed)) return false;
+    await dbRef.child('trash').transaction(cur=>{
+      if(cur === null || cur === undefined) return undefined;
+      const arr = normalizeArrayish(cur).filter(x=> x && x.deletedAt !== deletedAt);
+      return arr.length ? arr : null;
+    });
+    return true;
+  }catch(e){
+    console.error('restoreFromTrash failed:', e);
+    return false;
+  }finally{
+    saveInFlight--;
+    if(saveInFlight === 0) setTimeout(applyDeferredState, 0);
+  }
+}
+
+/* ---------- free the Rennen tab if its holder simply walked away ---------- */
+let lastActivity = Date.now();
+['pointerdown','keydown','input','touchstart'].forEach(ev=> document.addEventListener(ev, ()=>{ lastActivity = Date.now(); }, true));
+function checkLockIdle(){
+  const limit = window.TM_LOCK_IDLE_MS || 30 * 60 * 1000;
+  if(iHoldLock && currentView === 'rennen' && Date.now() - lastActivity > limit){
+    showToast('Wegen Inaktivität beendet – alles ist gespeichert. Der Rennen-Tab ist wieder frei.', 8000);
+    switchView('live');
+  }
+}
+setInterval(checkLockIdle, 30000);
 
 /* ============================================================
    EXCLUSIVE EDITING LOCK - only one device at a time in the Rennen tab
@@ -1207,7 +1389,8 @@ function attemptLogin(){
   }
 }
 
-function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+// escapes quotes too - otherwise a " or ' inside a value="..." attribute cuts the value off
+function escapeHtml(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function sameSet(a,b){
   if(!Array.isArray(a) || !Array.isArray(b)) return false;
   if(a.length!==b.length) return false;
@@ -1531,9 +1714,10 @@ function renderEditingPhase(area){
   document.getElementById('discardDraftBtn').onclick = ()=>{
     const msg = draft.id
       ? 'Nicht gespeicherte Änderungen verwerfen? Der zuletzt gespeicherte Stand bleibt im Archiv erhalten.'
-      : 'Dieses Rennen verwerfen? Alle bisher eingetragenen Werte gehen verloren.';
-    showConfirm(msg, ()=>{
-      clearDraft();
+      : 'Dieses Rennen verwerfen? Eine Sicherheitskopie bleibt unter „Sicherung → Zuletzt gelöscht“ erhalten.';
+    showConfirm(msg, async ()=>{
+      await trashDraftIfUsed(draft);
+      await clearDraft();
       renderRennen();
     });
   };
@@ -1557,7 +1741,7 @@ function renderEditingPhase(area){
     if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); // flush a half-typed cell
     const res = commitDraftToArchive();
     const ok = await res.promise;
-    const verified = ok ? await verifySessionSaved(res.idx, res.session) : false;
+    const verified = ok ? await verifySessionSaved(res.session) : false;
     const btn2 = document.getElementById('saveNowBtn');
     if(btn2) btn2.disabled = false;
     if(ok && verified) showToast('✅ Gespeichert – Punkte, Zeiten und Namen sind gesichert', 3500);
@@ -1572,7 +1756,7 @@ function renderEditingPhase(area){
     const wasNewRace = !!draft.isNewRace;
     const res = commitDraftToArchive();
     const ok = await res.promise;
-    const verified = ok ? await verifySessionSaved(res.idx, res.session) : false;
+    const verified = ok ? await verifySessionSaved(res.session) : false;
     if(!(ok && verified)){
       const b = document.getElementById('finishRaceBtn');
       if(b) b.disabled = false;
@@ -1604,7 +1788,7 @@ document.getElementById('addNameBtn').onclick = ()=>{
   const input = document.getElementById('newNameInput');
   const name = input.value.trim();
   if(!name) return;
-  if(/[.$#\[\]\/]/.test(name)){ showToast('Im Namen sind diese Zeichen nicht erlaubt: . $ # [ ] /', 4000); return; }
+  if(/[.$#\[\]\/"'<>&\\`]/.test(name)){ showToast('Im Namen sind Sonderzeichen wie . $ # [ ] / " < > & nicht erlaubt', 5000); return; }
   if(state.savedNames.includes(name)){ showToast('Name existiert bereits'); return; }
   state.savedNames.push(name);
   state.selectedNames.push(name);
@@ -1759,29 +1943,21 @@ function showFinishOverlay(session, isMilestone, sessionCount){
 }
 
 function commitDraftToArchive(){
-  // Writes the complete current table into the archive (insert or update by id)
-  // AND the live draft, in ONE multi-path update. Returns immediately with a
+  // Writes the complete current table into the archive (insert or update, found by
+  // race ID - never by list position) AND the live draft. Returns immediately with a
   // `promise` that resolves true once the database acknowledged the write.
   const copy = JSON.parse(JSON.stringify(draft));
   sanitizeSessionLike(copy);
   delete copy.editorClientId;
   delete copy.isNewRace;
-  let idx;
+  if(!draft.id) draft.id = 's' + Date.now();
+  copy.id = draft.id;
   let isNewSession = false;
-  if(draft.id){
-    idx = state.sessions.findIndex(s=>s.id===draft.id);
-    if(idx>=0) state.sessions[idx] = copy;
-    else { idx = state.sessions.length; state.sessions.push(copy); isNewSession = true; }
-  } else {
-    draft.id = 's'+Date.now();
-    copy.id = draft.id;
-    idx = state.sessions.length;
-    state.sessions.push(copy);
-    isNewSession = true;
-  }
+  const localIdx = state.sessions.findIndex(s=> s.id === copy.id);
+  if(localIdx >= 0) state.sessions[localIdx] = copy; else { state.sessions.push(copy); isNewSession = true; }
   state.liveDraft = draft;
-  const promise = withTimeout(patchFirebase({ [`sessions/${idx}`]: copy, liveDraft: draft }), 8000, false);
-  return { session: copy, idx, isNewSession, promise };
+  const promise = withTimeout(upsertSessionAndDraft(copy, draft), 8000, false);
+  return { session: copy, isNewSession, promise };
 }
 
 // canonical form of a session, so what we meant to write and what the database
@@ -1802,13 +1978,13 @@ function canonSession(s){
   return stableStringify(out);
 }
 
-async function verifySessionSaved(idx, expected){
+async function verifySessionSaved(expected){
   if(!firebaseReady) return false;
   try{
-    const ref = dbRef.child('sessions/' + idx);
+    const ref = dbRef.child('sessions');
     const snap = await withTimeout(typeof ref.get === 'function' ? ref.get() : ref.once('value'), 8000, null);
     if(!snap) return false;
-    const got = snap.val();
+    const got = normalizeArrayish(snap.val()).find(s=> s && s.id === expected.id);
     if(!got) return false;
     const same = canonSession(got) === canonSession(expected);
     if(!same) console.error('Verify mismatch', canonSession(got), canonSession(expected));
@@ -2270,14 +2446,16 @@ function importBackupFile(file){
     }
     const existingIds = new Set(state.sessions.map(s=>s.id));
     const toAdd = backup.sessions.filter(s=>s && s.id && !existingIds.has(s.id));
-    showConfirm(`${toAdd.length} fehlende Renn-Einträge aus der Sicherung ergänzen? Bestehende Einträge werden nicht verändert.`, ()=>{
-      toAdd.forEach(s=>{ if(sanitizeSessionLike(s)) state.sessions.push(s); });
+    showConfirm(`${toAdd.length} fehlende Renn-Einträge aus der Sicherung ergänzen? Bestehende Einträge werden nicht verändert.`, async ()=>{
+      const valid = toAdd.filter(s=> sanitizeSessionLike(s));
       if(Array.isArray(backup.savedNames)){
         backup.savedNames.forEach(n=>{ if(!state.savedNames.includes(n)) state.savedNames.push(n); });
       }
-      logBackupEvent('import', { addedCount: toAdd.length, sourceVersion: backup.exportedFromVersion || null });
-      patchFirebase({ sessions: state.sessions, savedNames: state.savedNames, backupHistory: state.backupHistory });
-      showToast(`${toAdd.length} Rennen wiederhergestellt`);
+      logBackupEvent('import', { addedCount: valid.length, sourceVersion: backup.exportedFromVersion || null });
+      const importOk = await mergeSessionsIntoDb(valid);
+      patchFirebase({ savedNames: state.savedNames, backupHistory: state.backupHistory });
+      if(importOk) showToast(`${valid.length} Rennen wiederhergestellt`);
+      else showToast('❌ Import fehlgeschlagen – bitte nochmal versuchen', 6000);
       renderCurrentView();
     });
   };
@@ -2399,7 +2577,7 @@ function renderSettings(){
 
   document.getElementById('dnfPenaltyInput').addEventListener('change', (e)=>{
     const n = parseInt(e.target.value, 10);
-    const val = (isNaN(n) || n<0) ? 30 : n;
+    const val = (isNaN(n) || n<0) ? 30 : Math.min(n, 3600);
     e.target.value = val;
     state.settings.dnfPenaltySeconds = val;
     patchFirebase({ 'settings/dnfPenaltySeconds': val });
@@ -2439,9 +2617,30 @@ function renderSicherung(){
   }
   html += `<p class="muted" style="margin-top:10px;">Zeigt, wann zuletzt exportiert/importiert wurde und mit welcher App-Version.</p></div>`;
 
+  const trash = Array.isArray(state && state.trash) ? state.trash.slice().reverse() : [];
+  html += `<div class="card"><h2>Zuletzt gelöscht</h2>` + (trash.length === 0
+    ? `<div class="empty" style="padding:16px 0;">Nichts gelöscht. Gelöschte oder verworfene Rennen landen hier und lassen sich wiederherstellen.</div>`
+    : `<div class="standing-list">` + trash.map(t=>{
+        const s = t.session || {};
+        const when = new Date(t.deletedAt || 0).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+        return `<div class="result-row">
+          <div class="name">${escapeHtml(formatDate(s.date))} · ${escapeHtml((s.participants || []).join(', '))}
+            <div class="breakdown"><span>${t.kind === 'draft' ? 'verworfenes Rennen' : 'gelöscht'} · ${escapeHtml(when)}</span></div></div>
+          <button data-restore-trash="${escapeHtml(String(t.deletedAt))}" style="padding:8px 12px;">Wiederherstellen</button>
+        </div>`;
+      }).join('') + `</div>`) + `</div>`;
+
   el.innerHTML = html;
   wireBackupButtons();
   wireShareCard();
+  el.querySelectorAll('[data-restore-trash]').forEach(btn=>{
+    btn.onclick = async ()=>{
+      btn.disabled = true;
+      const ok = await restoreFromTrash(Number(btn.dataset.restoreTrash));
+      showToast(ok ? 'Rennen wiederhergestellt – es steht wieder im Archiv' : '❌ Wiederherstellen fehlgeschlagen', ok ? 3000 : 6000);
+      if(!ok) btn.disabled = false;
+    };
+  });
 }
 
 let archivFilter = [];
@@ -2530,9 +2729,12 @@ function renderArchiv(){
   el.querySelectorAll('[data-delete-id]').forEach(btn=>{
     btn.onclick = ()=>{
       const id = btn.dataset.deleteId;
-      showConfirm('Dieses Rennen wirklich löschen?', ()=>{
-        state.sessions = state.sessions.filter(x=>x.id!==id);
-        patchFirebase({ sessions: state.sessions.length ? state.sessions : null });
+      const s = state.sessions.find(x=> x.id === id);
+      const what = s ? `Rennen vom ${formatDate(s.date)} (${(s.participants || []).join(', ')})` : 'Dieses Rennen';
+      showConfirm(`${what} wirklich löschen? Es landet unter „Sicherung → Zuletzt gelöscht“ und lässt sich von dort wiederherstellen.`, async ()=>{
+        const ok = await deleteSessionById(id);
+        if(ok) state.sessions = state.sessions.filter(x=> x.id !== id);
+        else showToast('❌ Löschen fehlgeschlagen – bitte Verbindung prüfen und nochmal versuchen', 6000);
         renderArchiv();
       });
     };
@@ -2572,8 +2774,10 @@ function renderArchiv(){
         switchView('rennen');
       };
       if(draft){
-        showConfirm('Es gibt bereits ein unfertiges Rennen in Bearbeitung. Dieses verwerfen und stattdessen das gewählte bearbeiten?', ()=>{
-          clearDraft().then(openNow);
+        showConfirm('Es gibt bereits ein unfertiges Rennen in Bearbeitung' + (hasDraftEntries(draft) ? ' (mit Eingaben)' : '') + '. Dieses verwerfen und stattdessen das gewählte bearbeiten? Eine Sicherheitskopie bleibt unter „Sicherung → Zuletzt gelöscht“ erhalten.', async ()=>{
+          await trashDraftIfUsed(draft);
+          await clearDraft();
+          openNow();
         });
       } else {
         openNow();
@@ -2913,6 +3117,16 @@ document.getElementById('loginUserInput').addEventListener('keydown', e=>{ if(e.
 
 startLockListener();
 loadState();
+
+// If the very first answer from the database never comes (no internet), say so
+// instead of showing a blank page forever. We keep waiting - nothing is guessed.
+setTimeout(()=>{
+  if(!firstLoadDone){
+    const el = document.getElementById('liveContent');
+    if(el) el.innerHTML = '<div class="empty">Die Verbindung zur Datenbank dauert ungewöhnlich lange …<br>Bitte Internetverbindung prüfen. Die Seite wartet weiter – oder einmal neu laden.</div>';
+    showStorageBanner();
+  }
+}, window.TM_CONNECT_TIMEOUT_MS || 12000);
 </script>
 </body>
 </html>
