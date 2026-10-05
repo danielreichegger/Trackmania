@@ -381,7 +381,7 @@ const VERSION_HISTORY = [
   { v:15, date:'2026-10-02', notes:'DNF zeigt im Strecken-Tab jetzt wirklich "DNF" statt einer falschen Zeit; zählt in der Statistik mit einstellbarer Ersatzzeit (Settings). Live-Zeit-Ranking unterhalb des Zwischenstands während der Eingabe. "Neues Rennen starten" führt direkt zur Punktetabelle. "Speichern" und "Fertig" zu einem Button zusammengelegt. Krone-Berechnung repariert (war zu streng). Kalender färbt Tage jetzt in der Farbe des Tagessiegers inkl. Namen. Fahrer-Farben überall in der App, einstellbar unter Settings. Settings erweitert um DNF-Zeitwertung und Jubiläumsfeier-Schalter.' },
   { v:16, date:'2026-10-02', notes:'Bug behoben: Die Storage-Konfiguration (für Fotos) war in derselben Einstellung wie die Datenbank-Verbindung untergebracht – ein ungültiger Wert dort konnte die komplette App blockieren ("Verbinde…" ohne Ende), obwohl die Datenbank selbst nie das Problem war. Beides jetzt komplett getrennt. Jubiläumsfeier ist jetzt fix aktiviert (Einstellung dafür entfernt).' },
   { v:17, date:'2026-10-03', notes:'Fotos-Tab komplett entfernt (hätte einen kostenpflichtigen Firebase-Tarif erfordert). Statistik: neue Karte "Gesamtfahrzeit" – aufsummierte (nicht gemittelte) Zeit über alle gefahrenen Strecken, zusätzlich zum bestehenden fairen Ø-Zeit-Ranking.' },
-  { v:18, date:'2026-10-03', notes:'Neuer LIVE-Tab ganz links: Zuschauen ohne Bearbeiten. Der Rennen-Tab ist jetzt exklusiv - es kann immer nur ein Gerät eingeben (mit Übernahme-Funktion), das verhindert Speicherkonflikte. Neuer Speichern-Knopf unter der Punktetabelle: sichert Punkte, Zeiten und Namen ins Archiv und prüft nach, dass es angekommen ist. Behoben: Die Punktetabelle klappte nach dem Verlassen des Tabs zusammen und Einträge konnten verloren gehen (Firebase schneidet leere Felder am Ende von Listen ab) - die Spaltenanzahl wird jetzt fest gespeichert. Track-Editor: Namen nach Platzierung der aktuellen Strecke, Plausibilitätsprüfungen für Zeiten. Alle Speichervorgänge schreiben nur noch gezielt ihre eigenen Felder. Krone/Kackhaufen: bei Punktegleichstand wird niemand mehr gleichzeitig Sieger und Letzter. Zusätzlich abgesichert: Löschen, Import und Speichern arbeiten auf dem aktuellen Datenbestand und über die Renn-ID (nichts wird mehr durch eine veraltete Ansicht überschrieben); neuer Bereich Sicherung → Zuletzt gelöscht zum Wiederherstellen; Rennen-Tab wird nach 30 Minuten Inaktivität wieder freigegeben; im Track-Editor gehen Zeiten nicht mehr still verloren; Anführungszeichen in Passwort/Streckennamen; Datum um Mitternacht; Ladeanzeige beim Start. Eingaben werden schon beim Tippen und beim Verlassen/Schließen der Seite gesichert, Status-Anzeige „automatisch gespeichert“, Warnung beim Schließen mit ungesicherten Daten, Neuladen im selben Tab behält die eigene Sperre; Knopf „Zwischenspeichern“; Rennen-abgeschlossen-Knopf in Türkis; Streckenfilter im Strecken-Tab.' }
+  { v:18, date:'2026-10-03', notes:'Neuer LIVE-Tab ganz links: Zuschauen ohne Bearbeiten. Der Rennen-Tab ist jetzt exklusiv - es kann immer nur ein Gerät eingeben (mit Übernahme-Funktion), das verhindert Speicherkonflikte. Neuer Speichern-Knopf unter der Punktetabelle: sichert Punkte, Zeiten und Namen ins Archiv und prüft nach, dass es angekommen ist. Behoben: Die Punktetabelle klappte nach dem Verlassen des Tabs zusammen und Einträge konnten verloren gehen (Firebase schneidet leere Felder am Ende von Listen ab) - die Spaltenanzahl wird jetzt fest gespeichert. Track-Editor: Namen nach Platzierung der aktuellen Strecke, Plausibilitätsprüfungen für Zeiten. Alle Speichervorgänge schreiben nur noch gezielt ihre eigenen Felder. Krone/Kackhaufen: bei Punktegleichstand wird niemand mehr gleichzeitig Sieger und Letzter. Zusätzlich abgesichert: Löschen, Import und Speichern arbeiten auf dem aktuellen Datenbestand und über die Renn-ID (nichts wird mehr durch eine veraltete Ansicht überschrieben); neuer Bereich Sicherung → Zuletzt gelöscht zum Wiederherstellen; Rennen-Tab wird nach 30 Minuten Inaktivität wieder freigegeben; im Track-Editor gehen Zeiten nicht mehr still verloren; Anführungszeichen in Passwort/Streckennamen; Datum um Mitternacht; Ladeanzeige beim Start. Eingaben werden schon beim Tippen und beim Verlassen/Schließen der Seite gesichert, Status-Anzeige „automatisch gespeichert“, Warnung beim Schließen mit ungesicherten Daten, Neuladen im selben Tab behält die eigene Sperre; ein gesperrtes Handy (Seite im Hintergrund) gibt den Rennen-Tab nach 2 Minuten von selbst frei; Knopf „Zwischenspeichern“; Rennen-abgeschlossen-Knopf in Türkis; Streckenfilter im Strecken-Tab; Notfall-Bereich in den Settings (laufendes Rennen sichern, Bearbeiter rauswerfen).' }
 ];
 
 let state = null;
@@ -985,6 +985,8 @@ function loadState(){
 
     // Never apply while the user is typing or one of our own writes is in flight -
     // but REMEMBER the update and apply it as soon as that is over (it used to be dropped).
+    // an id given to the running race by the Notfall save is adopted immediately (even while typing)
+    if(draft && !draft.id && fresh.liveDraft && fresh.liveDraft.id) draft.id = fresh.liveDraft.id;
     deferredFresh = fresh;
     applyDeferredState();
   }, (err)=>{
@@ -1168,10 +1170,16 @@ document.addEventListener('focusout', ()=>setTimeout(applyDeferredState, 60));
 document.addEventListener('blur', ()=>setTimeout(applyDeferredState, 60), true);
 setInterval(applyDeferredState, 2000);
 
-async function upsertSessionAndDraft(copy, draftObj){
+async function upsertSessionAndDraft(copy, draftObj, claim){
   if(!firebaseReady){ storageAvailable = false; showStorageBanner(); return false; }
   saveInFlight++;
   try{
+    if(claim){
+      // a brand-new id: if the race already got one in the database (Notfall save), use THAT one
+      const cl = await dbRef.child('liveDraft').transaction(cur=>{ if(!cur || cur.id) return undefined; cur.id = copy.id; return cur; });
+      const now = cl && cl.snapshot ? cl.snapshot.val() : null;
+      if(now && now.id && now.id !== copy.id){ copy.id = now.id; draftObj.id = now.id; }
+    }
     const res = await dbRef.child('sessions').transaction(cur=>{
       const arr = normalizeArrayish(cur);
       const i = arr.findIndex(s=> s && s.id === copy.id);
@@ -1241,6 +1249,151 @@ async function mergeSessionsIntoDb(list){
     saveInFlight--;
     if(saveInFlight === 0) setTimeout(applyDeferredState, 0);
   }
+}
+
+/* ============================================================
+   NOTFALL (Settings tab) - save the running race / throw the editor out
+   ============================================================ */
+function countDraftEntries(d){
+  if(!d || !Array.isArray(d.participants)) return 0;
+  let n = 0;
+  d.participants.forEach(p=>{
+    toFixedArray(d.grid && d.grid[p], 0).forEach(v=>{ if(v !== null && v !== undefined) n++; });
+    toFixedArray(d.trackTimes && d.trackTimes[p], 0).forEach(v=>{ if(v) n++; });
+  });
+  toFixedArray(d.trackNames, 0).forEach(v=>{ if(v) n++; });
+  return n;
+}
+
+// writes ONLY the race list (never the live draft - the editor's copy stays untouched)
+async function upsertSessionOnly(copy){
+  if(!firebaseReady){ showStorageBanner(); return false; }
+  saveInFlight++;
+  try{
+    const res = await dbRef.child('sessions').transaction(cur=>{
+      const arr = normalizeArrayish(cur);
+      const i = arr.findIndex(s=> s && s.id === copy.id);
+      if(i >= 0) arr[i] = JSON.parse(JSON.stringify(copy)); else arr.push(JSON.parse(JSON.stringify(copy)));
+      return arr;
+    });
+    return !!(res && res.committed);
+  }catch(e){
+    console.error('upsertSessionOnly failed:', e);
+    showStorageBanner(e);
+    return false;
+  }finally{
+    saveInFlight--;
+    if(saveInFlight === 0) setTimeout(applyDeferredState, 0);
+  }
+}
+
+// Reads the race as it is IN THE DATABASE (works from any device, whoever is editing),
+// stores a verified copy in the archive. The race stays open and keeps its identity, so the
+// editor's normal "Rennen abgeschlossen" later updates this very entry instead of adding a second one.
+async function emergencySaveRace(){
+  if(!firebaseReady) return { ok:false, msg:'Keine Verbindung zur Datenbank.' };
+  let d = null;
+  try{
+    const ref = dbRef.child('liveDraft');
+    const snap = await withTimeout(typeof ref.get === 'function' ? ref.get() : ref.once('value'), 8000, null);
+    d = snap ? snap.val() : null;
+  }catch(e){ return { ok:false, msg:'Das laufende Rennen konnte nicht gelesen werden.' }; }
+  if(!d || !sanitizeSessionLike(d)) return { ok:false, none:true, msg:'Gerade ist kein Rennen in Bearbeitung.' };
+  if(!hasDraftEntries(d)) return { ok:false, empty:true, msg:'Im laufenden Rennen sind noch keine Eingaben – es gibt nichts zu sichern.' };
+  if(!d.id){
+    const candidate = 's' + Date.now();
+    try{
+      const res = await dbRef.child('liveDraft').transaction(cur=>{
+        if(!cur || cur.id) return undefined;
+        cur.id = candidate;
+        return cur;
+      });
+      const now = res && res.snapshot ? res.snapshot.val() : null;
+      if(!now) return { ok:false, none:true, msg:'Das Rennen wurde gerade beendet oder verworfen.' };
+      d.id = now.id || candidate;
+    }catch(e){ return { ok:false, msg:'Das Rennen konnte nicht markiert werden.' }; }
+  }
+  const copy = JSON.parse(JSON.stringify(d));
+  sanitizeSessionLike(copy);
+  delete copy.editorClientId;
+  delete copy.isNewRace;
+  copy.id = d.id;
+  const ok = await upsertSessionOnly(copy);
+  const verified = ok ? await verifySessionSaved(copy) : false;
+  return { ok: ok && verified, session: copy, msg: 'Die Archiv-Kopie konnte nicht bestätigt werden.' };
+}
+
+// Replaces the lock by a "released by Notfall" marker. (Just deleting it would not work: the
+// editor's own page would quietly take it back.) The marker counts as stale, so the next
+// person gets in at once; the editor's page sees that somebody else holds the lock and
+// moves itself to LIVE - its entries are already saved.
+async function emergencyKickEditor(){
+  if(!lockRef) return false;
+  try{
+    const res = await withTimeout(lockRef.transaction(cur=>{
+      const info = parseLock(cur);
+      if(!info || info.clientId === CLIENT_ID) return undefined; // nobody to throw out
+      return { notfall: { since: 0, sinceText: '', beat: 0, kicked: true } };
+    }), 6000, null);
+    return !!(res && res.committed);
+  }catch(e){ console.error('emergencyKickEditor failed', e); return false; }
+}
+
+function updateEmergencyStatus(){
+  const el = document.getElementById('emergencyStatus');
+  if(!el || !state) return;
+  const d = state.liveDraft;
+  const hasRace = !!(d && Array.isArray(d.participants) && d.participants.length);
+  const other = !!(lockInfo && lockInfo.clientId !== CLIENT_ID && !lockInfo.kicked);
+  const raceTxt = hasRace
+    ? `Laufendes Rennen: <b>${escapeHtml(formatDate(d.date))}</b> · ${escapeHtml(d.participants.join(', '))} · ${countDraftEntries(d)} Einträge`
+    : 'Kein Rennen in Bearbeitung.';
+  const editorTxt = other
+    ? (isLockStale(lockInfo)
+        ? `Ein Gerät hat den Rennen-Tab offen, ist aber seit einigen Minuten inaktiv (seit ${escapeHtml(lockInfo.sinceText || '?')} Uhr).`
+        : `Ein Gerät trägt gerade ein (seit ${escapeHtml(lockInfo.sinceText || '?')} Uhr).`)
+    : 'Niemand hat den Rennen-Tab offen.';
+  el.innerHTML = `${raceTxt}<br>${editorTxt}`;
+  const sb = document.getElementById('emergencySaveBtn');
+  const kb = document.getElementById('emergencyKickBtn');
+  if(sb) sb.disabled = !hasRace;
+  if(kb) kb.disabled = !other;
+}
+setInterval(updateEmergencyStatus, 10000);
+
+function emergencyCardHtml(){
+  return `<div class="card" style="border-color:rgba(255,77,94,0.55);">
+    <h2>🚨 Notfall</h2>
+    <p class="muted" style="margin:0 0 10px;">Wenn jemand das Rennen blockiert oder etwas hängt:</p>
+    <div id="emergencyStatus" style="font-size:13px;margin-bottom:14px;line-height:1.6;"></div>
+    <button class="full" id="emergencySaveBtn">💾 Aktuelles Rennen jetzt abspeichern</button>
+    <p class="muted" style="margin:6px 0 14px;font-size:12px;">Legt von jedem Gerät aus eine geprüfte Kopie des laufenden Rennens im Archiv an. Das Rennen bleibt offen, der Bearbeiter kann normal weitermachen.</p>
+    <button class="danger full" id="emergencyKickBtn">🚪 Bearbeiter aus dem Rennen werfen</button>
+    <p class="muted" style="margin:6px 0 0;font-size:12px;">Sichert vorher den Stand ins Archiv, nimmt dem Bearbeiter den Rennen-Tab weg (sein Gerät wechselt in den LIVE-Tab, seine Eingaben bleiben erhalten) und macht ihn sofort für den Nächsten frei.</p>
+  </div>`;
+}
+
+function wireEmergency(){
+  updateEmergencyStatus();
+  const sb = document.getElementById('emergencySaveBtn');
+  const kb = document.getElementById('emergencyKickBtn');
+  if(sb) sb.onclick = async ()=>{
+    sb.disabled = true;
+    const r = await emergencySaveRace();
+    const icon = r.ok ? '✅' : (r.none || r.empty ? 'ℹ️' : '❌');
+    showToast(r.ok ? '✅ Rennen gesichert – geprüfte Kopie liegt im Archiv' : `${icon} ${r.msg || 'Speichern nicht bestätigt'}`, r.ok ? 4500 : 7000);
+    updateEmergencyStatus();
+  };
+  if(kb) kb.onclick = ()=>{
+    showConfirm('Den aktuellen Bearbeiter wirklich aus dem Rennen werfen? Der Stand wird vorher ins Archiv gesichert. Sein Gerät wechselt in den LIVE-Tab, seine Eingaben bleiben erhalten.', async ()=>{
+      kb.disabled = true;
+      const r = await emergencySaveRace(); // safety copy first (the live draft itself stays intact either way)
+      const kicked = await emergencyKickEditor();
+      const saved = r.ok ? ' Stand ist im Archiv gesichert.' : (r.none || r.empty ? '' : ' ⚠️ Archiv-Kopie nicht bestätigt (die Eingaben liegen aber im laufenden Rennen).');
+      showToast(kicked ? '✅ Bearbeiter rausgeworfen – der Rennen-Tab ist frei.' + saved : 'Es war niemand im Rennen-Tab (oder keine Verbindung).', 7000);
+      updateEmergencyStatus();
+    });
+  };
 }
 
 /* ---------- "Zuletzt gelöscht": nothing is gone for good ---------- */
@@ -1325,6 +1478,7 @@ let lockRef = null;
 try{ lockRef = firebase.database().ref('tm_scoreboard_lock'); }catch(e){ console.error('Lock init failed', e); }
 let lockInfo = null;        // what the database says right now: null or {clientId, since, sinceText}
 let iHoldLock = false;
+let lockSig = '';
 let lockChecking = false;
 
 // The lock is stored PER CLIENT (tm_scoreboard_lock/<clientId>). So "remove my lock when
@@ -1340,8 +1494,53 @@ function parseLock(val){
   return Object.assign({ clientId: ids[0] }, val[ids[0]]);
 }
 function lockPayload(){
-  return { since: Date.now(), sinceText: new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}) };
+  return { since: Date.now(), sinceText: new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}), beat: serverNow() };
 }
+
+/* ---------- heartbeat: a lock whose holder has gone quiet frees itself ----------
+   While the holder is really there (page visible, Rennen tab open) it renews a
+   timestamp every 15 s. A locked phone / backgrounded page stops doing that, and after
+   2 minutes the lock counts as abandoned: the next person who opens the Rennen tab simply
+   gets in - no button, no waiting for the server to notice a dead connection.
+   Timestamps use the database's clock (serverTimeOffset), so differently-set phone
+   clocks do not matter. */
+let serverOffset = 0;
+try{
+  firebase.database().ref('.info/serverTimeOffset').on('value', s=>{ const v = s.val(); if(typeof v === 'number') serverOffset = v; });
+}catch(e){ /* without it the device's own clock is used */ }
+function serverNow(){ return Date.now() + serverOffset; }
+function isLockStale(info){
+  if(info && info.kicked) return true; // set by the Notfall function: free for anybody
+  const last = (info && (info.beat || info.since)) || 0;
+  return (serverNow() - last) > (window.TM_LOCK_STALE_MS || 120000);
+}
+async function sendLockBeat(){
+  if(!lockRef || !iHoldLock) return;
+  try{
+    await lockRef.transaction(cur=>{
+      const info = parseLock(cur);
+      if(!info || info.clientId !== CLIENT_ID) return undefined; // never recreate a lock that is gone / not ours
+      const mine = (cur && cur[CLIENT_ID]) || { since: info.since, sinceText: info.sinceText };
+      return { [CLIENT_ID]: Object.assign({}, mine, { beat: serverNow() }) };
+    });
+  }catch(e){ /* the next beat retries */ }
+}
+setInterval(()=>{ if(iHoldLock && currentView === 'rennen' && document.visibilityState !== 'hidden') sendLockBeat(); }, 15000);
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible'){
+    lastActivity = Date.now(); // coming back counts as being active (no instant idle kick-out)
+    if(iHoldLock && currentView === 'rennen') sendLockBeat();
+  }
+});
+// somebody waiting on the "belegt" screen gets in as soon as the holder has gone quiet
+function checkStaleLockForWaiter(){
+  if(currentView === 'rennen' && !iHoldLock && !lockChecking && lockInfo && lockInfo.clientId !== CLIENT_ID && isLockStale(lockInfo)){
+    lockChecking = true;
+    renderRennen();
+    acquireLock().then(()=>{ lockChecking = false; if(currentView === 'rennen') renderCurrentView(); else releaseLock(); });
+  }
+}
+setInterval(checkStaleLockForWaiter, 10000);
 
 async function acquireLock(){
   if(!lockRef){ iHoldLock = true; return true; }
@@ -1349,7 +1548,7 @@ async function acquireLock(){
   try{
     res = await withTimeout(lockRef.transaction(cur=>{
       const info = parseLock(cur);
-      if(!info || info.clientId === CLIENT_ID) return { [CLIENT_ID]: lockPayload() };
+      if(!info || info.clientId === CLIENT_ID || isLockStale(info)) return { [CLIENT_ID]: lockPayload() };
       return undefined; // somebody else holds it -> abort
     }), 6000, null);
   }catch(e){ console.error('acquireLock failed', e); }
@@ -1389,13 +1588,16 @@ async function forceTakeLock(){
 function startLockListener(){
   if(!lockRef) return;
   lockRef.on('value', snap=>{
+    const prevSig = lockSig;
     lockInfo = parseLock(snap.val());
+    lockSig = lockInfo ? lockInfo.clientId + ':' + lockInfo.since : '';
+    updateEmergencyStatus();
     if(iHoldLock && lockInfo && lockInfo.clientId !== CLIENT_ID){
       // somebody took over
       iHoldLock = false;
       try{ lockRef.child(CLIENT_ID).onDisconnect().cancel(); }catch(e){}
       if(currentView === 'rennen'){
-        showToast('Ein anderes Gerät hat die Bearbeitung übernommen – du siehst jetzt nur noch zu', 5000);
+        showToast(lockInfo.kicked ? 'Du wurdest über die Notfall-Funktion aus dem Rennen-Tab genommen – deine Eingaben sind gespeichert, du siehst jetzt nur noch zu' : 'Ein anderes Gerät hat die Bearbeitung übernommen – du siehst jetzt nur noch zu', 7000);
         switchView('live');
         return;
       }
@@ -1403,7 +1605,8 @@ function startLockListener(){
       // the server dropped our lock (e.g. after a reconnect) - quietly take it back
       acquireLock().then(ok=>{ if(!ok && currentView === 'rennen') switchView('live'); });
     }
-    if(state && (currentView === 'live' || (currentView === 'rennen' && !iHoldLock))) renderCurrentView();
+    // (a heartbeat alone does not redraw anything)
+    if(state && lockSig !== prevSig && (currentView === 'live' || (currentView === 'rennen' && !iHoldLock))) renderCurrentView();
   });
 }
 
@@ -1411,9 +1614,11 @@ function renderLive(){
   const el = document.getElementById('liveContent');
   if(!el || !state) return;
   const d = state.liveDraft;
-  const otherEditing = !!(lockInfo && lockInfo.clientId !== CLIENT_ID);
+  const otherEditing = !!(lockInfo && lockInfo.clientId !== CLIENT_ID && !lockInfo.kicked);
   const status = otherEditing
-    ? `✏️ Ein anderes Gerät trägt gerade ein (seit ${escapeHtml(lockInfo.sinceText || '?')} Uhr).`
+    ? (isLockStale(lockInfo)
+        ? `✏️ Ein anderes Gerät hat den Rennen-Tab offen, ist aber seit einigen Minuten inaktiv (seit ${escapeHtml(lockInfo.sinceText || '?')} Uhr) – du kannst ihn übernehmen.`
+        : `✏️ Ein anderes Gerät trägt gerade ein (seit ${escapeHtml(lockInfo.sinceText || '?')} Uhr).`)
     : 'Aktuell trägt niemand ein.';
   const goBtn = `<button class="primary full" id="liveGoRennenBtn" style="margin-top:12px;">${otherEditing ? 'Zum Rennen-Tab (gerade belegt)' : 'Zum Rennen-Tab – selbst eintragen'}</button>`;
   const wire = ()=>{ const b = document.getElementById('liveGoRennenBtn'); if(b) b.onclick = ()=>switchView('rennen'); };
@@ -1644,11 +1849,11 @@ function renderRennen(){
   if(!iHoldLock){
     dateCard.style.display = 'none';
     driversCard.style.display = 'none';
-    const holder = !!(lockInfo && lockInfo.clientId !== CLIENT_ID);
+    const holder = !!(lockInfo && lockInfo.clientId !== CLIENT_ID && !lockInfo.kicked);
     area.innerHTML = `<div class="card">
       <h2>🔒 Rennen-Tab belegt</h2>
       <p class="muted" style="margin:0 0 12px;">${holder
-        ? `Ein anderes Gerät bearbeitet gerade das Rennen (seit ${escapeHtml(lockInfo.sinceText || '?')} Uhr). Es darf immer nur eine Person gleichzeitig eingeben, damit nichts überschrieben wird. Zuschauen kannst du im LIVE-Tab.`
+        ? `Ein anderes Gerät bearbeitet gerade das Rennen (seit ${escapeHtml(lockInfo.sinceText || '?')} Uhr). Es darf immer nur eine Person gleichzeitig eingeben, damit nichts überschrieben wird. Zuschauen kannst du im LIVE-Tab. Ist der andere länger als 2 Minuten nicht aktiv (z. B. Handy gesperrt), wird der Tab von selbst frei.`
         : 'Die Sperre konnte nicht geprüft werden (Internetverbindung?).'}</p>
       <button class="primary full" id="goLiveBtn">Zum LIVE-Tab</button>
       <button class="full" id="retryLockBtn" style="margin-top:8px;">${holder ? 'Sperre übernehmen (nur wenn dort niemand mehr eingibt)' : 'Erneut versuchen'}</button>
@@ -2078,13 +2283,14 @@ function commitDraftToArchive(){
   sanitizeSessionLike(copy);
   delete copy.editorClientId;
   delete copy.isNewRace;
-  if(!draft.id) draft.id = 's' + Date.now();
+  const needsClaim = !draft.id;
+  if(needsClaim) draft.id = 's' + Date.now();
   copy.id = draft.id;
   let isNewSession = false;
   const localIdx = state.sessions.findIndex(s=> s.id === copy.id);
   if(localIdx >= 0) state.sessions[localIdx] = copy; else { state.sessions.push(copy); isNewSession = true; }
   state.liveDraft = draft;
-  const promise = withTimeout(upsertSessionAndDraft(copy, draft), 8000, false);
+  const promise = withTimeout(upsertSessionAndDraft(copy, draft, needsClaim), 8000, false);
   return { session: copy, isNewSession, promise };
 }
 
@@ -2671,7 +2877,7 @@ function renderSettings(){
       <div style="flex:1;font-size:14px;">${escapeHtml(name)}</div>
     </div>`).join('');
 
-  el.innerHTML = `<div class="card">
+  el.innerHTML = `${emergencyCardHtml()}<div class="card">
     <h2>Zugang</h2>
     <p class="muted" style="margin:0 0 12px;">Einfacher Zugriffsschutz für die Gruppe – keine echte Sicherheit, der Code ist für jeden einsehbar. Hält nur Zufallsbesucher fern.</p>
     <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Benutzername</label>
@@ -2703,6 +2909,7 @@ function renderSettings(){
     <textarea id="changeRequestsInput" placeholder="z.B. neue Funktion, Bug, Idee…" style="width:100%;min-height:120px;resize:vertical;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:11px 12px;font-size:14px;font-family:var(--font-body);">${escapeHtml(s.changeRequests||'')}</textarea>
   </div>`;
 
+  wireEmergency();
   document.getElementById('settingsSaveAuthBtn').onclick = ()=>{
     const u = document.getElementById('settingsUserInput').value.trim() || 'TM';
     const p = document.getElementById('settingsPassInput').value.trim() || 'TM2026';
@@ -2893,7 +3100,7 @@ function renderArchiv(){
   el.querySelectorAll('[data-edit-id]').forEach(btn=>{
     btn.onclick = ()=>{
       const id = btn.dataset.editId;
-      if(!iHoldLock && lockInfo && lockInfo.clientId !== CLIENT_ID){
+      if(!iHoldLock && lockInfo && lockInfo.clientId !== CLIENT_ID && !isLockStale(lockInfo)){
         showToast('🔒 Das Rennen wird gerade von einem anderen Gerät bearbeitet – bitte warten oder im LIVE-Tab zuschauen', 5000);
         return;
       }
