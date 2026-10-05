@@ -351,7 +351,16 @@
 const FIXED_DRIVERS = ['Max','Andy','Dani','Olly','Bär','Mky'];
 // A random id for THIS browser tab, used only to detect (and warn about,
 // not prevent) two people editing the same race at the same time.
-const CLIENT_ID = 'c' + Date.now() + Math.random().toString(36).slice(2,8);
+const CLIENT_ID = (()=>{
+  // kept per browser TAB: after a reload you are still "you", so your own Rennen lock is
+  // yours again immediately instead of blocking you until the old connection times out
+  const fresh = ()=> 'c' + Date.now() + Math.random().toString(36).slice(2,8);
+  try{
+    let id = sessionStorage.getItem('tm_client_id');
+    if(!id){ id = fresh(); sessionStorage.setItem('tm_client_id', id); }
+    return id;
+  }catch(e){ return fresh(); }
+})();
 const APP_VERSION = 18;
 const APP_VERSION_DATE = '2026-10-03';
 const VERSION_HISTORY = [
@@ -372,7 +381,7 @@ const VERSION_HISTORY = [
   { v:15, date:'2026-10-02', notes:'DNF zeigt im Strecken-Tab jetzt wirklich "DNF" statt einer falschen Zeit; zählt in der Statistik mit einstellbarer Ersatzzeit (Settings). Live-Zeit-Ranking unterhalb des Zwischenstands während der Eingabe. "Neues Rennen starten" führt direkt zur Punktetabelle. "Speichern" und "Fertig" zu einem Button zusammengelegt. Krone-Berechnung repariert (war zu streng). Kalender färbt Tage jetzt in der Farbe des Tagessiegers inkl. Namen. Fahrer-Farben überall in der App, einstellbar unter Settings. Settings erweitert um DNF-Zeitwertung und Jubiläumsfeier-Schalter.' },
   { v:16, date:'2026-10-02', notes:'Bug behoben: Die Storage-Konfiguration (für Fotos) war in derselben Einstellung wie die Datenbank-Verbindung untergebracht – ein ungültiger Wert dort konnte die komplette App blockieren ("Verbinde…" ohne Ende), obwohl die Datenbank selbst nie das Problem war. Beides jetzt komplett getrennt. Jubiläumsfeier ist jetzt fix aktiviert (Einstellung dafür entfernt).' },
   { v:17, date:'2026-10-03', notes:'Fotos-Tab komplett entfernt (hätte einen kostenpflichtigen Firebase-Tarif erfordert). Statistik: neue Karte "Gesamtfahrzeit" – aufsummierte (nicht gemittelte) Zeit über alle gefahrenen Strecken, zusätzlich zum bestehenden fairen Ø-Zeit-Ranking.' },
-  { v:18, date:'2026-10-03', notes:'Neuer LIVE-Tab ganz links: Zuschauen ohne Bearbeiten. Der Rennen-Tab ist jetzt exklusiv - es kann immer nur ein Gerät eingeben (mit Übernahme-Funktion), das verhindert Speicherkonflikte. Neuer Speichern-Knopf unter der Punktetabelle: sichert Punkte, Zeiten und Namen ins Archiv und prüft nach, dass es angekommen ist. Behoben: Die Punktetabelle klappte nach dem Verlassen des Tabs zusammen und Einträge konnten verloren gehen (Firebase schneidet leere Felder am Ende von Listen ab) - die Spaltenanzahl wird jetzt fest gespeichert. Track-Editor: Namen nach Platzierung der aktuellen Strecke, Plausibilitätsprüfungen für Zeiten. Alle Speichervorgänge schreiben nur noch gezielt ihre eigenen Felder. Krone/Kackhaufen: bei Punktegleichstand wird niemand mehr gleichzeitig Sieger und Letzter. Zusätzlich abgesichert: Löschen, Import und Speichern arbeiten auf dem aktuellen Datenbestand und über die Renn-ID (nichts wird mehr durch eine veraltete Ansicht überschrieben); neuer Bereich Sicherung → Zuletzt gelöscht zum Wiederherstellen; Rennen-Tab wird nach 30 Minuten Inaktivität wieder freigegeben; im Track-Editor gehen Zeiten nicht mehr still verloren; Anführungszeichen in Passwort/Streckennamen; Datum um Mitternacht; Ladeanzeige beim Start.' }
+  { v:18, date:'2026-10-03', notes:'Neuer LIVE-Tab ganz links: Zuschauen ohne Bearbeiten. Der Rennen-Tab ist jetzt exklusiv - es kann immer nur ein Gerät eingeben (mit Übernahme-Funktion), das verhindert Speicherkonflikte. Neuer Speichern-Knopf unter der Punktetabelle: sichert Punkte, Zeiten und Namen ins Archiv und prüft nach, dass es angekommen ist. Behoben: Die Punktetabelle klappte nach dem Verlassen des Tabs zusammen und Einträge konnten verloren gehen (Firebase schneidet leere Felder am Ende von Listen ab) - die Spaltenanzahl wird jetzt fest gespeichert. Track-Editor: Namen nach Platzierung der aktuellen Strecke, Plausibilitätsprüfungen für Zeiten. Alle Speichervorgänge schreiben nur noch gezielt ihre eigenen Felder. Krone/Kackhaufen: bei Punktegleichstand wird niemand mehr gleichzeitig Sieger und Letzter. Zusätzlich abgesichert: Löschen, Import und Speichern arbeiten auf dem aktuellen Datenbestand und über die Renn-ID (nichts wird mehr durch eine veraltete Ansicht überschrieben); neuer Bereich Sicherung → Zuletzt gelöscht zum Wiederherstellen; Rennen-Tab wird nach 30 Minuten Inaktivität wieder freigegeben; im Track-Editor gehen Zeiten nicht mehr still verloren; Anführungszeichen in Passwort/Streckennamen; Datum um Mitternacht; Ladeanzeige beim Start. Eingaben werden schon beim Tippen und beim Verlassen/Schließen der Seite gesichert, Status-Anzeige „automatisch gespeichert“, Warnung beim Schließen mit ungesicherten Daten, Neuladen im selben Tab behält die eigene Sperre; Knopf „Zwischenspeichern“; Rennen-abgeschlossen-Knopf in Türkis; Streckenfilter im Strecken-Tab.' }
 ];
 
 let state = null;
@@ -1019,26 +1028,121 @@ async function clearDraft(){
 async function patchFirebase(updates){
   if(!firebaseReady){
     storageAvailable = false;
+    lastSaveFailed = true;
     showStorageBanner();
+    updateSaveStatus();
     return false;
   }
+  const touchesDraft = Object.keys(updates).some(k=> k === 'liveDraft' || k.indexOf('liveDraft/') === 0);
   saveInFlight++;
+  updateSaveStatus();
   try{
     // plain JSON copy: drops undefined (which Firebase rejects) and NaN
     await dbRef.update(JSON.parse(JSON.stringify(updates)));
     storageAvailable = true;
     hideStorageBanner();
+    lastSaveOkAt = new Date();
+    lastSaveFailed = false;
+    if(Object.prototype.hasOwnProperty.call(updates, 'liveDraft')) draftDirty = false; // a full write repairs everything
     return true;
   }catch(e){
     console.error('Firebase patch failed:', e);
     storageAvailable = false;
+    lastSaveFailed = true;
+    if(touchesDraft) draftDirty = true; // some entry did not arrive -> send the whole table again soon
     showStorageBanner(e);
     return false;
   }finally{
     saveInFlight--;
+    updateSaveStatus();
     if(saveInFlight === 0) setTimeout(applyDeferredState, 0);
   }
 }
+
+/* ---------- visible save status ("is it really saved?") ---------- */
+let lastSaveOkAt = null;
+let lastSaveFailed = false;
+let draftDirty = false;
+function updateSaveStatus(){
+  const el = document.getElementById('saveStatus');
+  if(!el) return;
+  let text, color;
+  if(lastSaveFailed || storageAvailable === false){
+    text = '❌ Speichern fehlgeschlagen – bitte die Seite NICHT verlassen und die Verbindung prüfen';
+    color = 'var(--danger)';
+  } else if(draftDirty){
+    text = '⚠️ Ein Eintrag wird erneut gesendet …';
+    color = 'var(--warn)';
+  } else if(saveInFlight > 0){
+    text = '⏳ Speichert …';
+    color = 'var(--warn)';
+  } else if(lastSaveOkAt){
+    text = '✅ Alles automatisch gespeichert · ' + lastSaveOkAt.toLocaleTimeString('de-DE');
+    color = 'var(--accent)';
+  } else {
+    text = 'Automatisches Speichern ist aktiv – jede Eingabe wird sofort gesichert';
+    color = 'var(--muted)';
+  }
+  el.textContent = text;
+  el.style.color = color;
+}
+// an entry that failed to arrive is never silently forgotten: resend the whole table
+function resyncDraftIfDirty(){
+  if(draftDirty && draft && iHoldLock && currentView === 'rennen' && saveInFlight === 0) saveDraft();
+}
+setInterval(resyncDraftIfDirty, 4000);
+
+/* ---------- entries are saved while typing, and when the page is left or closed ---------- */
+const quickSaveTimers = new WeakMap();
+function scheduleQuickSave(el, fn){
+  clearTimeout(quickSaveTimers.get(el));
+  quickSaveTimers.set(el, setTimeout(()=>{ quickSaveTimers.delete(el); if(draft && iHoldLock) fn(el); }, 500));
+}
+function quickSaveCell(input){
+  if(!draft) return;
+  const name = input.dataset.name;
+  const round = parseInt(input.dataset.round, 10);
+  const val = normalizeCellValue(input.value);
+  if(!draft.grid[name]) draft.grid[name] = [];
+  if(draft.grid[name][round] === val) return;
+  draft.grid[name][round] = val;
+  if(val === null) saveDraft(); else patchFirebase({ [`liveDraft/grid/${name}/${round}`]: val });
+  updateSumsAndStandings(draft); // never touches the field the person is typing in
+}
+function quickSavePenalty(input){
+  if(!draft) return;
+  const name = input.dataset.penaltyName;
+  const n = input.value.trim() === '' ? 0 : parseInt(input.value, 10);
+  const val = (isNaN(n) || n < 0) ? 0 : n;
+  if(!draft.penalties) draft.penalties = {};
+  if(draft.penalties[name] === val) return;
+  draft.penalties[name] = val;
+  patchFirebase({ [`liveDraft/penalties/${name}`]: val });
+  updateSumsAndStandings(draft);
+}
+function quickSaveNote(el){
+  if(!draft || draft.note === el.value) return;
+  draft.note = el.value;
+  patchFirebase({ 'liveDraft/note': el.value });
+}
+function flushPendingInput(){
+  const a = document.activeElement;
+  if(!a || !draft || !iHoldLock || !a.classList) return;
+  if(a.classList.contains('cell-input') && a.dataset.name) quickSaveCell(a);
+  else if(a.classList.contains('penalty-input')) quickSavePenalty(a);
+  else if(a.id === 'sessionNoteInput') quickSaveNote(a);
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'hidden') flushPendingInput(); });
+window.addEventListener('pagehide', ()=>flushPendingInput());
+window.addEventListener('beforeunload', (e)=>{
+  flushPendingInput();
+  const trackModalOpen = !!document.getElementById('trackEditorSaveBtn');
+  if(saveInFlight > 0 || lastSaveFailed || draftDirty || trackModalOpen){
+    e.preventDefault();
+    e.returnValue = ''; // browser asks "leave this page?" - something is not saved yet
+    return '';
+  }
+});
 
 /* ============================================================
    SAFE WRITES FOR THE SHARED RACE LIST
@@ -1078,14 +1182,18 @@ async function upsertSessionAndDraft(copy, draftObj){
     await dbRef.update(JSON.parse(JSON.stringify({ liveDraft: draftObj })));
     storageAvailable = true;
     hideStorageBanner();
+    lastSaveOkAt = new Date();
+    lastSaveFailed = false;
     return true;
   }catch(e){
     console.error('upsertSessionAndDraft failed:', e);
     storageAvailable = false;
+    lastSaveFailed = true;
     showStorageBanner(e);
     return false;
   }finally{
     saveInFlight--;
+    updateSaveStatus();
     if(saveInFlight === 0) setTimeout(applyDeferredState, 0);
   }
 }
@@ -1219,8 +1327,20 @@ let lockInfo = null;        // what the database says right now: null or {client
 let iHoldLock = false;
 let lockChecking = false;
 
+// The lock is stored PER CLIENT (tm_scoreboard_lock/<clientId>). So "remove my lock when
+// I disconnect" can only ever remove MY entry - the late disconnect of an old or dead page
+// can no longer wipe the lock of the person who took over in the meantime.
+// (The older single-record format is still understood.)
+function parseLock(val){
+  if(!val || typeof val !== 'object') return null;
+  if(typeof val.clientId === 'string') return val;
+  const ids = Object.keys(val).filter(k=> val[k] && typeof val[k] === 'object');
+  if(!ids.length) return null;
+  ids.sort((a,b)=> (val[a].since || 0) - (val[b].since || 0));
+  return Object.assign({ clientId: ids[0] }, val[ids[0]]);
+}
 function lockPayload(){
-  return { clientId: CLIENT_ID, since: Date.now(), sinceText: new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}) };
+  return { since: Date.now(), sinceText: new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}) };
 }
 
 async function acquireLock(){
@@ -1228,13 +1348,15 @@ async function acquireLock(){
   let res = null;
   try{
     res = await withTimeout(lockRef.transaction(cur=>{
-      if(cur === null || cur === undefined || cur.clientId === CLIENT_ID) return lockPayload();
+      const info = parseLock(cur);
+      if(!info || info.clientId === CLIENT_ID) return { [CLIENT_ID]: lockPayload() };
       return undefined; // somebody else holds it -> abort
     }), 6000, null);
   }catch(e){ console.error('acquireLock failed', e); }
   if(res && res.committed){
-    try{ lockRef.onDisconnect().remove(); }catch(e){}
+    try{ lockRef.child(CLIENT_ID).onDisconnect().remove(); }catch(e){}
     iHoldLock = true;
+    lastActivity = Date.now();
     return true;
   }
   if(res && !res.committed){ iHoldLock = false; return false; } // really held by someone else
@@ -1250,27 +1372,28 @@ async function releaseLock(){
   iHoldLock = false;
   if(!lockRef) return;
   try{
-    await lockRef.transaction(cur=> (cur && cur.clientId === CLIENT_ID) ? null : undefined);
-    lockRef.onDisconnect().cancel(); // otherwise our later disconnect could wipe SOMEONE ELSE'S lock
+    await lockRef.transaction(cur=>{ const info = parseLock(cur); return (info && info.clientId === CLIENT_ID) ? null : undefined; });
+    lockRef.child(CLIENT_ID).onDisconnect().cancel();
   }catch(e){ console.error('releaseLock failed', e); }
 }
 
 async function forceTakeLock(){
   if(lockRef){
-    await lockRef.set(lockPayload());
-    try{ lockRef.onDisconnect().remove(); }catch(e){}
+    await lockRef.set({ [CLIENT_ID]: lockPayload() });
+    try{ lockRef.child(CLIENT_ID).onDisconnect().remove(); }catch(e){}
   }
   iHoldLock = true;
+  lastActivity = Date.now();
 }
 
 function startLockListener(){
   if(!lockRef) return;
   lockRef.on('value', snap=>{
-    lockInfo = snap.val();
+    lockInfo = parseLock(snap.val());
     if(iHoldLock && lockInfo && lockInfo.clientId !== CLIENT_ID){
       // somebody took over
       iHoldLock = false;
-      try{ lockRef.onDisconnect().cancel(); }catch(e){}
+      try{ lockRef.child(CLIENT_ID).onDisconnect().cancel(); }catch(e){}
       if(currentView === 'rennen'){
         showToast('Ein anderes Gerät hat die Bearbeitung übernommen – du siehst jetzt nur noch zu', 5000);
         switchView('live');
@@ -1476,7 +1599,7 @@ function switchView(v){
   document.querySelectorAll('section.view').forEach(s=>s.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   document.querySelectorAll('nav.bottom button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
-  if(prev === 'rennen' && v !== 'rennen') releaseLock();
+  if(prev === 'rennen' && v !== 'rennen'){ flushPendingInput(); releaseLock(); }
   if(v === 'rennen' && !iHoldLock){
     lockChecking = true;
     renderCurrentView(); // shows "checking ..." for a moment
@@ -1643,6 +1766,7 @@ function renderEditingPhase(area){
       <div class="info"><b>${formatDate(draft.date)}</b> · ${N} Fahrer · ${rounds} Tracks</div>
       <button class="danger" id="discardDraftBtn">Verwerfen</button>
     </div>
+    <div id="saveStatus" style="font-size:12px;margin:0 0 10px;font-weight:600;"></div>
     <div class="table-wrap"><table class="grid">
       <thead><tr><th class="namecol">Fahrer</th>`;
   for(let r=1;r<=rounds;r++){
@@ -1676,9 +1800,9 @@ function renderEditingPhase(area){
       <button id="addExtraRoundBtn">+ Zusatztrack</button>
     </div>
     <div class="section-actions">
-      <button class="primary full" id="saveNowBtn">💾 Speichern</button>
+      <button class="full" id="saveNowBtn">💾 Zwischenspeichern (Kopie ins Archiv)</button>
     </div>
-    <p class="muted" style="margin-top:8px;font-size:12px;">Speichern sichert die komplette Tabelle (Punkte, Zeiten, Streckennamen) sofort im Archiv und prüft nach, dass sie wirklich angekommen ist – das Rennen bleibt offen. „Rennen abgeschlossen“ (ganz unten) sichert genauso und beendet das Rennen.</p>
+    <p class="muted" style="margin-top:8px;font-size:12px;">Deine Eingaben werden ohnehin ständig automatisch gespeichert (Status oben). „Zwischenspeichern“ legt zusätzlich eine geprüfte Kopie im Archiv an – das Rennen läuft weiter und ist <b>noch nicht abgeschlossen</b>. Erst „Rennen abgeschlossen“ (ganz unten) beendet es.</p>
     </div>`;
 
   html += `<div class="card">
@@ -1690,7 +1814,7 @@ function renderEditingPhase(area){
   html += `<div class="card" id="liveTimeRankingCard" style="display:none;"><div id="liveTimeRankingContent"></div></div>`;
 
   html += `<div class="section-actions">
-    <button class="full" id="finishRaceBtn">🏁 Rennen abgeschlossen – sichern &amp; beenden</button>
+    <button class="primary full" id="finishRaceBtn">🏁 Rennen abgeschlossen – sichern &amp; beenden</button>
   </div>`;
 
   area.innerHTML = html;
@@ -1698,15 +1822,18 @@ function renderEditingPhase(area){
   area.querySelectorAll('.cell-input[data-name]').forEach(input=>{
     input.addEventListener('change', ()=>onDraftCellChange(input));
     input.addEventListener('blur', ()=>onDraftCellChange(input));
+    input.addEventListener('input', ()=>scheduleQuickSave(input, quickSaveCell));
   });
   const noteInput = document.getElementById('sessionNoteInput');
   if(noteInput){
     noteInput.addEventListener('change', ()=>{ draft.note = noteInput.value; patchFirebase({ 'liveDraft/note': noteInput.value }); });
     noteInput.addEventListener('blur', ()=>{ draft.note = noteInput.value; patchFirebase({ 'liveDraft/note': noteInput.value }); });
+    noteInput.addEventListener('input', ()=>scheduleQuickSave(noteInput, quickSaveNote));
   }
   area.querySelectorAll('.penalty-input').forEach(input=>{
     input.addEventListener('change', ()=>onPenaltyChange(input));
     input.addEventListener('blur', ()=>onPenaltyChange(input));
+    input.addEventListener('input', ()=>scheduleQuickSave(input, quickSavePenalty));
   });
   area.querySelectorAll('.track-th').forEach(th=>{
     th.onclick = ()=> showTrackEditor(parseInt(th.dataset.trackRound, 10));
@@ -1744,7 +1871,7 @@ function renderEditingPhase(area){
     const verified = ok ? await verifySessionSaved(res.session) : false;
     const btn2 = document.getElementById('saveNowBtn');
     if(btn2) btn2.disabled = false;
-    if(ok && verified) showToast('✅ Gespeichert – Punkte, Zeiten und Namen sind gesichert', 3500);
+    if(ok && verified) showToast('✅ Zwischengespeichert – Kopie im Archiv geprüft, das Rennen läuft weiter', 4000);
     else showToast('❌ Speichern NICHT bestätigt – bitte Verbindung prüfen und nochmal drücken', 7000);
   };
 
@@ -1772,6 +1899,7 @@ function renderEditingPhase(area){
   };
 
   updateSumsAndStandings(draft);
+  updateSaveStatus();
 }
 
 function toggleSelected(name){
@@ -2168,6 +2296,7 @@ function getPersonalBestMs(driverName, trackNameRaw){
   return best;
 }
 
+let streckenFilterText = '';
 function renderStrecken(){
   const el = document.getElementById('streckenContent');
   if (!el || !state || !Array.isArray(state.sessions)) return;
@@ -2205,7 +2334,7 @@ function renderStrecken(){
     return;
   }
 
-  el.innerHTML = trackKeys.map(key=>{
+  const cardsHtml = (keys)=> keys.map(key=>{
     const t = tracks[key];
     const entries = Object.entries(t.entries).sort((a,b)=>{
       const am = a[1].dnf ? Infinity : (a[1].ms===null ? Infinity : a[1].ms);
@@ -2228,6 +2357,27 @@ function renderStrecken(){
       </div>
     </div>`;
   }).join('');
+
+  // filter box at the very top; matches ignore case and punctuation ("ws9404" finds "Ws.94.04"),
+  // several words must all match
+  el.innerHTML = `<div class="card" style="padding:12px 14px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="streckenFilter" placeholder="🔍 Strecke suchen (z. B. wg oder 94.04)" autocomplete="off" style="flex:1;min-width:0;" value="${escapeHtml(streckenFilterText)}" />
+        <button id="streckenFilterClear" style="padding:10px 14px;" title="Filter löschen">✕</button>
+      </div>
+      <div id="streckenCount" class="muted" style="margin-top:8px;font-size:12px;"></div>
+    </div><div id="streckenList"></div>`;
+  const norm = s => String(s).toLowerCase().replace(/[^a-z0-9äöüß]/g, '');
+  const applyFilter = ()=>{
+    const words = streckenFilterText.trim().split(/\s+/).map(norm).filter(Boolean);
+    const shown = words.length ? trackKeys.filter(k=> words.every(w=> norm(tracks[k].displayName).includes(w))) : trackKeys;
+    document.getElementById('streckenCount').textContent = words.length ? `${shown.length} von ${trackKeys.length} Strecken` : `${trackKeys.length} Strecken`;
+    document.getElementById('streckenList').innerHTML = shown.length ? cardsHtml(shown) : '<div class="empty">Keine Strecke gefunden – anderen Suchbegriff probieren.</div>';
+  };
+  const filterInput = document.getElementById('streckenFilter');
+  filterInput.addEventListener('input', ()=>{ streckenFilterText = filterInput.value; applyFilter(); });
+  document.getElementById('streckenFilterClear').onclick = ()=>{ streckenFilterText = ''; filterInput.value = ''; applyFilter(); filterInput.focus(); };
+  applyFilter();
 }
 
 function buildReadOnlyGridHtml(s, opts){
