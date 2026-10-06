@@ -104,7 +104,7 @@
   .muted{color:var(--muted);font-size:13px;}
   .empty{text-align:center;color:var(--muted);font-size:14px;padding:26px 10px;}
 
-  input[type="text"], input[type="date"], input[type="number"]{
+  input[type="text"], input[type="date"], input[type="number"], input[type="password"], input[type="search"]{
     background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);
     border-radius:9px;padding:11px 12px;font-size:15px;font-family:var(--font-body);
   }
@@ -172,11 +172,48 @@
   table.grid th{font-family:var(--font-display);font-weight:600;font-size:13px;color:var(--muted);
     padding:6px 4px;text-align:center;white-space:nowrap;letter-spacing:0.4px;}
   table.grid td{padding:4px;text-align:center;}
-  table.grid .namecol{position:sticky;left:0;background:#0b1020;z-index:2;text-align:left;
+  table.grid .namecol{position:sticky;left:0;background:#0d1118;z-index:2;text-align:left;
     padding:6px 10px 6px 0;font-size:14px;font-weight:500;white-space:nowrap;}
-  table.grid th.namecol{background:transparent;}
+  table.grid th.namecol{background:#0d1118;}
+  /* the sum column stays visible at the right edge while the tracks scroll sideways */
   table.grid .sumcol{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:16px;
-    padding:6px 4px 6px 10px;white-space:nowrap;text-shadow:0 0 12px rgba(0,229,255,0.5);}
+    padding:6px 8px 6px 10px;white-space:nowrap;text-shadow:0 0 12px rgba(0,229,255,0.5);
+    position:sticky;right:0;z-index:2;background:#0d1118;box-shadow:-10px 0 10px -8px rgba(0,0,0,0.45);}
+  table.grid th.sumcol{font-size:13px;text-shadow:none;color:var(--accent);}
+  table.grid .namecol{box-shadow:10px 0 10px -8px rgba(0,0,0,0.45);}
+  .breakdown{font-size:11px;color:var(--muted);margin-top:1px;font-weight:400;}
+  .dn{display:inline-block;border-left:3px solid var(--c, var(--muted));padding-left:7px;line-height:1.2;}
+  .ghost-btn{font-size:12px;padding:6px 10px;color:var(--muted);background:none;border-color:var(--border);font-weight:500;}
+  .ghost-btn.danger-soft{color:#c98a92;}
+  .compact-btn{font-size:12px;padding:7px 11px;}
+  .rank-badge.small{font-size:10px;}
+  @media (max-width:380px){ .btn-txt{display:none;} }
+  .backup-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px;padding:11px 14px;border-radius:12px;
+    background:rgba(255,181,69,0.1);border:1px solid var(--warn);color:var(--warn);font-size:13px;line-height:1.4;}
+  .backup-banner .txt{flex:1 1 100%;}
+  .record-line{font-size:12.5px;color:var(--gold);margin:-6px 0 10px;}
+  .tr-leader{background:rgba(0,229,255,0.07);border-radius:10px;}
+  .tr-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .tr-row .tr-name{flex:1 1 70px;min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tr-row .track-time-input{flex:0 0 100px;width:100px;padding:10px 4px;}
+  @media (max-width:380px){
+    /* narrow phones: the time field gets its own full-width line under the name */
+    .tr-row .track-time-input{order:9;flex:1 1 calc(100% - 30px);width:auto;min-width:0;margin-left:30px;}
+  }
+  .filter-bar{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:10px 14px;border-radius:12px;font-weight:500;font-size:13.5px;}
+  .filter-bar .fb-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .chip-row .chip{width:auto;padding:8px 13px;font-size:13.5px;gap:6px;}
+  .chip-row .chip::after{display:none;}
+  .period-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .period-chips .chip{width:auto;padding:7px 12px;font-size:12.5px;}
+  .period-chips .chip::after{display:none;}
+  .h2h-sel{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
+  .h2h-sel select{flex:1;min-width:0;color-scheme:dark;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:10px;font-size:14px;font-family:var(--font-body);}
+  .h2h-bar{display:flex;height:10px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.06);margin:6px 0 4px;}
+  .h2h-row{margin-bottom:14px;}
+  .h2h-row .h2h-nums{display:flex;justify-content:space-between;font-family:var(--font-display);font-weight:700;font-size:17px;}
+  .h2h-row .h2h-lbl{font-size:11px;color:var(--muted);text-align:center;}
   .cell-input{
     width:44px;text-align:center;padding:9px 2px;font-family:var(--font-display);font-size:15px;
     border-radius:8px;background:rgba(255,255,255,0.04);
@@ -239,6 +276,14 @@
     content:'';position:absolute;top:0;left:30%;right:30%;height:2px;
     background:var(--accent);box-shadow:0 0 8px rgba(0,229,255,0.8);border-radius:2px;
   }
+  /* very narrow phones (320-360px): seven tabs must still fit without clipped labels */
+  nav.bottom button .lbl{display:block;max-width:100%;white-space:nowrap;}
+  @media (max-width:380px){
+    nav.bottom button{font-size:9px;letter-spacing:0;gap:3px;padding:11px 0 9px;}
+    nav.bottom button .ico{font-size:19px;line-height:1;}
+    nav.bottom button .lbl{font-size:8.5px;letter-spacing:-0.1px;}
+    main{padding:14px 12px;}
+  }
 
   .toast{
     position:fixed;top:14px;left:50%;transform:translateX(-50%);background:rgba(10,15,28,0.9);
@@ -289,6 +334,13 @@
 <main>
 
   <div class="storage-banner" id="storageBanner" style="display:none;"></div>
+  <div class="storage-banner" id="updateBanner" style="display:none;">🔄 Es gibt eine neuere Version der App. Bitte die Seite neu laden (notfalls den Browser-Cache leeren), damit alle dieselbe Version benutzen. <button id="reloadAppBtn" style="margin-top:8px;">Jetzt neu laden</button></div>
+
+  <div class="backup-banner" id="backupBanner" style="display:none;">
+    <div class="txt" id="backupBannerText"></div>
+    <button class="compact-btn" id="backupBannerBtn">💾 Jetzt sichern</button>
+    <button class="compact-btn ghost-btn" id="backupBannerLater">Später</button>
+  </div>
 
   <section class="view active" id="view-live">
     <div id="liveContent"><div class="empty">Verbinde …</div></div>
@@ -336,13 +388,13 @@
 </main>
 
 <nav class="bottom">
-  <button data-view="live" class="active"><span class="ico">🔴</span>LIVE</button>
-  <button data-view="rennen"><span class="ico">🏎️</span>Rennen</button>
-  <button data-view="archiv"><span class="ico">🗂️</span>Archiv</button>
-  <button data-view="strecken"><span class="ico">🏁</span>Strecken</button>
-  <button data-view="statistik"><span class="ico">🏆</span>Statistik</button>
-  <button data-view="sicherung"><span class="ico">💾</span>Sicherung</button>
-  <button data-view="settings"><span class="ico">⚙️</span>Settings</button>
+  <button data-view="live" class="active"><span class="ico">🔴</span><span class="lbl">LIVE</span></button>
+  <button data-view="rennen"><span class="ico">🏎️</span><span class="lbl">Rennen</span></button>
+  <button data-view="archiv"><span class="ico">🗂️</span><span class="lbl">Archiv</span></button>
+  <button data-view="strecken"><span class="ico">🏁</span><span class="lbl">Strecken</span></button>
+  <button data-view="statistik"><span class="ico">🏆</span><span class="lbl">Statistik</span></button>
+  <button data-view="sicherung"><span class="ico">💾</span><span class="lbl">Sicherung</span></button>
+  <button data-view="settings"><span class="ico">⚙️</span><span class="lbl">Settings</span></button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -362,6 +414,8 @@ const CLIENT_ID = (()=>{
   }catch(e){ return fresh(); }
 })();
 const APP_VERSION = 18;
+// identifies this exact file; every device announces it, so an outdated cached page can tell it is outdated
+const APP_BUILD = '2026-10-06.1';
 const APP_VERSION_DATE = '2026-10-03';
 const VERSION_HISTORY = [
   { v:1, date:'2026-09-10', notes:'Kompletter Funktionsstand: Rennen-Tabelle, Archiv, Statistik, Strafpunkte, Zeitraum-Filter, faires Gesamtranking.' },
@@ -381,7 +435,7 @@ const VERSION_HISTORY = [
   { v:15, date:'2026-10-02', notes:'DNF zeigt im Strecken-Tab jetzt wirklich "DNF" statt einer falschen Zeit; zählt in der Statistik mit einstellbarer Ersatzzeit (Settings). Live-Zeit-Ranking unterhalb des Zwischenstands während der Eingabe. "Neues Rennen starten" führt direkt zur Punktetabelle. "Speichern" und "Fertig" zu einem Button zusammengelegt. Krone-Berechnung repariert (war zu streng). Kalender färbt Tage jetzt in der Farbe des Tagessiegers inkl. Namen. Fahrer-Farben überall in der App, einstellbar unter Settings. Settings erweitert um DNF-Zeitwertung und Jubiläumsfeier-Schalter.' },
   { v:16, date:'2026-10-02', notes:'Bug behoben: Die Storage-Konfiguration (für Fotos) war in derselben Einstellung wie die Datenbank-Verbindung untergebracht – ein ungültiger Wert dort konnte die komplette App blockieren ("Verbinde…" ohne Ende), obwohl die Datenbank selbst nie das Problem war. Beides jetzt komplett getrennt. Jubiläumsfeier ist jetzt fix aktiviert (Einstellung dafür entfernt).' },
   { v:17, date:'2026-10-03', notes:'Fotos-Tab komplett entfernt (hätte einen kostenpflichtigen Firebase-Tarif erfordert). Statistik: neue Karte "Gesamtfahrzeit" – aufsummierte (nicht gemittelte) Zeit über alle gefahrenen Strecken, zusätzlich zum bestehenden fairen Ø-Zeit-Ranking.' },
-  { v:18, date:'2026-10-03', notes:'Neuer LIVE-Tab ganz links: Zuschauen ohne Bearbeiten. Der Rennen-Tab ist jetzt exklusiv - es kann immer nur ein Gerät eingeben (mit Übernahme-Funktion), das verhindert Speicherkonflikte. Neuer Speichern-Knopf unter der Punktetabelle: sichert Punkte, Zeiten und Namen ins Archiv und prüft nach, dass es angekommen ist. Behoben: Die Punktetabelle klappte nach dem Verlassen des Tabs zusammen und Einträge konnten verloren gehen (Firebase schneidet leere Felder am Ende von Listen ab) - die Spaltenanzahl wird jetzt fest gespeichert. Track-Editor: Namen nach Platzierung der aktuellen Strecke, Plausibilitätsprüfungen für Zeiten. Alle Speichervorgänge schreiben nur noch gezielt ihre eigenen Felder. Krone/Kackhaufen: bei Punktegleichstand wird niemand mehr gleichzeitig Sieger und Letzter. Zusätzlich abgesichert: Löschen, Import und Speichern arbeiten auf dem aktuellen Datenbestand und über die Renn-ID (nichts wird mehr durch eine veraltete Ansicht überschrieben); neuer Bereich Sicherung → Zuletzt gelöscht zum Wiederherstellen; Rennen-Tab wird nach 30 Minuten Inaktivität wieder freigegeben; im Track-Editor gehen Zeiten nicht mehr still verloren; Anführungszeichen in Passwort/Streckennamen; Datum um Mitternacht; Ladeanzeige beim Start. Eingaben werden schon beim Tippen und beim Verlassen/Schließen der Seite gesichert, Status-Anzeige „automatisch gespeichert“, Warnung beim Schließen mit ungesicherten Daten, Neuladen im selben Tab behält die eigene Sperre; ein gesperrtes Handy (Seite im Hintergrund) gibt den Rennen-Tab nach 2 Minuten von selbst frei; Knopf „Zwischenspeichern“; Rennen-abgeschlossen-Knopf in Türkis; Streckenfilter im Strecken-Tab; Notfall-Bereich in den Settings (laufendes Rennen sichern, Bearbeiter rauswerfen).' }
+  { v:18, date:'2026-10-03', notes:'Neuer LIVE-Tab ganz links: Zuschauen ohne Bearbeiten. Der Rennen-Tab ist jetzt exklusiv - es kann immer nur ein Gerät eingeben (mit Übernahme-Funktion), das verhindert Speicherkonflikte. Neuer Speichern-Knopf unter der Punktetabelle: sichert Punkte, Zeiten und Namen ins Archiv und prüft nach, dass es angekommen ist. Behoben: Die Punktetabelle klappte nach dem Verlassen des Tabs zusammen und Einträge konnten verloren gehen (Firebase schneidet leere Felder am Ende von Listen ab) - die Spaltenanzahl wird jetzt fest gespeichert. Track-Editor: Namen nach Platzierung der aktuellen Strecke, Plausibilitätsprüfungen für Zeiten. Alle Speichervorgänge schreiben nur noch gezielt ihre eigenen Felder. Krone/Kackhaufen: bei Punktegleichstand wird niemand mehr gleichzeitig Sieger und Letzter. Zusätzlich abgesichert: Löschen, Import und Speichern arbeiten auf dem aktuellen Datenbestand und über die Renn-ID (nichts wird mehr durch eine veraltete Ansicht überschrieben); neuer Bereich Sicherung → Zuletzt gelöscht zum Wiederherstellen; Rennen-Tab wird nach 30 Minuten Inaktivität wieder freigegeben; im Track-Editor gehen Zeiten nicht mehr still verloren; Anführungszeichen in Passwort/Streckennamen; Datum um Mitternacht; Ladeanzeige beim Start. Eingaben werden schon beim Tippen und beim Verlassen/Schließen der Seite gesichert, Status-Anzeige „automatisch gespeichert“, Warnung beim Schließen mit ungesicherten Daten, Neuladen im selben Tab behält die eigene Sperre; ein gesperrtes Handy (Seite im Hintergrund) gibt den Rennen-Tab nach 2 Minuten von selbst frei; Knopf „Zwischenspeichern“; Rennen-abgeschlossen-Knopf in Türkis; Streckenfilter im Strecken-Tab; Notfall-Bereich in den Settings (laufendes Rennen sichern, Bearbeiter rauswerfen). Prüfung/Fehlerbehebung: Zeiteingabe auch mit Handy-Tastaturen, die keine normalen Tasten senden; unmögliche Platzierungen (z. B. 99) werden abgelehnt; einheitliche DNF-Zählung in der Statistik; Hinweis bei veralteter Seite. Nachtrag 06.10.: Live-Seite mit Zwischenstand oben und Rückstand auf Platz 1, Summenspalte bleibt beim seitlichen Scrollen sichtbar, Fahrer mit Farbstreifen, kompakter Archiv-Filter, dezenter Verwerfen-Knopf, Track-Editor mit Platz-Medaillen, Navigation für kleine Handys, „Ergebnis teilen“ (WhatsApp), Streckenrekorde, Direktvergleich und Zeitraum-Schnellwahl in der Statistik, Hinweis bei Sicherung älter als 30 Tage.' }
 ];
 
 let state = null;
@@ -515,6 +569,18 @@ function withTimeout(promise, ms, fallback){
   return Promise.race([promise, new Promise(res=>setTimeout(()=>res(fallback), ms))]);
 }
 
+// a finished race without date or id (damaged / imported) must not crash sorting everywhere
+function ensureSessionIdentity(s){
+  if(typeof s.date !== 'string' || !s.date) s.date = '1970-01-01';
+  if(typeof s.id !== 'string' || !s.id){
+    let h = 0;
+    const str = JSON.stringify([s.date, s.participants, s.grid]);
+    for(let i=0;i<str.length;i++) h = (h*31 + str.charCodeAt(i)) | 0;
+    s.id = 'g' + Math.abs(h).toString(36);
+  }
+  return s;
+}
+
 function sanitizeSessionLike(s){
   // Returns false if unusable; otherwise guarantees: participants is a real
   // array, and every participant has a grid array of exactly `rounds` entries.
@@ -623,7 +689,13 @@ function showTrackEditor(roundIndex){
     const p = asPlacementNumber(draft.grid[n] ? draft.grid[n][roundIndex] : null);
     return p === null ? 999 : p;
   };
-  const placeLabel = (n)=>{ const p = placeOf(n); return p === 1000 ? 'DNF' : (p === 999 ? '–' : p + '.'); };
+  const placeBadge = (n)=>{
+    const p = placeOf(n);
+    if(p === 1000) return '<div class="rank-badge small" style="color:var(--danger);border-color:rgba(255,77,94,0.5);">DNF</div>';
+    if(p === 999) return '<div class="rank-badge">–</div>';
+    const cls = p===1?'p1':p===2?'p2':p===3?'p3':'';
+    return `<div class="rank-badge ${cls}">${p===1?'🥇':p===2?'🥈':p===3?'🥉':p}</div>`;
+  };
   const orderedNames = draft.participants.slice().sort((a,b)=> placeOf(a)-placeOf(b) || draft.participants.indexOf(a)-draft.participants.indexOf(b));
   const hasPlacedLeader = orderedNames.some(n=> placeOf(n) === 1);
 
@@ -633,7 +705,7 @@ function showTrackEditor(roundIndex){
 
   const overlay = document.createElement('div');
   overlay.className = 'confirm-overlay';
-  overlay.innerHTML = `<div class="confirm-box" style="max-width:380px;text-align:left;">
+  overlay.innerHTML = `<div class="confirm-box" style="max-width:380px;text-align:left;max-height:94vh;overflow-y:auto;">
     <h2 style="font-family:var(--font-display);font-size:16px;margin:0 0 12px;">Track ${roundIndex+1}</h2>
     <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Streckenname</label>
     <input type="text" id="trackNameInputModal" value="${escapeHtml(currentName)}" placeholder="z.B. Canyon Speed" style="width:100%;margin-bottom:14px;" />
@@ -696,15 +768,16 @@ function showTrackEditor(roundIndex){
         else if(storedMs!==null) keepOld = formatMsToTime(storedMs);
       }
       const errMsg = isLeader ? 'Format: mm:ss,SSS (z.B. 0:47,325)' : 'Format: ss,SSS (z.B. 01,500)';
-      return `<div class="track-time-field" style="margin-bottom:10px;">
-        <div style="display:flex;align-items:center;gap:8px;">
+      return `<div class="track-time-field ${isLeader?'tr-leader':''}" style="margin-bottom:8px;padding:4px 6px;">
+        <div class="tr-row">
           <label style="display:flex;align-items:center;gap:4px;flex-shrink:0;" title="Als 1. Platz / Bestzeit-Referenz festlegen">
             <input type="radio" name="leaderRadio" class="leader-radio" data-track-name="${escapeHtml(name)}" ${isLeader?'checked':''} />
           </label>
-          <div style="flex:1;font-size:14px;"><span class="muted" style="display:inline-block;min-width:28px;">${placeLabel(name)}</span>${driverNameHtml(name)}</div>
+          ${placeBadge(name)}
+          <div class="tr-name">${driverNameHtml(name)}</div>
           <input type="text" inputmode="numeric" class="track-time-input" data-track-name="${escapeHtml(name)}" data-is-leader="${isLeader}"
             placeholder="${keepOld ? 'bisher ' + keepOld : (isLeader?'mm:ss,SSS':'ss,SSS')}" value="${escapeHtml(fieldValue)}" data-keep-old="${escapeHtml(keepOld)}"
-            style="width:110px;text-align:center;" ${!isLeader && dnfDefault ? 'disabled':''} />
+            style="text-align:center;" ${!isLeader && dnfDefault ? 'disabled':''} />
           <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);flex-shrink:0;">
             <input type="checkbox" class="track-dnf-check" data-track-name="${escapeHtml(name)}" ${dnfDefault?'checked':''} /> DNF
           </label>
@@ -736,6 +809,7 @@ function showTrackEditor(roundIndex){
       const isLeaderField = inp.dataset.isLeader === 'true';
       const maxDigits = isLeaderField ? 7 : 6;
       inp.dataset.rawDigits = inp.value.replace(/\D/g,'');
+      inp.dataset.shownDigits = inp.dataset.rawDigits;
       const clearErrorIfShown = ()=>{
         const wrap = inp.closest('.track-time-field');
         const errEl = wrap ? wrap.querySelector('.track-time-error') : null;
@@ -744,6 +818,7 @@ function showTrackEditor(roundIndex){
       const applyMask = (raw)=>{
         inp.dataset.rawDigits = raw;
         inp.value = raw ? (isLeaderField ? maskDigitsToLeaderTime(raw) : maskDigitsToGapTime(raw)) : '';
+        inp.dataset.shownDigits = inp.value.replace(/\D/g,'');
         clearErrorIfShown();
       };
       inp.addEventListener('keydown', (e)=>{
@@ -765,6 +840,22 @@ function showTrackEditor(roundIndex){
         const text = (e.clipboardData || window.clipboardData).getData('text');
         applyMask(((inp.dataset.rawDigits||'') + text.replace(/\D/g,'')).slice(-maxDigits));
       });
+      // Many phone keyboards (e.g. Android) insert the digits as plain text WITHOUT usable key
+      // events. Then the browser has already changed the field, so work out what was typed by
+      // comparing the digits shown now with the digits we showed last time.
+      inp.addEventListener('input', ()=>{
+        const shown = inp.dataset.shownDigits || '';
+        const now = inp.value.replace(/\D/g,'');
+        let raw = inp.dataset.rawDigits || '';
+        if(now.length > shown.length && now.startsWith(shown)) raw = (raw + now.slice(shown.length)).slice(-maxDigits);
+        else if(now.length < shown.length) raw = raw.slice(0, Math.max(0, raw.length - (shown.length - now.length)));
+        else raw = now.slice(-maxDigits);
+        applyMask(raw);
+      });
+      // always type at the END of the field (digits fill in from the right)
+      const caretToEnd = ()=>{ try{ const n = inp.value.length; inp.setSelectionRange(n, n); }catch(e){} };
+      inp.addEventListener('focus', ()=>setTimeout(caretToEnd, 0));
+      inp.addEventListener('click', caretToEnd);
     });
   }
   renderRows();
@@ -966,7 +1057,7 @@ function loadState(){
     // version of this app) where a session's participants and its grid
     // don't fully match up - repair or drop anything that doesn't fit,
     // BEFORE any render function ever touches it.
-    fresh.sessions = fresh.sessions.filter(s=>sanitizeSessionLike(s));
+    fresh.sessions = fresh.sessions.filter(s=>sanitizeSessionLike(s)).map(ensureSessionIdentity);
     if(fresh.liveDraft && !sanitizeSessionLike(fresh.liveDraft)) fresh.liveDraft = null;
 
     storageAvailable = true;
@@ -979,12 +1070,15 @@ function loadState(){
       if(state.selectedDate !== todayStr()){ state.selectedDate = todayStr(); needsSave = true; }
       syncDraftFromState();
       if(needsSave) patchFirebase({ selectedDate: state.selectedDate });
+      announceBuild();
+      checkBuild(fresh); // also at the very first load - that is when an outdated page matters
       checkAuthGate();
       return;
     }
 
     // Never apply while the user is typing or one of our own writes is in flight -
     // but REMEMBER the update and apply it as soon as that is over (it used to be dropped).
+    checkBuild(fresh);
     // an id given to the running race by the Notfall save is adopted immediately (even while typing)
     if(draft && !draft.id && fresh.liveDraft && fresh.liveDraft.id) draft.id = fresh.liveDraft.id;
     deferredFresh = fresh;
@@ -1104,7 +1198,9 @@ function quickSaveCell(input){
   if(!draft) return;
   const name = input.dataset.name;
   const round = parseInt(input.dataset.round, 10);
-  const val = normalizeCellValue(input.value);
+  const res = resolveCellValue(input.value);
+  if(res.bad) return; // the final check (and the message) happens when the field is left
+  const val = res.val;
   if(!draft.grid[name]) draft.grid[name] = [];
   if(draft.grid[name][round] === val) return;
   draft.grid[name][round] = val;
@@ -1266,6 +1362,19 @@ function countDraftEntries(d){
 }
 
 // writes ONLY the race list (never the live draft - the editor's copy stays untouched)
+async function announceBuild(){
+  if(!firebaseReady) return;
+  try{
+    await dbRef.child('meta/latestBuild').transaction(cur=> (typeof cur === 'string' && cur >= APP_BUILD) ? undefined : APP_BUILD);
+  }catch(e){ /* not critical */ }
+}
+function checkBuild(s){
+  const el = document.getElementById('updateBanner');
+  if(!el) return;
+  const latest = s && s.meta && s.meta.latestBuild;
+  el.style.display = (typeof latest === 'string' && latest > APP_BUILD) ? 'block' : 'none';
+}
+
 async function upsertSessionOnly(copy){
   if(!firebaseReady){ showStorageBanner(); return false; }
   saveInFlight++;
@@ -1632,20 +1741,25 @@ function renderLive(){
   }
   const totals = sessionTotals(d);
   const sorted = Object.entries(totals).sort((a,b)=>a[1]-b[1]);
+  const leadPts = sorted.length ? sorted[0][1] : 0;
   const standing = sorted.map(([name,pts],i)=>{
     const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
     const badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+    const gap = pts - leadPts;
     return `<div class="result-row">
       <div class="rank-badge ${cls}">${badge}</div>
-      <div class="name">${driverNameHtml(name)}</div>
+      <div class="name">${driverNameHtml(name)}${i>0 ? `<div class="breakdown">+${gap} Pkt. auf Platz 1</div>` : ''}</div>
       <div class="pts">${pts}</div>
     </div>`;
   }).join('');
+  const rounds = getRoundsCount(d);
+  const doneRounds = rounds ? Math.max(0, ...d.participants.map(n=> (d.grid && d.grid[n] ? d.grid[n] : []).filter(v=>v!==null && v!==undefined && v!=='').length)) : 0;
   el.innerHTML = `<div class="card"><h2>🔴 LIVE · ${escapeHtml(formatDate(d.date))}</h2>
       <p class="muted" style="margin:0;">${status}</p>
       <p class="muted" style="margin:6px 0 0;">Nur Ansicht – eingetragen wird im Rennen-Tab.</p>${goBtn}</div>
-    <div class="card"><h2>Punktetabelle</h2>${buildReadOnlyGridHtml(d, { timeTitle: 'Zeit-Ranking (laufend)' })}</div>
-    <div class="card"><h2>Zwischenstand</h2><div class="standing-list">${standing}</div></div>`;
+    <div class="card"><h2>Zwischenstand <span class="muted" style="font-weight:500;">· ${doneRounds} von ${rounds} Tracks</span></h2><div class="standing-list">${standing}</div>
+      <div class="section-actions"><button class="compact-btn" data-share-session="__live__">📤 Zwischenstand teilen</button></div></div>
+    <div class="card"><h2>Punktetabelle</h2>${buildReadOnlyGridHtml(d, { timeTitle: 'Zeit-Ranking (laufend)' })}</div>`;
   wire();
 }
 
@@ -1780,8 +1894,11 @@ function getDriverColor(name){
   return `hsl(${hash}, 70%, 65%)`;
 }
 function driverNameHtml(name){
-  return `<span style="color:${getDriverColor(name)};">${escapeHtml(name)}</span>`;
+  const c = getDriverColor(name);
+  return `<span class="dn" style="--c:${c};color:${c};">${escapeHtml(name)}</span>`;
 }
+
+function driverInline(name){ return `<b style="color:${getDriverColor(name)};">${escapeHtml(name)}</b>`; }
 
 function orderedSavedNames(){
   const canonicalOrder = ['Max','Andy','Dani','Olly','Bär','Mky'];
@@ -1818,7 +1935,25 @@ function switchView(v){
   renderCurrentView();
 }
 
+// Reminder to download a backup when the last one is 30+ days old (or never). Not shown while typing in
+// the Rennen tab (no layout jumps) and not in the Sicherung tab (it has its own reminder there).
+let backupBannerDismissed = (()=>{ try{ return sessionStorage.getItem('tm_backup_later') === '1'; }catch(e){ return false; } })();
+function updateBackupBanner(){
+  const el = document.getElementById('backupBanner');
+  if(!el) return;
+  let text = '';
+  if(state && Array.isArray(state.sessions) && state.sessions.length > 0 && !backupBannerDismissed && currentView !== 'rennen' && currentView !== 'sicherung'){
+    const days = daysSince(state.lastExportDate);
+    if(days === null) text = '💾 Es wurde noch nie eine Sicherung heruntergeladen.';
+    else if(days >= 30) text = `💾 Die letzte Sicherung ist ${days} Tage her.`;
+  }
+  el.style.display = text ? 'flex' : 'none';
+  const t = document.getElementById('backupBannerText');
+  if(t) t.textContent = text;
+}
+
 function renderCurrentView(){
+  updateBackupBanner();
   if(currentView==='live') renderLive();
   else if(currentView==='rennen') renderRennen();
   else if(currentView==='archiv') renderArchiv();
@@ -1969,7 +2104,7 @@ function renderEditingPhase(area){
   html += `<div class="card">
     <div class="session-head">
       <div class="info"><b>${formatDate(draft.date)}</b> · ${N} Fahrer · ${rounds} Tracks</div>
-      <button class="danger" id="discardDraftBtn">Verwerfen</button>
+      <button class="ghost-btn danger-soft" id="discardDraftBtn">Verwerfen</button>
     </div>
     <div id="saveStatus" style="font-size:12px;margin:0 0 10px;font-weight:600;"></div>
     <div class="table-wrap"><table class="grid">
@@ -2178,10 +2313,31 @@ function isStarredValue(val){
   return typeof val === 'string' && val !== 'DNF' && val.endsWith('*');
 }
 
+// Interprets what was typed into a points cell. Placements run 1..N; N+1 (the DNF points) and 0
+// mean DNF; anything higher is a typing mistake ("99", "11") and is refused instead of silently
+// wrecking all totals and rankings.
+function resolveCellValue(raw){
+  const val = normalizeCellValue(raw);
+  const N = (draft && Array.isArray(draft.participants)) ? draft.participants.length : 0;
+  const num = asPlacementNumber(val);
+  if(val !== 'DNF' && num !== null && N > 0){
+    if(num === N + 1) return { val: 'DNF', bad: false };
+    if(num > N + 1) return { val: null, bad: true, num, N };
+  }
+  return { val, bad: false };
+}
+
 function onDraftCellChange(input){
   const name = input.dataset.name;
   const round = parseInt(input.dataset.round, 10);
-  const val = normalizeCellValue(input.value);
+  const res = resolveCellValue(input.value);
+  if(res.bad){
+    showToast(`Platz ${res.num} gibt es nicht – bei ${res.N} Fahrern höchstens ${res.N} (0 = DNF)`, 4500);
+    const prev = draft.grid[name] ? draft.grid[name][round] : null;
+    input.value = (prev === null || prev === undefined) ? '' : prev;
+    return;
+  }
+  const val = res.val;
   if (!draft.grid[name]) draft.grid[name] = [];
   draft.grid[name][round] = val;
   input.value = val===null ? '' : val;
@@ -2383,7 +2539,9 @@ function buildSessionRecapHtml(s){
     lines.push(`⏱️ Engstes Rennen: ${escapeHtml(closest.trackName)} (nur ${formatGapDisplay(closest.gap)}s Unterschied)`);
   }
 
-  return lines.map(l=>`<div style="margin-bottom:8px;font-size:14px;">${l}</div>`).join('');
+  const shareKey = s.id || ('recap-' + (s.date || ''));
+  shareRegistry[shareKey] = s;
+  return lines.map(l=>`<div style="margin-bottom:8px;font-size:14px;">${l}</div>`).join('') + shareButtonHtml(shareKey, '📤 Ergebnis in WhatsApp teilen');
 }
 
 function updateSumsAndStandings(session){
@@ -2437,7 +2595,7 @@ function updateSumsAndStandings(session){
   const timeCard = document.getElementById('liveTimeRankingCard');
   const timeContent = document.getElementById('liveTimeRankingContent');
   if(timeCard && timeContent){
-    const timeHtml = buildSessionTimeRankingHtml(session, 'Zeit-Ranking (laufend)');
+    const timeHtml = buildSessionTimeRankingHtml(session, 'Zeit-Ranking (laufend)', true);
     if(timeHtml){
       timeContent.innerHTML = timeHtml;
       timeCard.style.display = 'block';
@@ -2547,8 +2705,10 @@ function renderStrecken(){
       const bm = b[1].dnf ? Infinity : (b[1].ms===null ? Infinity : b[1].ms);
       return am-bm;
     });
+    const rec = entries.find(([,info])=> !info.dnf && info.ms !== null);
+    const recLine = rec ? `<div class="record-line">🏆 Rekord: ${driverInline(rec[0])} · ${escapeHtml(rec[1].timeStr)} · ${escapeHtml(formatDate(rec[1].date))}</div>` : '';
     return `<div class="card">
-      <h2>${escapeHtml(t.displayName)}</h2>
+      <h2>${escapeHtml(t.displayName)}</h2>${recLine}
       <div class="standing-list">
         ${entries.map(([driver,info],i)=>{
           const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
@@ -2613,13 +2773,15 @@ function buildReadOnlyGridHtml(s, opts){
   });
   html += `</tbody></table></div>`;
   html += buildSessionTimeRankingHtml(s, opts && opts.timeTitle);
+  html += recordsHtml(s);
   if(s.note){
     html += `<p class="muted" style="margin-top:10px;white-space:pre-wrap;">📝 ${escapeHtml(s.note)}</p>`;
   }
+  if(opts && opts.share) html += shareButtonHtml(opts.share);
   return html;
 }
 
-function buildSessionTimeRankingHtml(s, title){
+function buildSessionTimeRankingHtml(s, title, bare){
   if(!s.trackTimes || !Array.isArray(s.participants)) return '';
   const totals = s.participants.map(name=>{
     let sumMs = 0, count = 0;
@@ -2641,7 +2803,7 @@ function buildSessionTimeRankingHtml(s, title){
       <div class="pts">${formatDurationMsPrecise(t.sumMs)}</div>
     </div>`;
   }).join('');
-  return `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+  return `<div style="${bare ? '' : 'margin-top:14px;padding-top:12px;border-top:1px solid var(--border);'}">
     <h2 style="font-size:14px;margin:0 0 8px;">${escapeHtml(title || 'Fahrzeit-Ranking (gesamt)')}</h2>
     <div class="standing-list">${rows}</div>
     <p class="muted" style="margin-top:8px;font-size:11px;">DNF zählt als ${((getDnfPenaltyMs())/1000)}s (einstellbar unter Settings).</p>
@@ -2656,6 +2818,137 @@ function formatDurationMsPrecise(ms){
   const msPart = totalMs%1000;
   return `${min}:${String(sec).padStart(2,'0')},${String(msPart).padStart(3,'0')}`;
 }
+
+/* ---------------- STRECKENREKORDE ---------------- */
+function trackKeyOf(n){ return String(n||'').trim().toLowerCase(); }
+function sessionOrderCmp(a,b){ return (a.date||'').localeCompare(b.date||'') || (a.id||'').localeCompare(b.id||''); }
+// fastest valid (non-DNF) time of one track column in one race
+function fastestOfRound(s, r){
+  let best = null;
+  (s.participants||[]).forEach(name=>{
+    if(isDnfForRound(s, name, r)) return;
+    const t = s.trackTimes && s.trackTimes[name] && s.trackTimes[name][r];
+    const ms = t ? parseTimeToMs(t) : null;
+    if(ms !== null && (best === null || ms < best.ms)) best = { ms, name };
+  });
+  return best;
+}
+// Track records that THIS race set: faster than everything driven on the same track in earlier races.
+// The first time a track is driven is not a record (nothing to beat yet).
+function recordsForSession(s){
+  if(!s || !state || !Array.isArray(state.sessions) || !Array.isArray(s.trackNames)) return [];
+  const prior = state.sessions.filter(x=> x && x.id !== s.id && Array.isArray(x.trackNames) &&
+    (s.id ? sessionOrderCmp(x, s) < 0 : (x.date||'') <= (s.date||'')));
+  const bestBy = {};
+  prior.forEach(x=>{
+    x.trackNames.forEach((tn, r)=>{
+      const k = trackKeyOf(tn); if(!k) return;
+      const b = fastestOfRound(x, r);
+      if(b && (bestBy[k] === undefined || b.ms < bestBy[k])) bestBy[k] = b.ms;
+    });
+  });
+  const out = [];
+  s.trackNames.forEach((tn, r)=>{
+    const k = trackKeyOf(tn); if(!k) return;
+    const b = fastestOfRound(s, r); if(!b) return;
+    const prev = bestBy[k];
+    if(prev !== undefined && b.ms < prev) out.push({ track: String(tn).trim(), name: b.name, ms: b.ms, prev });
+    if(prev === undefined || b.ms < prev) bestBy[k] = b.ms;
+  });
+  return out;
+}
+function recordsHtml(s){
+  const recs = recordsForSession(s);
+  if(!recs.length) return '';
+  return `<div class="record-line" style="margin:12px 0 0;">${recs.map(r=>`🏆 Neuer Streckenrekord auf <b>${escapeHtml(r.track)}</b>: ${driverInline(r.name)} · ${formatMsToTime(r.ms)} <span class="muted" style="font-size:11px;">(vorher ${formatMsToTime(r.prev)})</span>`).join('<br>')}</div>`;
+}
+
+/* ---------------- ERGEBNIS TEILEN ---------------- */
+const shareRegistry = {};
+function buildShareText(s, opts){
+  if(!s || !Array.isArray(s.participants)) return '';
+  const totals = sessionTotals(s);
+  const ranked = Object.entries(totals).sort((a,b)=>a[1]-b[1]);
+  if(!ranked.length) return '';
+  const timeOf = {};
+  let maxCount = 0;
+  s.participants.forEach(name=>{
+    let sumMs = 0, count = 0;
+    ((s.trackTimes && s.trackTimes[name]) || []).forEach((t, r)=>{
+      if(isDnfForRound(s, name, r)){ sumMs += getDnfPenaltyMs(); count++; return; }
+      const ms = t ? parseTimeToMs(t) : null;
+      if(ms !== null){ sumMs += ms; count++; }
+    });
+    timeOf[name] = { sumMs, count };
+    if(count > maxCount) maxCount = count;
+  });
+  const medals = ['🥇','🥈','🥉'];
+  let rank = 0, lastPts = null, incomplete = false;
+  const lines = ranked.map(([name, pts], i)=>{
+    if(pts !== lastPts){ rank = i + 1; lastPts = pts; }
+    const m = rank <= 3 ? medals[rank-1] : rank + '.';
+    const t = timeOf[name];
+    let tt = '';
+    if(t && t.count > 0){
+      const part = t.count < maxCount;
+      if(part) incomplete = true;
+      tt = ` · ⏱ ${formatDurationMsPrecise(t.sumMs)}${part ? '*' : ''}`;
+    }
+    return `${m} ${name} – ${pts} Pkt.${tt}`;
+  });
+  const rounds = getRoundsCount(s);
+  const out = [];
+  out.push(`🏁 Trackmania · ${formatDate(s.date)}${opts && opts.live ? ' · Zwischenstand' : ''}`);
+  out.push(`${s.participants.length} Fahrer · ${rounds} Tracks`);
+  out.push('');
+  out.push(...lines);
+  const recs = recordsForSession(s);
+  if(recs.length){ out.push(''); recs.forEach(r=> out.push(`🏆 Rekord ${r.track}: ${r.name} ${formatMsToTime(r.ms)}`)); }
+  if(incomplete){ out.push(''); out.push('* nicht alle Strecken mit Zeit'); }
+  return out.join('\n');
+}
+function shareButtonHtml(sessionOrId, label){
+  return `<div class="section-actions"><button class="compact-btn" data-share-session="${escapeHtml(String(sessionOrId))}">${label || '📤 Ergebnis teilen'}</button></div>`;
+}
+function showTextForCopy(text){
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `<div class="confirm-box" style="max-width:360px;text-align:left;">
+    <p style="margin:0 0 10px;">Text markieren und kopieren:</p>
+    <textarea readonly style="width:100%;min-height:170px;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;font-size:13px;font-family:var(--font-body);">${escapeHtml(text)}</textarea>
+    <div class="confirm-actions" style="margin-top:12px;"><button class="primary full" id="copyTextCloseBtn">Schließen</button></div>
+  </div>`;
+  document.body.appendChild(overlay);
+  const ta = overlay.querySelector('textarea');
+  try{ ta.focus(); ta.select(); }catch(e){}
+  const close = ()=> overlay.remove();
+  overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
+  document.getElementById('copyTextCloseBtn').onclick = close;
+}
+async function shareText(text){
+  if(!text){ showToast('Noch nichts zum Teilen'); return; }
+  if(navigator.share){
+    try{ await navigator.share({ text }); return; }
+    catch(e){ if(e && e.name === 'AbortError') return; /* otherwise fall back to copying */ }
+  }
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(text);
+      showToast('Ergebnis kopiert – jetzt z. B. in WhatsApp einfügen', 3500);
+      return;
+    }
+  }catch(e){ /* fall through */ }
+  showTextForCopy(text);
+}
+document.addEventListener('click', (e)=>{
+  const b = e.target.closest ? e.target.closest('[data-share-session]') : null;
+  if(!b) return;
+  const id = b.dataset.shareSession;
+  let sess = null, live = false;
+  if(id === '__live__'){ sess = state && state.liveDraft; live = true; }
+  else sess = shareRegistry[id] || (state && Array.isArray(state.sessions) ? state.sessions.find(x=>x && x.id === id) : null);
+  shareText(buildShareText(sess, { live }));
+});
 
 function daysSince(dateStr){
   if(!dateStr) return null;
@@ -2967,7 +3260,7 @@ function renderSicherung(){
         ? `${ev.addedCount!=null ? ev.addedCount+' Rennen ergänzt' : ''}${ev.sourceVersion ? ' · aus V'+ev.sourceVersion : ''}`
         : `${ev.sessionCount!=null ? ev.sessionCount+' Rennen im Datenbestand' : ''}`;
       return `<div class="result-row">
-        <div class="name">${label}<div class="breakdown"><span>${escapeHtml(formatDate(ev.date))}</span><span>V${ev.version}</span></div></div>
+        <div class="name">${label}<div class="breakdown"><span>${escapeHtml(formatDate(ev.date))} · V${escapeHtml(String(ev.version))}</span></div></div>
         <div class="pts" style="font-size:12px;color:var(--muted);font-weight:500;">${escapeHtml(detail)}</div>
       </div>`;
     }).join('') + `</div>`;
@@ -3001,19 +3294,27 @@ function renderSicherung(){
 }
 
 let archivFilter = [];
+let archivFilterOpen = false;
 
 function archivFilterCardHtml(){
   const names = orderedSavedNames();
-  return `<div class="card">
-    <h2>Nach Besetzung filtern</h2>
-    <div class="chip-grid" id="archivFilterChips">
-      ${names.map(n=>`<div class="chip${archivFilter.includes(n)?' active':''}" data-archiv-filter-name="${escapeHtml(n)}">${escapeHtml(n)}</div>`).join('')}
+  const label = archivFilter.length ? 'Besetzung: ' + archivFilter.map(escapeHtml).join(', ') : 'Alle Rennen';
+  return `<div class="card" style="padding:10px 12px;">
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="filter-bar" id="archivFilterToggle" aria-expanded="${archivFilterOpen}">
+        <span>🔍</span><span class="fb-label">Filter · ${label}</span><span class="muted">${archivFilterOpen ? '▴' : '▾'}</span>
+      </button>
+      ${archivFilter.length ? '<button class="compact-btn" id="archivFilterResetBtn" title="Filter zurücksetzen">✕</button>' : ''}
     </div>
-    ${archivFilter.length ? '<button class="add-toggle" id="archivFilterResetBtn" style="margin-top:8px;">Filter zurücksetzen</button>' : '<p class="muted" style="margin:8px 0 0;">Keine Auswahl = alle Rennen</p>'}
+    ${archivFilterOpen ? `<div class="chip-row" id="archivFilterChips">
+      ${names.map(n=>`<div class="chip${archivFilter.includes(n)?' active':''}" data-archiv-filter-name="${escapeHtml(n)}">${escapeHtml(n)}</div>`).join('')}
+    </div><p class="muted" style="margin:8px 0 0;font-size:12px;">Zeigt nur Rennen mit genau dieser Besetzung. Keine Auswahl = alle Rennen.</p>` : ''}
   </div>`;
 }
 
 function wireArchivFilterChips(){
+  const tg = document.getElementById('archivFilterToggle');
+  if(tg) tg.onclick = ()=>{ archivFilterOpen = !archivFilterOpen; renderArchiv(); };
   document.querySelectorAll('#archivFilterChips [data-archiv-filter-name]').forEach(chip=>{
     chip.onclick = ()=>{
       const n = chip.dataset.archivFilterName;
@@ -3055,9 +3356,9 @@ function renderArchiv(){
     return `<div class="card">
       <div class="session-head" data-toggle-id="${s.id}" style="cursor:pointer;">
         <div class="info"><b>${formatDate(s.date)}</b> · ${s.participants ? s.participants.length : 0} Fahrer${complete?'':' · unvollständig'}</div>
-        <div style="display:flex;gap:6px;">
-          <button data-edit-id="${s.id}">Bearbeiten</button>
-          <button class="danger" data-delete-id="${s.id}">Löschen</button>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="compact-btn" data-edit-id="${s.id}" title="Bearbeiten" aria-label="Rennen bearbeiten">✏️<span class="btn-txt"> Bearbeiten</span></button>
+          <button class="compact-btn ghost-btn danger-soft" data-delete-id="${s.id}" title="Löschen" aria-label="Rennen löschen">🗑️</button>
         </div>
       </div>
       <div class="match-standing" data-toggle-id="${s.id}" style="cursor:pointer;">${rankedStandings.map(([n,p])=>`<span class="${p===winnerPts?'win':''}" style="border-left:3px solid ${getDriverColor(n)};">${escapeHtml(n)} ${p}</span>`).join('')}</div>
@@ -3077,7 +3378,7 @@ function renderArchiv(){
         detail.innerHTML = '';
       } else {
         const session = state.sessions.find(x=>x.id===id);
-        detail.innerHTML = session ? buildReadOnlyGridHtml(session) : '';
+        detail.innerHTML = session ? buildReadOnlyGridHtml(session, { share: session.id }) : '';
         detail.style.display = 'block';
       }
     };
@@ -3211,7 +3512,7 @@ function buildActivityCalendarHtml(){
       ${WEEKDAY_LABELS.map(w=>`<div style="text-align:center;font-size:10px;color:var(--muted);letter-spacing:0.3px;">${w}</div>`).join('')}
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${cellsHtml}</div>
-    <p class="muted" style="margin-top:10px;">Je heller, desto mehr Rennen an diesem Tag</p>
+    <p class="muted" style="margin-top:10px;">Die Farbe zeigt den Sieger des Tages, sein Name steht im Kästchen.</p>
   </div>`;
 }
 
@@ -3244,8 +3545,10 @@ function renderStatistik(){
   const effectiveFrom = statsFilter.from || earliestDate;
   const effectiveTo = statsFilter.to || todayStr();
 
+  const periods = statsPeriods();
   const filterCardHtml = `<div class="card">
     <h2>Zeitraum</h2>
+    <div class="period-chips" id="periodChips">${periods.map(pr=>`<div class="chip${(statsFilter.from === pr.from && statsFilter.to === pr.to) ? ' active' : ''}" data-period="${pr.id}">${escapeHtml(pr.label)}</div>`).join('')}</div>
     <div class="setup-row" style="display:flex;gap:10px;">
       <div style="flex:1;">
         <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Von</label>
@@ -3300,10 +3603,10 @@ function renderStatistik(){
         });
       }
       const arr = s.grid && s.grid[name] ? s.grid[name] : [];
-      arr.forEach(val=>{
+      arr.forEach((val, r)=>{
         if(val===null || val===undefined) return;
         st.rounds++;
-        const isDnf = (val === 'DNF');
+        const isDnf = isDnfForRound(s, name, r); // same definition as the time sums (also older "N+1" entries)
         const num = isDnf ? null : asPlacementNumber(val);
         const pts = isDnf ? N+1 : (num!==null ? num : 0);
         st.points += pts;
@@ -3422,6 +3725,10 @@ function renderStatistik(){
   html += `<p class="muted" style="margin-top:10px;">Ø Pkt = durchschnittliche Punkte pro Strecke (niedriger = besser) · Renntage = Anzahl unterschiedlicher Tage mit Teilnahme · Strecken = Anzahl gefahrener Rennstrecken gesamt · DNF % = Anteil nicht abgeschlossener Strecken · Strafp. = Summe aller erhaltenen Strafpunkte · ⭐ = Anzahl "letzter Tropfen Benzin"-Rettungen auf Platz 1 · Fahrzeit = Summe aller eingetragenen Streckenzeiten (h:mm:ss)</p>
   </div>`;
 
+  h2hSessions = sessions;
+  const h2hNames = (()=>{ const have = Object.keys(stats); const ord = orderedSavedNames().filter(n=>have.includes(n)); return [...ord, ...have.filter(n=>!ord.includes(n))]; })();
+  html += h2hCardHtml(h2hNames);
+
   const comboSorted = Object.entries(comboCount).sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0]));
   html += `<div class="card"><h2>Besetzungen</h2>
     <table class="stats"><thead><tr><th>Fahrer</th><th>Anzahl</th></tr></thead><tbody>`;
@@ -3435,9 +3742,111 @@ function renderStatistik(){
   el.innerHTML = filterCardHtml + activityCardHtml + html;
   wireStatsFilterInputs();
   wireActivityCalendar();
+  wireH2h();
+}
+
+function isoLocal(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function statsPeriods(){
+  const now = new Date();
+  const y = now.getFullYear();
+  const m3 = new Date(now.getFullYear(), now.getMonth() - 3, Math.min(now.getDate(), 28));
+  const list = [
+    { id:'all',   label:'Alle',            from:null, to:null },
+    { id:'month', label:'Dieser Monat',    from:isoLocal(new Date(y, now.getMonth(), 1)), to:null },
+    { id:'q',     label:'Letzte 3 Monate', from:isoLocal(m3), to:null },
+    { id:'year',  label:'Dieses Jahr',     from:y + '-01-01', to:null }
+  ];
+  const years = new Set();
+  ((state && state.sessions) || []).forEach(x=>{ const yr = parseInt(String(x && x.date || '').slice(0,4), 10); if(yr && yr < y) years.add(yr); });
+  [...years].sort((a,b)=>b-a).forEach(yr=> list.push({ id:'y' + yr, label:String(yr), from:yr + '-01-01', to:yr + '-12-31' }));
+  return list;
+}
+
+/* ---------------- DIREKTVERGLEICH ---------------- */
+let h2hA = null, h2hB = null, h2hSessions = [];
+function h2hPoints(s, name, i, N){
+  if(isDnfForRound(s, name, i)) return N + 1;
+  const v = s.grid && s.grid[name] ? s.grid[name][i] : null;
+  if(v === null || v === undefined || v === '') return null;
+  return asPlacementNumber(v);
+}
+function h2hCompute(a, b, sessions){
+  const r = { rounds:0, aWins:0, bWins:0, ties:0, sess:0, aSess:0, bSess:0, sessTies:0, ptsA:0, ptsB:0, timeRounds:0, timeDiffMs:0 };
+  sessions.forEach(s=>{
+    if(!s || !Array.isArray(s.participants) || !s.participants.includes(a) || !s.participants.includes(b)) return;
+    const N = s.participants.length;
+    const rounds = getRoundsCount(s);
+    let shared = 0;
+    for(let i=0;i<rounds;i++){
+      const va = h2hPoints(s, a, i, N), vb = h2hPoints(s, b, i, N);
+      if(va === null || vb === null) continue;
+      shared++; r.rounds++; r.ptsA += va; r.ptsB += vb;
+      if(va < vb) r.aWins++; else if(vb < va) r.bWins++; else r.ties++;
+      if(!isDnfForRound(s, a, i) && !isDnfForRound(s, b, i)){
+        const ta = s.trackTimes && s.trackTimes[a] && s.trackTimes[a][i];
+        const tb = s.trackTimes && s.trackTimes[b] && s.trackTimes[b][i];
+        const ma = ta ? parseTimeToMs(ta) : null, mb = tb ? parseTimeToMs(tb) : null;
+        if(ma !== null && mb !== null){ r.timeRounds++; r.timeDiffMs += ma - mb; }
+      }
+    }
+    if(shared > 0){
+      const t = sessionTotals(s);
+      r.sess++;
+      if(t[a] < t[b]) r.aSess++; else if(t[b] < t[a]) r.bSess++; else r.sessTies++;
+    }
+  });
+  return r;
+}
+function h2hBodyHtml(a, b){
+  if(!a || !b || a === b) return '<div class="empty" style="padding:14px 0;">Bitte zwei verschiedene Fahrer wählen.</div>';
+  const r = h2hCompute(a, b, h2hSessions);
+  if(r.rounds === 0) return '<div class="empty" style="padding:14px 0;">Diese beiden sind im gewählten Zeitraum noch keine gemeinsamen Strecken gefahren.</div>';
+  const ca = getDriverColor(a), cb = getDriverColor(b);
+  const bar = (x, y, t)=>{
+    const tot = x + y + t || 1;
+    return `<div class="h2h-bar"><div style="width:${100*x/tot}%;background:${ca};"></div><div style="width:${100*t/tot}%;background:rgba(255,255,255,0.18);"></div><div style="width:${100*y/tot}%;background:${cb};"></div></div>`;
+  };
+  const row = (x, y, t, lbl)=>`<div class="h2h-row"><div class="h2h-nums"><span style="color:${ca};">${x}</span><span style="color:${cb};">${y}</span></div>${bar(x, y, t)}<div class="h2h-lbl">${lbl}${t ? ` · ${t}× gleich` : ''}</div></div>`;
+  let html = row(r.aWins, r.bWins, r.ties, `Strecken-Duelle (wer war besser platziert) · ${r.rounds} gemeinsame Strecken`);
+  html += row(r.aSess, r.bSess, r.sessTies, `Rennabende gewonnen · ${r.sess} gemeinsame Abende`);
+  const avgA = r.ptsA / r.rounds, avgB = r.ptsB / r.rounds;
+  html += `<div class="h2h-row"><div class="h2h-nums"><span style="color:${ca};">${avgA.toFixed(2)}</span><span style="color:${cb};">${avgB.toFixed(2)}</span></div><div class="h2h-lbl">Ø Punkte pro Strecke (niedriger = besser)</div></div>`;
+  if(r.timeRounds > 0){
+    const avgDiff = r.timeDiffMs / r.timeRounds;
+    const faster = avgDiff < 0 ? a : b;
+    html += `<div class="h2h-row"><div class="h2h-nums" style="justify-content:center;font-size:15px;">${driverNameHtml(faster)}&nbsp;<span style="color:var(--text);">im Schnitt ${(Math.abs(avgDiff)/1000).toFixed(3).replace('.', ',')} s schneller</span></div><div class="h2h-lbl">aus ${r.timeRounds} Strecken mit Zeiten beider (DNF zählt hier nicht)</div></div>`;
+  } else {
+    html += `<div class="h2h-lbl" style="margin-top:4px;">Keine Strecken mit Zeiten von beiden – kein Zeitvergleich möglich.</div>`;
+  }
+  return html;
+}
+function h2hCardHtml(names){
+  if(names.length < 2) return '';
+  if(!names.includes(h2hA)) h2hA = names[0];
+  if(!names.includes(h2hB) || h2hB === h2hA) h2hB = names.find(n=>n !== h2hA);
+  const opts = (sel)=> names.map(n=>`<option value="${escapeHtml(n)}"${n === sel ? ' selected' : ''}>${escapeHtml(n)}</option>`).join('');
+  return `<div class="card"><h2>⚔️ Direktvergleich</h2>
+    <div class="h2h-sel"><select id="h2hA" aria-label="Fahrer 1">${opts(h2hA)}</select><span class="muted">vs</span><select id="h2hB" aria-label="Fahrer 2">${opts(h2hB)}</select></div>
+    <div id="h2hBody">${h2hBodyHtml(h2hA, h2hB)}</div>
+    <p class="muted" style="margin-top:6px;font-size:11.5px;">Nur Strecken, die beide gefahren sind, im oben gewählten Zeitraum.</p>
+  </div>`;
+}
+function wireH2h(){
+  const sa = document.getElementById('h2hA'), sb = document.getElementById('h2hB');
+  if(!sa || !sb) return;
+  const upd = ()=>{ h2hA = sa.value; h2hB = sb.value; const body = document.getElementById('h2hBody'); if(body) body.innerHTML = h2hBodyHtml(h2hA, h2hB); };
+  sa.onchange = upd; sb.onchange = upd;
 }
 
 function wireStatsFilterInputs(){
+  document.querySelectorAll('#periodChips [data-period]').forEach(chip=>{
+    chip.onclick = ()=>{
+      const pr = statsPeriods().find(x=>x.id === chip.dataset.period);
+      if(!pr) return;
+      statsFilter = { from: pr.from, to: pr.to };
+      renderStatistik();
+    };
+  });
   const fromInput = document.getElementById('statsFromInput');
   const toInput = document.getElementById('statsToInput');
   const resetBtn = document.getElementById('statsResetBtn');
@@ -3468,6 +3877,13 @@ document.getElementById('versionBadge').innerHTML = `<b>V${APP_VERSION}</b> · $
 document.getElementById('versionBadge').style.cursor = 'pointer';
 document.getElementById('versionBadge').onclick = showVersionHistory;
 
+document.getElementById('reloadAppBtn').onclick = ()=>location.reload();
+document.getElementById('backupBannerBtn').onclick = ()=>{ if(state) exportBackup(); };
+document.getElementById('backupBannerLater').onclick = ()=>{
+  backupBannerDismissed = true;
+  try{ sessionStorage.setItem('tm_backup_later', '1'); }catch(e){}
+  updateBackupBanner();
+};
 document.getElementById('loginSubmitBtn').onclick = attemptLogin;
 document.getElementById('loginPassInput').addEventListener('keydown', e=>{ if(e.key==='Enter') attemptLogin(); });
 document.getElementById('loginUserInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('loginPassInput').focus(); });
