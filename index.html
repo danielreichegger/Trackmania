@@ -110,6 +110,8 @@
   }
   input[type="date"]{color-scheme:dark;width:100%;}
   input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,255,0.15);}
+  input, select, textarea{min-width:0;max-width:100%;}
+  .setup-row > div{min-width:0;}
 
   .chip-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:6px;}
   .chip{
@@ -192,6 +194,10 @@
     background:rgba(255,181,69,0.1);border:1px solid var(--warn);color:var(--warn);font-size:13px;line-height:1.4;}
   .backup-banner .txt{flex:1 1 100%;}
   .record-line{font-size:12.5px;color:var(--gold);margin:-6px 0 10px;}
+  .part-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .part-row input[type="color"]{width:40px;height:36px;padding:2px;border-radius:8px;cursor:pointer;flex-shrink:0;background:rgba(255,255,255,0.05);border:1px solid var(--border);}
+  .part-add button.primary{width:100%;}
+  .part-name{flex:1;min-width:0;font-size:14px;}
   .tr-leader{background:rgba(0,229,255,0.07);border-radius:10px;}
   .tr-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
   .tr-row .tr-name{flex:1 1 70px;min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -355,11 +361,7 @@
     <div class="card" id="driversCard">
       <h2>Fahrer</h2>
       <div class="chip-grid" id="chipGrid"></div>
-      <button class="add-toggle" id="addToggleBtn">+ weiteren Fahrer</button>
-      <div class="add-row" id="addRow" style="display:none;">
-        <input type="text" id="newNameInput" placeholder="Name" maxlength="18" />
-        <button id="addNameBtn">+</button>
-      </div>
+      <button class="add-toggle" id="manageNamesBtn">⚙️ Teilnehmer verwalten (Settings)</button>
     </div>
 
     <div id="raceArea"><div class="empty">Verbinde …</div></div>
@@ -415,7 +417,7 @@ const CLIENT_ID = (()=>{
 })();
 const APP_VERSION = 18;
 // identifies this exact file; every device announces it, so an outdated cached page can tell it is outdated
-const APP_BUILD = '2026-10-06.1';
+const APP_BUILD = '2026-10-06.5';
 const APP_VERSION_DATE = '2026-10-03';
 const VERSION_HISTORY = [
   { v:1, date:'2026-09-10', notes:'Kompletter Funktionsstand: Rennen-Tabelle, Archiv, Statistik, Strafpunkte, Zeitraum-Filter, faires Gesamtranking.' },
@@ -435,7 +437,7 @@ const VERSION_HISTORY = [
   { v:15, date:'2026-10-02', notes:'DNF zeigt im Strecken-Tab jetzt wirklich "DNF" statt einer falschen Zeit; zählt in der Statistik mit einstellbarer Ersatzzeit (Settings). Live-Zeit-Ranking unterhalb des Zwischenstands während der Eingabe. "Neues Rennen starten" führt direkt zur Punktetabelle. "Speichern" und "Fertig" zu einem Button zusammengelegt. Krone-Berechnung repariert (war zu streng). Kalender färbt Tage jetzt in der Farbe des Tagessiegers inkl. Namen. Fahrer-Farben überall in der App, einstellbar unter Settings. Settings erweitert um DNF-Zeitwertung und Jubiläumsfeier-Schalter.' },
   { v:16, date:'2026-10-02', notes:'Bug behoben: Die Storage-Konfiguration (für Fotos) war in derselben Einstellung wie die Datenbank-Verbindung untergebracht – ein ungültiger Wert dort konnte die komplette App blockieren ("Verbinde…" ohne Ende), obwohl die Datenbank selbst nie das Problem war. Beides jetzt komplett getrennt. Jubiläumsfeier ist jetzt fix aktiviert (Einstellung dafür entfernt).' },
   { v:17, date:'2026-10-03', notes:'Fotos-Tab komplett entfernt (hätte einen kostenpflichtigen Firebase-Tarif erfordert). Statistik: neue Karte "Gesamtfahrzeit" – aufsummierte (nicht gemittelte) Zeit über alle gefahrenen Strecken, zusätzlich zum bestehenden fairen Ø-Zeit-Ranking.' },
-  { v:18, date:'2026-10-03', notes:'Neuer LIVE-Tab ganz links: Zuschauen ohne Bearbeiten. Der Rennen-Tab ist jetzt exklusiv - es kann immer nur ein Gerät eingeben (mit Übernahme-Funktion), das verhindert Speicherkonflikte. Neuer Speichern-Knopf unter der Punktetabelle: sichert Punkte, Zeiten und Namen ins Archiv und prüft nach, dass es angekommen ist. Behoben: Die Punktetabelle klappte nach dem Verlassen des Tabs zusammen und Einträge konnten verloren gehen (Firebase schneidet leere Felder am Ende von Listen ab) - die Spaltenanzahl wird jetzt fest gespeichert. Track-Editor: Namen nach Platzierung der aktuellen Strecke, Plausibilitätsprüfungen für Zeiten. Alle Speichervorgänge schreiben nur noch gezielt ihre eigenen Felder. Krone/Kackhaufen: bei Punktegleichstand wird niemand mehr gleichzeitig Sieger und Letzter. Zusätzlich abgesichert: Löschen, Import und Speichern arbeiten auf dem aktuellen Datenbestand und über die Renn-ID (nichts wird mehr durch eine veraltete Ansicht überschrieben); neuer Bereich Sicherung → Zuletzt gelöscht zum Wiederherstellen; Rennen-Tab wird nach 30 Minuten Inaktivität wieder freigegeben; im Track-Editor gehen Zeiten nicht mehr still verloren; Anführungszeichen in Passwort/Streckennamen; Datum um Mitternacht; Ladeanzeige beim Start. Eingaben werden schon beim Tippen und beim Verlassen/Schließen der Seite gesichert, Status-Anzeige „automatisch gespeichert“, Warnung beim Schließen mit ungesicherten Daten, Neuladen im selben Tab behält die eigene Sperre; ein gesperrtes Handy (Seite im Hintergrund) gibt den Rennen-Tab nach 2 Minuten von selbst frei; Knopf „Zwischenspeichern“; Rennen-abgeschlossen-Knopf in Türkis; Streckenfilter im Strecken-Tab; Notfall-Bereich in den Settings (laufendes Rennen sichern, Bearbeiter rauswerfen). Prüfung/Fehlerbehebung: Zeiteingabe auch mit Handy-Tastaturen, die keine normalen Tasten senden; unmögliche Platzierungen (z. B. 99) werden abgelehnt; einheitliche DNF-Zählung in der Statistik; Hinweis bei veralteter Seite. Nachtrag 06.10.: Live-Seite mit Zwischenstand oben und Rückstand auf Platz 1, Summenspalte bleibt beim seitlichen Scrollen sichtbar, Fahrer mit Farbstreifen, kompakter Archiv-Filter, dezenter Verwerfen-Knopf, Track-Editor mit Platz-Medaillen, Navigation für kleine Handys, „Ergebnis teilen“ (WhatsApp), Streckenrekorde, Direktvergleich und Zeitraum-Schnellwahl in der Statistik, Hinweis bei Sicherung älter als 30 Tage.' }
+  { v:18, date:'2026-10-03', notes:'Neuer LIVE-Tab ganz links: Zuschauen ohne Bearbeiten. Der Rennen-Tab ist jetzt exklusiv - es kann immer nur ein Gerät eingeben (mit Übernahme-Funktion), das verhindert Speicherkonflikte. Neuer Speichern-Knopf unter der Punktetabelle: sichert Punkte, Zeiten und Namen ins Archiv und prüft nach, dass es angekommen ist. Behoben: Die Punktetabelle klappte nach dem Verlassen des Tabs zusammen und Einträge konnten verloren gehen (Firebase schneidet leere Felder am Ende von Listen ab) - die Spaltenanzahl wird jetzt fest gespeichert. Track-Editor: Namen nach Platzierung der aktuellen Strecke, Plausibilitätsprüfungen für Zeiten. Alle Speichervorgänge schreiben nur noch gezielt ihre eigenen Felder. Krone/Kackhaufen: bei Punktegleichstand wird niemand mehr gleichzeitig Sieger und Letzter. Zusätzlich abgesichert: Löschen, Import und Speichern arbeiten auf dem aktuellen Datenbestand und über die Renn-ID (nichts wird mehr durch eine veraltete Ansicht überschrieben); neuer Bereich Sicherung → Zuletzt gelöscht zum Wiederherstellen; Rennen-Tab wird nach 30 Minuten Inaktivität wieder freigegeben; im Track-Editor gehen Zeiten nicht mehr still verloren; Anführungszeichen in Passwort/Streckennamen; Datum um Mitternacht; Ladeanzeige beim Start. Eingaben werden schon beim Tippen und beim Verlassen/Schließen der Seite gesichert, Status-Anzeige „automatisch gespeichert“, Warnung beim Schließen mit ungesicherten Daten, Neuladen im selben Tab behält die eigene Sperre; ein gesperrtes Handy (Seite im Hintergrund) gibt den Rennen-Tab nach 2 Minuten von selbst frei; Knopf „Zwischenspeichern“; Rennen-abgeschlossen-Knopf in Türkis; Streckenfilter im Strecken-Tab; Notfall-Bereich in den Settings (laufendes Rennen sichern, Bearbeiter rauswerfen). Prüfung/Fehlerbehebung: Zeiteingabe auch mit Handy-Tastaturen, die keine normalen Tasten senden; unmögliche Platzierungen (z. B. 99) werden abgelehnt; einheitliche DNF-Zählung in der Statistik; Hinweis bei veralteter Seite. Nachtrag 06.10.: Live-Seite mit Zwischenstand oben und Rückstand auf Platz 1, Summenspalte bleibt beim seitlichen Scrollen sichtbar, Fahrer mit Farbstreifen, kompakter Archiv-Filter, dezenter Verwerfen-Knopf, Track-Editor mit Platz-Medaillen, Navigation für kleine Handys, „Ergebnis teilen“ (WhatsApp), Streckenrekorde, Direktvergleich und Zeitraum-Schnellwahl in der Statistik, Hinweis bei Sicherung älter als 30 Tage. Korrekturen für schmale Handys (Datumsfelder in der Statistik und „Kopieren“-Knopf waren bei 320–360 px abgeschnitten), neue Fahrernamen prüfen auf Groß-/Kleinschreibung. Neu in Settings: Karte „Teilnehmer“ – neue Teilnehmer mit Name und Wunschfarbe hinzufügen (höchstens 10), Farben aller Fahrer ändern, Teilnehmer ohne Rennen wieder entfernen. Das „+ weiteren Fahrer“ im Rennen-Tab wurde durch einen Link dorthin ersetzt. Teilnehmer lassen sich jetzt auch umbenennen (✏️ in der Teilnehmer-Karte): alle bisherigen Rennen, der Papierkorb, die Farbe und die Auswahl werden dabei in einem Schritt (alles oder nichts) auf den neuen Namen umgestellt, vorher wird automatisch eine Sicherung heruntergeladen, danach wird nachgeprüft. Beim Import alter Sicherungen werden frühere Namen automatisch dem neuen Namen zugeordnet.' }
 ];
 
 let state = null;
@@ -489,33 +491,80 @@ function defaultState(){
   };
 }
 
-function migrateLegacyNames(state){
-  const RENAME = { 'Andi': 'Andy', 'Mäcky': 'Mky', 'Mäkky': 'Mky' };
-  const renameIn = (arr) => normalizeArrayish(arr).map(n => RENAME[n] || n);
-  state.savedNames = renameIn(state.savedNames);
-  state.selectedNames = renameIn(state.selectedNames);
-  const migrateSessionLike = (s)=>{
-    if (!s) return;
-    s.participants = renameIn(s.participants);
-    const newGrid = {};
-    if (s.grid) {
-      Object.entries(s.grid).forEach(([name, vals])=>{
-        newGrid[RENAME[name] || name] = vals;
-      });
-    }
-    s.grid = newGrid;
-    if(s.penalties){
-      const newPenalties = {};
-      Object.entries(s.penalties).forEach(([name, val])=>{
-        newPenalties[RENAME[name] || name] = val;
-      });
-      s.penalties = newPenalties;
-    }
-  };
-  if (Array.isArray(state.sessions)) {
-    state.sessions.forEach(migrateSessionLike);
+/* ---------- Namen: frühere Schreibweisen / Umbenennungen ----------
+   settings.nameAliases = { alterName: neuerName } wird beim Umbenennen eines Teilnehmers geführt.
+   Damit werden alte Sicherungsdateien und ein veraltet geöffneter Tab automatisch auf den
+   aktuellen Namen abgebildet. LEGACY_NAME_ALIASES sind die frühen Schreibweisen (V1-V17). */
+const LEGACY_NAME_ALIASES = { 'Andi': 'Andy', 'Mäcky': 'Mky', 'Mäkky': 'Mky' };
+function hasOwn(o, k){ return Object.prototype.hasOwnProperty.call(o, k); }
+function buildAliasMap(custom){
+  const m = Object.assign({}, LEGACY_NAME_ALIASES);
+  if(custom && typeof custom === 'object'){
+    Object.keys(custom).forEach(k=>{ if(typeof custom[k] === 'string' && custom[k]) m[k] = custom[k]; });
   }
-  if(state.liveDraft) migrateSessionLike(state.liveDraft);
+  return m;
+}
+function resolveAlias(name, map){ let n = name; for(let i=0; i<10 && hasOwn(map, n); i++) n = map[n]; return n; }
+function resolvedAliasMap(map){
+  const out = {};
+  Object.keys(map).forEach(k=>{ const r = resolveAlias(k, map); if(r !== k) out[k] = r; });
+  return out;
+}
+function aliasesOf(st){ return (st && st.settings && typeof st.settings.nameAliases === 'object' && st.settings.nameAliases) || {}; }
+function activeNameFor(n, st){ return resolveAlias(n, buildAliasMap(aliasesOf(st))); }
+function activeName(n){ return activeNameFor(n, state); }
+function activeFixedNames(st){ return FIXED_DRIVERS.map(n=>activeNameFor(n, st || state)); }
+
+// Wendet eine Namens-Zuordnung {alt:neu} auf ALLE Stellen an, an denen Namen stehen:
+// savedNames, selectedNames, Rennen (Teilnehmer, Punkte-Tabelle, Strafen, Streckenzeiten,
+// Stand des Vor-Rennens), laufendes Rennen und Papierkorb.
+// strict=true: bricht mit einem Fehler ab, statt etwas zu überschreiben (Namenskollision).
+function applyNameMap(data, rawMap, strict){
+  const res = { sessions: 0, trash: 0, draft: false };
+  const map = resolvedAliasMap(rawMap || {});
+  if(!data || !Object.keys(map).length) return res;
+  const m = n => hasOwn(map, n) ? map[n] : n;
+  const mapList = arr => [...new Set(normalizeArrayish(arr).map(m))];
+  const mapKeys = (obj)=>{
+    if(!obj || typeof obj !== 'object') return false;
+    let changed = false;
+    Object.keys(obj).forEach(k=>{
+      const t = m(k);
+      if(t === k) return;
+      if(strict && hasOwn(obj, t)) throw new Error('collision:' + t);
+      obj[t] = obj[k]; delete obj[k]; changed = true;
+    });
+    return changed;
+  };
+  const mapSession = (s)=>{
+    if(!s || typeof s !== 'object') return false;
+    let changed = false;
+    if(s.participants !== undefined && s.participants !== null){
+      const before = normalizeArrayish(s.participants);
+      const after = mapList(before);
+      if(strict && after.length !== before.length) throw new Error('collision');
+      if(before.some(n=> m(n) !== n)) changed = true;
+      s.participants = after;
+    }
+    ['grid','penalties','trackTimes'].forEach(k=>{ if(mapKeys(s[k])) changed = true; });
+    if(s.lastMatchInfo && mapKeys(s.lastMatchInfo.standing)) changed = true;
+    return changed;
+  };
+  if(data.savedNames !== undefined && data.savedNames !== null) data.savedNames = mapList(data.savedNames);
+  if(data.selectedNames !== undefined && data.selectedNames !== null) data.selectedNames = mapList(data.selectedNames);
+  if(data.sessions !== undefined && data.sessions !== null){
+    data.sessions = normalizeArrayish(data.sessions);
+    data.sessions.forEach(x=>{ if(mapSession(x)) res.sessions++; });
+  }
+  if(data.trash !== undefined && data.trash !== null){
+    data.trash = normalizeArrayish(data.trash);
+    data.trash.forEach(t=>{ if(t && mapSession(t.session)) res.trash++; });
+  }
+  if(data.liveDraft && mapSession(data.liveDraft)) res.draft = true;
+  return res;
+}
+function migrateLegacyNames(state){
+  applyNameMap(state, buildAliasMap(state && state.settings && state.settings.nameAliases), false);
 }
 
 function normalizeArrayish(x){
@@ -1041,7 +1090,8 @@ function loadState(){
     fresh.backupHistory = normalizeArrayish(fresh.backupHistory);
     fresh.trash = normalizeArrayish(fresh.trash);
     migrateLegacyNames(fresh);
-    if(!firstLoadDone && !fresh.selectedNames.length) fresh.selectedNames = [...FIXED_DRIVERS];
+    const fixedNow = activeFixedNames(fresh); // die 6 Stamm-Fahrer unter ihrem aktuellen Namen (auch nach Umbenennen)
+    if(!firstLoadDone && !fresh.selectedNames.length) fresh.selectedNames = [...fixedNow];
     if(!fresh.settings || typeof fresh.settings !== 'object') fresh.settings = {};
     if(typeof fresh.settings.authUsername !== 'string') fresh.settings.authUsername = 'TM';
     if(typeof fresh.settings.authPassword !== 'string') fresh.settings.authPassword = 'TM2026';
@@ -1049,8 +1099,8 @@ function loadState(){
     if(typeof fresh.settings.dnfPenaltySeconds !== 'number' || isNaN(fresh.settings.dnfPenaltySeconds)) fresh.settings.dnfPenaltySeconds = 30;
     if(!fresh.settings.driverColors || typeof fresh.settings.driverColors !== 'object') fresh.settings.driverColors = {};
     const defaultColors = { Max:'#00e5ff', Andy:'#ff5b1f', Dani:'#ffd166', Olly:'#7ee787', Bär:'#ff6b9d', Mky:'#a78bfa' };
-    Object.entries(defaultColors).forEach(([n,c])=>{ if(!fresh.settings.driverColors[n]) fresh.settings.driverColors[n] = c; });
-    FIXED_DRIVERS.forEach(n=>{ if(!fresh.savedNames.includes(n)) fresh.savedNames.push(n); });
+    Object.entries(defaultColors).forEach(([n,c])=>{ const t = activeNameFor(n, fresh); if(!fresh.settings.driverColors[t]) fresh.settings.driverColors[t] = c; });
+    fixedNow.forEach(n=>{ if(!fresh.savedNames.includes(n)) fresh.savedNames.push(n); });
     fresh.savedNames = [...new Set(fresh.savedNames)];
     fresh.selectedNames = [...new Set(fresh.selectedNames)];
     // Guard against malformed/legacy data (e.g. from an earlier, simpler
@@ -1901,7 +1951,7 @@ function driverNameHtml(name){
 function driverInline(name){ return `<b style="color:${getDriverColor(name)};">${escapeHtml(name)}</b>`; }
 
 function orderedSavedNames(){
-  const canonicalOrder = ['Max','Andy','Dani','Olly','Bär','Mky'];
+  const canonicalOrder = activeFixedNames(); // Reihenfolge der Stamm-Fahrer bleibt auch nach Umbenennen
   const saved = Array.isArray(state?.savedNames) ? state.savedNames : [];
   const known = canonicalOrder.filter(n=>saved.includes(n));
   const extra = saved.filter(n=>!canonicalOrder.includes(n));
@@ -2248,22 +2298,363 @@ function toggleSelected(name){
   patchFirebase({ selectedNames: state.selectedNames.length ? state.selectedNames : null }); renderRennen();
 }
 
-document.getElementById('addToggleBtn').onclick = ()=>{
-  const row = document.getElementById('addRow');
-  row.style.display = row.style.display==='none' ? 'flex' : 'none';
-};
-document.getElementById('addNameBtn').onclick = ()=>{
-  const input = document.getElementById('newNameInput');
-  const name = input.value.trim();
-  if(!name) return;
-  if(/[.$#\[\]\/"'<>&\\`]/.test(name)){ showToast('Im Namen sind Sonderzeichen wie . $ # [ ] / " < > & nicht erlaubt', 5000); return; }
-  if(state.savedNames.includes(name)){ showToast('Name existiert bereits'); return; }
-  state.savedNames.push(name);
-  state.selectedNames.push(name);
-  input.value = '';
-  patchFirebase({ savedNames: state.savedNames, selectedNames: state.selectedNames }); renderRennen();
-};
-document.getElementById('newNameInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('addNameBtn').click(); });
+document.getElementById('manageNamesBtn').onclick = ()=>switchView('settings');
+
+/* ---------------- TEILNEHMER (Settings) ---------------- */
+const MAX_PARTICIPANTS = 10;
+const SUGGEST_COLORS = ['#ff8787','#38d9a9','#74c0fc','#e5dbff','#ffa94d','#c0eb75','#f783ac','#66d9e8'];
+function validateName(raw, from){
+  const name = String(raw || '').trim();
+  if(!name) return { err:'Bitte einen Namen eingeben.' };
+  if(name.length > 18) return { err:'Der Name darf höchstens 18 Zeichen haben.' };
+  if(/[.$#\[\]\/"'<>&\\`]/.test(name)) return { err:'Im Namen sind Sonderzeichen wie . $ # [ ] / " \' < > & nicht erlaubt.' };
+  if(name.toLowerCase() === '__proto__') return { err:'Dieser Name ist nicht erlaubt.' };
+  if(from && name === from) return { err:'Das ist schon der aktuelle Name.' };
+  const lower = name.toLowerCase();
+  if((state.savedNames || []).some(n=> n !== from && String(n).toLowerCase() === lower)) return { err:'Diesen Namen gibt es schon.' };
+  // frühere Namen sind gesperrt (sonst würden alte Sicherungen falsch zugeordnet) –
+  // außer beim exakten Zurück-Umbenennen
+  const aliases = aliasesOf(state), map = buildAliasMap(aliases);
+  const hit = Object.keys(map).find(k=> k.toLowerCase() === lower);
+  if(hit && !(from && hit === name && aliases[hit] === from)){
+    return { err:`„${hit}“ war früher ein Name im Archiv (heute „${resolveAlias(hit, map)}“) und ist deshalb gesperrt.` };
+  }
+  if(from){
+    const used = new Set();
+    const addP = x=>{ if(x) normalizeArrayish(x.participants).forEach(n=>used.add(n)); };
+    (state.sessions || []).forEach(addP);
+    (state.trash || []).forEach(t=> addP(t && t.session));
+    addP(state.liveDraft);
+    if([...used].some(n=> n !== from && String(n).toLowerCase() === lower)) return { err:'In bisherigen Rennen kommt schon ein Fahrer mit diesem Namen vor.' };
+  }
+  return { name };
+}
+function validateNewName(raw){ return validateName(raw, null); }
+function suggestColor(){
+  const used = new Set(Object.values((state.settings && state.settings.driverColors) || {}).map(c=>String(c).toLowerCase()));
+  return SUGGEST_COLORS.find(c=> !used.has(c)) || SUGGEST_COLORS[0];
+}
+// a participant can only be removed again if nobody ever drove under that name
+function participantRemovable(name){
+  if(activeFixedNames().includes(name)) return false;
+  if((state.sessions || []).some(x=> x && Array.isArray(x.participants) && x.participants.includes(name))) return false;
+  const d = state.liveDraft;
+  if(d && Array.isArray(d.participants) && d.participants.includes(name)) return false;
+  return true;
+}
+async function addParticipant(name, color){
+  if(!firebaseReady){ showStorageBanner(); return { ok:false, msg:'Keine Verbindung zur Datenbank.' }; }
+  saveInFlight++;
+  let outcome = 'ok';
+  try{
+    const res = await dbRef.child('savedNames').transaction(cur=>{
+      const arr = normalizeArrayish(cur);
+      activeFixedNames().forEach(n=>{ if(!arr.includes(n)) arr.push(n); });
+      if(arr.some(n=> String(n).toLowerCase() === name.toLowerCase())){ outcome = 'dup'; return undefined; }
+      if(arr.length >= MAX_PARTICIPANTS){ outcome = 'max'; return undefined; }
+      arr.push(name);
+      return arr;
+    });
+    if(!res || !res.committed){
+      if(outcome === 'max') return { ok:false, msg:`Es sind höchstens ${MAX_PARTICIPANTS} Teilnehmer erlaubt.` };
+      if(outcome === 'dup') return { ok:false, msg:'Diesen Namen gibt es schon.' };
+      return { ok:false, msg:'Konnte nicht gespeichert werden – bitte nochmal versuchen.' };
+    }
+    await dbRef.child('selectedNames').transaction(cur=>{
+      const arr = normalizeArrayish(cur);
+      if(!arr.includes(name)) arr.push(name);
+      return arr;
+    });
+    await dbRef.update({ [`settings/driverColors/${name}`]: color });
+    storageAvailable = true; hideStorageBanner();
+    return { ok:true };
+  }catch(e){
+    console.error('addParticipant failed:', e);
+    showStorageBanner(e);
+    return { ok:false, msg:'Speichern fehlgeschlagen – bitte Verbindung prüfen.' };
+  }finally{
+    saveInFlight--;
+    if(saveInFlight === 0) setTimeout(applyDeferredState, 0);
+  }
+}
+async function removeParticipant(name){
+  if(!firebaseReady || !participantRemovable(name)) return false;
+  saveInFlight++;
+  try{
+    const res = await dbRef.child('savedNames').transaction(cur=>{
+      if(cur === null || cur === undefined) return undefined;
+      return normalizeArrayish(cur).filter(n=> n !== name);
+    });
+    if(!res || !res.committed) return false;
+    await dbRef.child('selectedNames').transaction(cur=>{
+      if(cur === null || cur === undefined) return undefined;
+      const arr = normalizeArrayish(cur).filter(n=> n !== name);
+      return arr.length ? arr : null;
+    });
+    await dbRef.update({ [`settings/driverColors/${name}`]: null });
+    return true;
+  }catch(e){
+    console.error('removeParticipant failed:', e);
+    return false;
+  }finally{
+    saveInFlight--;
+    if(saveInFlight === 0) setTimeout(applyDeferredState, 0);
+  }
+}
+function sessionsUsingName(name){
+  let n = 0;
+  const has = x=> x && normalizeArrayish(x.participants).includes(name);
+  (state.sessions || []).forEach(x=>{ if(has(x)) n++; });
+  (state.trash || []).forEach(t=>{ if(t && has(t.session)) n++; });
+  return n;
+}
+// Why renaming is not possible right now (null = fine). The running race is the only thing
+// that could re-introduce the old name, so it has to be finished first.
+function renameBlockReason(){
+  if(!firebaseReady) return 'Keine Verbindung zur Datenbank.';
+  if(state.liveDraft || draft) return 'Gerade läuft ein Rennen (Rennen-Tab). Bitte das Rennen erst speichern oder verwerfen – danach kannst du umbenennen.';
+  if(lockInfo && lockInfo.clientId !== CLIENT_ID && !isLockStale(lockInfo)) return 'Ein anderes Gerät hat gerade den Rennen-Tab offen. Bitte dort erst fertig eintragen.';
+  return null;
+}
+// All-or-nothing: ONE transaction rewrites every place that holds the name
+// (savedNames, selectedNames, colour, all races, trash, alias list). If anything does not
+// fit (a draft appeared, the new name collides) nothing at all is written.
+async function renameParticipant(from, to){
+  if(!firebaseReady){ showStorageBanner(); return { ok:false, msg:'Keine Verbindung zur Datenbank.' }; }
+  const fallbackColor = getDriverColor(from);
+  saveInFlight++;
+  let outcome = 'ok', affected = { sessions:0, trash:0 };
+  try{
+    const res = await dbRef.transaction(cur=>{
+      outcome = 'ok';
+      if(!cur || typeof cur !== 'object'){ outcome = 'empty'; return undefined; }
+      if(cur.liveDraft){ outcome = 'draft'; return undefined; }
+      const d = JSON.parse(JSON.stringify(cur));
+      try{
+        if(!d.settings || typeof d.settings !== 'object') d.settings = {};
+        const aliases = (d.settings.nameAliases && typeof d.settings.nameAliases === 'object') ? d.settings.nameAliases : {};
+        const amap = buildAliasMap(aliases);
+        // 1) early spellings that may still sit in the raw data (Andi, Mäcky ...) -> current names
+        applyNameMap(d, amap, false);
+        d.savedNames = normalizeArrayish(d.savedNames);
+        FIXED_DRIVERS.map(n=>resolveAlias(n, amap)).forEach(n=>{ if(!d.savedNames.includes(n)) d.savedNames.push(n); });
+        if(!d.savedNames.includes(from)){ outcome = 'gone'; return undefined; }
+        const lower = to.toLowerCase();
+        if(d.savedNames.some(n=> n !== from && String(n).toLowerCase() === lower)){ outcome = 'dup'; return undefined; }
+        if(Object.keys(amap).some(k=> k.toLowerCase() === lower && !(k === to && aliases[k] === from))){ outcome = 'reserved'; return undefined; }
+        const inUse = [];
+        normalizeArrayish(d.sessions).forEach(x=>{ if(x) inUse.push(...normalizeArrayish(x.participants)); });
+        normalizeArrayish(d.trash).forEach(t=>{ if(t && t.session) inUse.push(...normalizeArrayish(t.session.participants)); });
+        if(inUse.some(n=> n !== from && String(n).toLowerCase() === lower)){ outcome = 'orphan'; return undefined; }
+        // 2) the rename itself, everywhere (strict: abort on any collision)
+        const r = applyNameMap(d, { [from]: to }, true);
+        affected = { sessions: r.sessions, trash: r.trash };
+        if(!d.selectedNames || !Array.isArray(d.selectedNames)) d.selectedNames = normalizeArrayish(d.selectedNames);
+        // 3) colour
+        if(!d.settings.driverColors || typeof d.settings.driverColors !== 'object') d.settings.driverColors = {};
+        const col = d.settings.driverColors[from] || fallbackColor;
+        delete d.settings.driverColors[from];
+        d.settings.driverColors[to] = col;
+        // 4) alias list (old name -> new name), also re-pointing earlier aliases
+        const al = Object.assign({}, aliases);
+        delete al[to];
+        Object.keys(al).forEach(k=>{ if(al[k] === from) al[k] = to; });
+        al[from] = to;
+        d.settings.nameAliases = al;
+        const log = normalizeArrayish(d.settings.renameLog);
+        log.push({ from, to, at: new Date().toISOString(), sessions: r.sessions, trash: r.trash });
+        d.settings.renameLog = log.slice(-20);
+        return d;
+      }catch(e){
+        outcome = 'collision';
+        return undefined;
+      }
+    });
+    if(!res || !res.committed){
+      const msgs = {
+        draft: 'Gerade läuft ein Rennen – bitte erst speichern oder verwerfen.',
+        dup: 'Diesen Namen gibt es schon.',
+        reserved: 'Dieser Name war früher ein anderer Teilnehmer und ist gesperrt.',
+        orphan: 'In bisherigen Rennen kommt schon ein Fahrer mit diesem Namen vor.',
+        collision: 'Der neue Name kollidiert mit vorhandenen Daten – es wurde nichts geändert.',
+        gone: `„${from}“ wurde inzwischen geändert oder entfernt – es wurde nichts geändert.`,
+        empty: 'Die Datenbank ist leer – es wurde nichts geändert.'
+      };
+      return { ok:false, msg: msgs[outcome] || 'Konnte nicht gespeichert werden – es wurde nichts geändert. Bitte nochmal versuchen.' };
+    }
+    // read back and verify: no trace of the old name, every affected race carries the new one
+    let verified = true, v = null;
+    try{
+      const snap = await dbRef.once('value');
+      v = snap.val() || {};
+      const hasFrom = x=> x && normalizeArrayish(x.participants).includes(from);
+      const gridFrom = x=> x && ['grid','penalties','trackTimes'].some(k=> x[k] && typeof x[k] === 'object' && hasOwn(x[k], from));
+      const bad = x=> hasFrom(x) || gridFrom(x);
+      const sess = normalizeArrayish(v.sessions), trash = normalizeArrayish(v.trash);
+      if(sess.some(bad) || trash.some(t=> t && bad(t.session)) || (v.liveDraft && bad(v.liveDraft))) verified = false;
+      if(normalizeArrayish(v.savedNames).includes(from) || normalizeArrayish(v.selectedNames).includes(from)) verified = false;
+      if(v.settings && v.settings.driverColors && hasOwn(v.settings.driverColors, from)) verified = false;
+      if(sess.filter(x=> x && normalizeArrayish(x.participants).includes(to)).length < affected.sessions) verified = false;
+    }catch(e){ verified = false; }
+    storageAvailable = true; hideStorageBanner();
+    return { ok:true, verified, affected, value: v };
+  }catch(e){
+    console.error('renameParticipant failed:', e);
+    showStorageBanner(e);
+    return { ok:false, msg:'Umbenennen fehlgeschlagen – es wurde nichts geändert. Bitte Verbindung prüfen.' };
+  }finally{
+    saveInFlight--;
+    if(saveInFlight === 0) setTimeout(applyDeferredState, 0);
+  }
+}
+function applyRenameLocally(from, to, v){
+  applyNameMap(state, { [from]: to }, false);
+  if(!state.settings) state.settings = {};
+  if(!state.settings.driverColors) state.settings.driverColors = {};
+  const col = state.settings.driverColors[from] || getDriverColor(from);
+  delete state.settings.driverColors[from];
+  state.settings.driverColors[to] = col;
+  if(v && v.settings){
+    state.settings.nameAliases = v.settings.nameAliases || state.settings.nameAliases;
+    state.settings.renameLog = v.settings.renameLog || state.settings.renameLog;
+  }
+  archivFilter = archivFilter.map(n=> n === from ? to : n);
+  if(h2hA === from) h2hA = to;
+  if(h2hB === from) h2hB = to;
+}
+function openRenameDialog(from){
+  const blocked = renameBlockReason();
+  const used = sessionsUsingName(from);
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `<div class="confirm-box">
+    <h2 style="margin:0 0 6px;font-size:17px;">Teilnehmer umbenennen</h2>
+    <p style="margin:0 0 6px;">Aktueller Name: ${driverInline(from)}</p>
+    <p class="muted" style="margin:0 0 12px;font-size:12px;">${used ? `${used} Rennen (inkl. Papierkorb) werden auf den neuen Namen umgestellt.` : 'Dieser Teilnehmer hat noch kein Rennen.'} Punkte, Zeiten, Strafen und Farbe bleiben erhalten. Vorher wird automatisch eine Sicherung heruntergeladen.</p>
+    ${blocked ? `<div class="warn-note" style="margin:0 0 10px;">${escapeHtml(blocked)}</div>` : ''}
+    <input type="text" id="renameInput" maxlength="18" value="${escapeHtml(from)}" autocomplete="off" ${blocked ? 'disabled' : ''} style="width:100%;margin-bottom:8px;" aria-label="Neuer Name" />
+    <div id="renameError" class="warn-note" style="display:none;margin:0 0 10px;"></div>
+    <div class="confirm-actions">
+      <button id="renameCancelBtn">Abbrechen</button>
+      <button class="primary" id="renameOkBtn" ${blocked ? 'disabled' : ''}>Umbenennen</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  const close = ()=> overlay.remove();
+  const inp = overlay.querySelector('#renameInput'), errEl = overlay.querySelector('#renameError'), okBtn = overlay.querySelector('#renameOkBtn'), cancelBtn = overlay.querySelector('#renameCancelBtn');
+  const showErr = m=>{ errEl.textContent = m; errEl.style.display = m ? 'block' : 'none'; };
+  let busy = false;
+  overlay.addEventListener('click', e=>{ if(e.target === overlay && !busy) close(); });
+  cancelBtn.onclick = ()=>{ if(!busy) close(); };
+  inp.addEventListener('input', ()=>showErr(''));
+  inp.addEventListener('keydown', e=>{ if(e.key === 'Enter') okBtn.click(); });
+  if(!blocked){ inp.focus(); inp.select(); }
+  okBtn.onclick = async ()=>{
+    if(busy) return;
+    const again = renameBlockReason();
+    if(again){ showErr(again); return; }
+    const v = validateName(inp.value, from);
+    if(v.err){ showErr(v.err); return; }
+    busy = true; okBtn.disabled = true; cancelBtn.disabled = true; inp.disabled = true;
+    okBtn.textContent = 'Sichert …';
+    try{ exportBackup(); }catch(e){ console.error('pre-rename backup failed', e); }
+    await new Promise(r=> setTimeout(r, 400)); // let the download start before the data changes
+    okBtn.textContent = 'Benennt um …';
+    const r = await renameParticipant(from, v.name);
+    busy = false;
+    if(!r.ok){ okBtn.disabled = false; cancelBtn.disabled = false; inp.disabled = false; okBtn.textContent = 'Umbenennen'; showErr(r.msg); return; }
+    applyRenameLocally(from, v.name, r.value);
+    close();
+    if(r.verified) showToast(`${from} heißt jetzt ${v.name} – ${r.affected.sessions + r.affected.trash} Rennen umgestellt ✓`, 4500);
+    else showToast('⚠️ Umbenannt, aber die Kontrolle war nicht eindeutig – bitte Archiv prüfen. Die Sicherung wurde heruntergeladen.', 9000);
+    renderSettings();
+  };
+}
+function renameLogHtml(){
+  const log = normalizeArrayish(state.settings && state.settings.renameLog).slice(-3).reverse();
+  if(!log.length) return '';
+  const lines = log.map(e=>{
+    const d = e.at ? formatDate(String(e.at).slice(0,10)) : '';
+    return `<div>${escapeHtml(e.from)} → ${escapeHtml(e.to)}${d ? ` <span style="opacity:.7;">(${escapeHtml(d)})</span>` : ''}</div>`;
+  }).join('');
+  return `<div class="muted" style="margin-top:6px;font-size:12px;"><div style="margin-bottom:2px;">Zuletzt umbenannt:</div>${lines}</div>`;
+}
+function participantsCardHtml(){
+  const names = orderedSavedNames();
+  const full = names.length >= MAX_PARTICIPANTS;
+  const rows = names.map(name=>`
+    <div class="part-row">
+      <input type="color" data-color-name="${escapeHtml(name)}" value="${escapeHtml(getDriverColor(name))}" aria-label="Farbe für ${escapeHtml(name)}" />
+      <div class="part-name">${driverNameHtml(name)}</div>
+      <button class="compact-btn ghost-btn" data-rename-name="${escapeHtml(name)}" title="Umbenennen" aria-label="${escapeHtml(name)} umbenennen">✏️</button>
+      ${participantRemovable(name) ? `<button class="compact-btn ghost-btn danger-soft" data-remove-name="${escapeHtml(name)}" title="Entfernen" aria-label="${escapeHtml(name)} entfernen">🗑️</button>` : ''}
+    </div>`).join('');
+  return `<div class="card">
+    <h2>Teilnehmer <span class="muted" style="font-weight:500;">· ${names.length} von ${MAX_PARTICIPANTS}</span></h2>
+    <p class="muted" style="margin:0 0 12px;">Name und Farbe der Fahrer. Die Farbe wird überall in der App verwendet (Tabelle, Rankings, Kalender, Chips). Umbenennen (✏️) stellt alle bisherigen Rennen auf den neuen Namen um. Entfernen geht nur bei Teilnehmern, die noch kein Rennen gefahren sind.</p>
+    ${rows}
+    ${renameLogHtml()}
+    <div class="part-add">
+      <h2 style="font-size:15px;margin:16px 0 10px;">Neuen Teilnehmer hinzufügen</h2>
+      ${full ? `<p class="warn-note" style="margin:0;">Das Maximum von ${MAX_PARTICIPANTS} Teilnehmern ist erreicht.</p>` : `
+      <div class="part-row" style="margin-bottom:8px;">
+        <input type="color" id="newPartColor" value="${suggestColor()}" aria-label="Farbe für den neuen Teilnehmer" />
+        <input type="text" id="newPartName" placeholder="Name (max. 18 Zeichen)" maxlength="18" autocomplete="off" style="flex:1;" />
+      </div>
+      <div id="newPartError" class="warn-note" style="display:none;margin:0 0 8px;"></div>
+      <button class="primary full" id="newPartAddBtn">+ Teilnehmer hinzufügen</button>`}
+    </div>
+  </div>`;
+}
+function wireParticipants(){
+  document.querySelectorAll('[data-color-name]').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const name = inp.dataset.colorName;
+      if(!state.settings.driverColors) state.settings.driverColors = {};
+      state.settings.driverColors[name] = inp.value;
+      patchFirebase({ [`settings/driverColors/${name}`]: inp.value });
+      showToast(`Farbe für ${name} gespeichert`);
+      // update only this row (a full redraw would wipe a half-typed new name)
+      const dn = inp.closest('.part-row') && inp.closest('.part-row').querySelector('.dn');
+      if(dn){ dn.style.setProperty('--c', inp.value); dn.style.color = inp.value; }
+    });
+  });
+  document.querySelectorAll('[data-rename-name]').forEach(btn=>{ btn.onclick = ()=> openRenameDialog(btn.dataset.renameName); });
+  document.querySelectorAll('[data-remove-name]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const name = btn.dataset.removeName;
+      showConfirm(`${name} wirklich entfernen? (Nur möglich, weil ${name} noch kein Rennen gefahren ist.)`, async ()=>{
+        const ok = await removeParticipant(name);
+        showToast(ok ? `${name} entfernt` : 'Entfernen nicht möglich', ok ? 2500 : 5000);
+        if(ok){ state.savedNames = state.savedNames.filter(n=>n !== name); state.selectedNames = (state.selectedNames||[]).filter(n=>n !== name); }
+        renderSettings();
+      });
+    };
+  });
+  const addBtn = document.getElementById('newPartAddBtn');
+  if(addBtn){
+    const nameInp = document.getElementById('newPartName');
+    const errEl = document.getElementById('newPartError');
+    const showErr = (m)=>{ errEl.textContent = m; errEl.style.display = m ? 'block' : 'none'; };
+    nameInp.addEventListener('input', ()=>showErr(''));
+    nameInp.addEventListener('keydown', e=>{ if(e.key === 'Enter') addBtn.click(); });
+    addBtn.onclick = async ()=>{
+      const v = validateNewName(nameInp.value);
+      if(v.err){ showErr(v.err); return; }
+      if(state.savedNames.length >= MAX_PARTICIPANTS){ showErr(`Es sind höchstens ${MAX_PARTICIPANTS} Teilnehmer erlaubt.`); return; }
+      const color = document.getElementById('newPartColor').value;
+      addBtn.disabled = true;
+      const r = await addParticipant(v.name, color);
+      if(!r.ok){ addBtn.disabled = false; showErr(r.msg); return; }
+      state.savedNames.push(v.name);
+      if(!state.selectedNames.includes(v.name)) state.selectedNames.push(v.name);
+      if(!state.settings.driverColors) state.settings.driverColors = {};
+      state.settings.driverColors[v.name] = color;
+      showToast(`${v.name} hinzugefügt`);
+      renderSettings();
+    };
+  }
+}
 
 document.getElementById('dateInput').addEventListener('change', e=>{
   state.selectedDate = e.target.value || todayStr();
@@ -3093,6 +3484,11 @@ function importBackupFile(file){
       showToast('Ungültige Sicherungsdatei');
       return;
     }
+    // frühere Namen (Umbenennungen) auf den heutigen Namen abbilden, damit alte Sicherungen passen
+    const impWrap = { sessions: backup.sessions, savedNames: backup.savedNames };
+    applyNameMap(impWrap, buildAliasMap(aliasesOf(state)), false);
+    backup.sessions = impWrap.sessions;
+    if(impWrap.savedNames !== undefined) backup.savedNames = impWrap.savedNames;
     const existingIds = new Set(state.sessions.map(s=>s.id));
     const toAdd = backup.sessions.filter(s=>s && s.id && !existingIds.has(s.id));
     showConfirm(`${toAdd.length} fehlende Renn-Einträge aus der Sicherung ergänzen? Bestehende Einträge werden nicht verändert.`, async ()=>{
@@ -3164,12 +3560,6 @@ function renderSettings(){
   if(!state.settings) state.settings = { authUsername:'TM', authPassword:'TM2026', changeRequests:'', dnfPenaltySeconds:30, driverColors:{} };
   const s = state.settings;
 
-  const colorRowsHtml = orderedSavedNames().map(name=>`
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-      <input type="color" data-color-name="${escapeHtml(name)}" value="${getDriverColor(name)}" style="width:40px;height:36px;padding:2px;border-radius:8px;cursor:pointer;flex-shrink:0;" />
-      <div style="flex:1;font-size:14px;">${escapeHtml(name)}</div>
-    </div>`).join('');
-
   el.innerHTML = `${emergencyCardHtml()}<div class="card">
     <h2>Zugang</h2>
     <p class="muted" style="margin:0 0 12px;">Einfacher Zugriffsschutz für die Gruppe – keine echte Sicherheit, der Code ist für jeden einsehbar. Hält nur Zufallsbesucher fern.</p>
@@ -3181,11 +3571,7 @@ function renderSettings(){
     <button class="full" id="settingsLogoutBtn" style="margin-top:8px;">Auf diesem Gerät abmelden</button>
   </div>
 
-  <div class="card">
-    <h2>Fahrer-Farben</h2>
-    <p class="muted" style="margin:0 0 12px;">Wird überall in der App verwendet (Tabelle, Rankings, Kalender, Chips).</p>
-    ${colorRowsHtml}
-  </div>
+  ${participantsCardHtml()}
 
   <div class="card">
     <h2>DNF-Zeitwertung</h2>
@@ -3215,15 +3601,7 @@ function renderSettings(){
     showConfirm('Auf diesem Gerät abmelden? Beim nächsten Öffnen muss man sich neu anmelden.', ()=>logout());
   };
 
-  document.querySelectorAll('[data-color-name]').forEach(inp=>{
-    inp.addEventListener('change', ()=>{
-      const name = inp.dataset.colorName;
-      if(!state.settings.driverColors) state.settings.driverColors = {};
-      state.settings.driverColors[name] = inp.value;
-      patchFirebase({ [`settings/driverColors/${name}`]: inp.value });
-      showToast(`Farbe für ${name} gespeichert`);
-    });
-  });
+  wireParticipants();
 
   document.getElementById('dnfPenaltyInput').addEventListener('change', (e)=>{
     const n = parseInt(e.target.value, 10);
@@ -3331,6 +3709,7 @@ function renderArchiv(){
   const el = document.getElementById('archivContent');
   if (!el || !state || !Array.isArray(state.sessions)) return;
 
+  archivFilter = [...new Set(archivFilter.map(activeName))].filter(n=> (state.savedNames||[]).includes(n)); // survives renames made on another device
   const filtered = archivFilter.length
     ? state.sessions.filter(s=> s && sameSet(s.participants, archivFilter))
     : state.sessions;
