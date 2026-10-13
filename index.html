@@ -304,6 +304,16 @@
     font-size:12.5px;padding:10px 18px;text-align:center;
   }
   .section-actions{display:flex;gap:8px;margin-top:14px;}
+
+  .joke-overlay{position:fixed;inset:0;background:rgba(4,6,13,0.82);backdrop-filter:blur(5px);z-index:110;display:flex;align-items:center;justify-content:center;padding:16px;animation:jokeFade .25s ease-out;}
+  .joke-box{width:100%;max-width:420px;max-height:92vh;overflow:auto;background:linear-gradient(160deg,rgba(0,229,255,0.10),rgba(255,91,31,0.10)),var(--card, #11162a);border:1px solid var(--border);border-radius:20px;padding:26px 20px 20px;text-align:center;box-shadow:0 10px 50px rgba(0,0,0,0.6);}
+  .joke-emoji{font-size:54px;line-height:1;margin-bottom:6px;animation:jokePop .4s ease-out;}
+  .joke-kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+  .joke-text{font-size:21px;line-height:1.4;font-weight:600;margin:0 0 22px;overflow-wrap:anywhere;}
+  .joke-actions{display:flex;gap:10px;}
+  .joke-actions button{flex:1;}
+  @keyframes jokeFade{from{opacity:0}to{opacity:1}}
+  @keyframes jokePop{0%{transform:scale(.4) rotate(-12deg)}70%{transform:scale(1.15) rotate(4deg)}100%{transform:scale(1) rotate(0)}}
   .confirm-overlay{
     position:fixed;inset:0;background:rgba(4,6,13,0.75);backdrop-filter:blur(4px);
     z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;
@@ -417,7 +427,7 @@ const CLIENT_ID = (()=>{
 })();
 const APP_VERSION = 18;
 // identifies this exact file; every device announces it, so an outdated cached page can tell it is outdated
-const APP_BUILD = '2026-10-06.5';
+const APP_BUILD = '2026-10-13.1';
 const APP_VERSION_DATE = '2026-10-03';
 const VERSION_HISTORY = [
   { v:1, date:'2026-09-10', notes:'Kompletter Funktionsstand: Rennen-Tabelle, Archiv, Statistik, Strafpunkte, Zeitraum-Filter, faires Gesamtranking.' },
@@ -437,7 +447,7 @@ const VERSION_HISTORY = [
   { v:15, date:'2026-10-02', notes:'DNF zeigt im Strecken-Tab jetzt wirklich "DNF" statt einer falschen Zeit; zählt in der Statistik mit einstellbarer Ersatzzeit (Settings). Live-Zeit-Ranking unterhalb des Zwischenstands während der Eingabe. "Neues Rennen starten" führt direkt zur Punktetabelle. "Speichern" und "Fertig" zu einem Button zusammengelegt. Krone-Berechnung repariert (war zu streng). Kalender färbt Tage jetzt in der Farbe des Tagessiegers inkl. Namen. Fahrer-Farben überall in der App, einstellbar unter Settings. Settings erweitert um DNF-Zeitwertung und Jubiläumsfeier-Schalter.' },
   { v:16, date:'2026-10-02', notes:'Bug behoben: Die Storage-Konfiguration (für Fotos) war in derselben Einstellung wie die Datenbank-Verbindung untergebracht – ein ungültiger Wert dort konnte die komplette App blockieren ("Verbinde…" ohne Ende), obwohl die Datenbank selbst nie das Problem war. Beides jetzt komplett getrennt. Jubiläumsfeier ist jetzt fix aktiviert (Einstellung dafür entfernt).' },
   { v:17, date:'2026-10-03', notes:'Fotos-Tab komplett entfernt (hätte einen kostenpflichtigen Firebase-Tarif erfordert). Statistik: neue Karte "Gesamtfahrzeit" – aufsummierte (nicht gemittelte) Zeit über alle gefahrenen Strecken, zusätzlich zum bestehenden fairen Ø-Zeit-Ranking.' },
-  { v:18, date:'2026-10-03', notes:'Neuer LIVE-Tab ganz links: Zuschauen ohne Bearbeiten. Der Rennen-Tab ist jetzt exklusiv - es kann immer nur ein Gerät eingeben (mit Übernahme-Funktion), das verhindert Speicherkonflikte. Neuer Speichern-Knopf unter der Punktetabelle: sichert Punkte, Zeiten und Namen ins Archiv und prüft nach, dass es angekommen ist. Behoben: Die Punktetabelle klappte nach dem Verlassen des Tabs zusammen und Einträge konnten verloren gehen (Firebase schneidet leere Felder am Ende von Listen ab) - die Spaltenanzahl wird jetzt fest gespeichert. Track-Editor: Namen nach Platzierung der aktuellen Strecke, Plausibilitätsprüfungen für Zeiten. Alle Speichervorgänge schreiben nur noch gezielt ihre eigenen Felder. Krone/Kackhaufen: bei Punktegleichstand wird niemand mehr gleichzeitig Sieger und Letzter. Zusätzlich abgesichert: Löschen, Import und Speichern arbeiten auf dem aktuellen Datenbestand und über die Renn-ID (nichts wird mehr durch eine veraltete Ansicht überschrieben); neuer Bereich Sicherung → Zuletzt gelöscht zum Wiederherstellen; Rennen-Tab wird nach 30 Minuten Inaktivität wieder freigegeben; im Track-Editor gehen Zeiten nicht mehr still verloren; Anführungszeichen in Passwort/Streckennamen; Datum um Mitternacht; Ladeanzeige beim Start. Eingaben werden schon beim Tippen und beim Verlassen/Schließen der Seite gesichert, Status-Anzeige „automatisch gespeichert“, Warnung beim Schließen mit ungesicherten Daten, Neuladen im selben Tab behält die eigene Sperre; ein gesperrtes Handy (Seite im Hintergrund) gibt den Rennen-Tab nach 2 Minuten von selbst frei; Knopf „Zwischenspeichern“; Rennen-abgeschlossen-Knopf in Türkis; Streckenfilter im Strecken-Tab; Notfall-Bereich in den Settings (laufendes Rennen sichern, Bearbeiter rauswerfen). Prüfung/Fehlerbehebung: Zeiteingabe auch mit Handy-Tastaturen, die keine normalen Tasten senden; unmögliche Platzierungen (z. B. 99) werden abgelehnt; einheitliche DNF-Zählung in der Statistik; Hinweis bei veralteter Seite. Nachtrag 06.10.: Live-Seite mit Zwischenstand oben und Rückstand auf Platz 1, Summenspalte bleibt beim seitlichen Scrollen sichtbar, Fahrer mit Farbstreifen, kompakter Archiv-Filter, dezenter Verwerfen-Knopf, Track-Editor mit Platz-Medaillen, Navigation für kleine Handys, „Ergebnis teilen“ (WhatsApp), Streckenrekorde, Direktvergleich und Zeitraum-Schnellwahl in der Statistik, Hinweis bei Sicherung älter als 30 Tage. Korrekturen für schmale Handys (Datumsfelder in der Statistik und „Kopieren“-Knopf waren bei 320–360 px abgeschnitten), neue Fahrernamen prüfen auf Groß-/Kleinschreibung. Neu in Settings: Karte „Teilnehmer“ – neue Teilnehmer mit Name und Wunschfarbe hinzufügen (höchstens 10), Farben aller Fahrer ändern, Teilnehmer ohne Rennen wieder entfernen. Das „+ weiteren Fahrer“ im Rennen-Tab wurde durch einen Link dorthin ersetzt. Teilnehmer lassen sich jetzt auch umbenennen (✏️ in der Teilnehmer-Karte): alle bisherigen Rennen, der Papierkorb, die Farbe und die Auswahl werden dabei in einem Schritt (alles oder nichts) auf den neuen Namen umgestellt, vorher wird automatisch eine Sicherung heruntergeladen, danach wird nachgeprüft. Beim Import alter Sicherungen werden frühere Namen automatisch dem neuen Namen zugeordnet.' }
+  { v:18, date:'2026-10-03', notes:'Neuer LIVE-Tab ganz links: Zuschauen ohne Bearbeiten. Der Rennen-Tab ist jetzt exklusiv - es kann immer nur ein Gerät eingeben (mit Übernahme-Funktion), das verhindert Speicherkonflikte. Neuer Speichern-Knopf unter der Punktetabelle: sichert Punkte, Zeiten und Namen ins Archiv und prüft nach, dass es angekommen ist. Behoben: Die Punktetabelle klappte nach dem Verlassen des Tabs zusammen und Einträge konnten verloren gehen (Firebase schneidet leere Felder am Ende von Listen ab) - die Spaltenanzahl wird jetzt fest gespeichert. Track-Editor: Namen nach Platzierung der aktuellen Strecke, Plausibilitätsprüfungen für Zeiten. Alle Speichervorgänge schreiben nur noch gezielt ihre eigenen Felder. Krone/Kackhaufen: bei Punktegleichstand wird niemand mehr gleichzeitig Sieger und Letzter. Zusätzlich abgesichert: Löschen, Import und Speichern arbeiten auf dem aktuellen Datenbestand und über die Renn-ID (nichts wird mehr durch eine veraltete Ansicht überschrieben); neuer Bereich Sicherung → Zuletzt gelöscht zum Wiederherstellen; Rennen-Tab wird nach 30 Minuten Inaktivität wieder freigegeben; im Track-Editor gehen Zeiten nicht mehr still verloren; Anführungszeichen in Passwort/Streckennamen; Datum um Mitternacht; Ladeanzeige beim Start. Eingaben werden schon beim Tippen und beim Verlassen/Schließen der Seite gesichert, Status-Anzeige „automatisch gespeichert“, Warnung beim Schließen mit ungesicherten Daten, Neuladen im selben Tab behält die eigene Sperre; ein gesperrtes Handy (Seite im Hintergrund) gibt den Rennen-Tab nach 2 Minuten von selbst frei; Knopf „Zwischenspeichern“; Rennen-abgeschlossen-Knopf in Türkis; Streckenfilter im Strecken-Tab; Notfall-Bereich in den Settings (laufendes Rennen sichern, Bearbeiter rauswerfen). Prüfung/Fehlerbehebung: Zeiteingabe auch mit Handy-Tastaturen, die keine normalen Tasten senden; unmögliche Platzierungen (z. B. 99) werden abgelehnt; einheitliche DNF-Zählung in der Statistik; Hinweis bei veralteter Seite. Nachtrag 06.10.: Live-Seite mit Zwischenstand oben und Rückstand auf Platz 1, Summenspalte bleibt beim seitlichen Scrollen sichtbar, Fahrer mit Farbstreifen, kompakter Archiv-Filter, dezenter Verwerfen-Knopf, Track-Editor mit Platz-Medaillen, Navigation für kleine Handys, „Ergebnis teilen“ (WhatsApp), Streckenrekorde, Direktvergleich und Zeitraum-Schnellwahl in der Statistik, Hinweis bei Sicherung älter als 30 Tage. Korrekturen für schmale Handys (Datumsfelder in der Statistik und „Kopieren“-Knopf waren bei 320–360 px abgeschnitten), neue Fahrernamen prüfen auf Groß-/Kleinschreibung. Neu in Settings: Karte „Teilnehmer“ – neue Teilnehmer mit Name und Wunschfarbe hinzufügen (höchstens 10), Farben aller Fahrer ändern, Teilnehmer ohne Rennen wieder entfernen. Das „+ weiteren Fahrer“ im Rennen-Tab wurde durch einen Link dorthin ersetzt. Teilnehmer lassen sich jetzt auch umbenennen (✏️ in der Teilnehmer-Karte): alle bisherigen Rennen, der Papierkorb, die Farbe und die Auswahl werden dabei in einem Schritt (alles oder nichts) auf den neuen Namen umgestellt, vorher wird automatisch eine Sicherung heruntergeladen, danach wird nachgeprüft. Beim Import alter Sicherungen werden frühere Namen automatisch dem neuen Namen zugeordnet. Nachtrag 13.10.: Beim Eröffnen eines neuen Rennens und beim Drücken auf „Rennen abgeschlossen“ erscheint groß ein (flacher) Witz über die Teilnehmer bzw. über Sieger und Letzten – nur auf dem Gerät, das die Punkte einträgt.' }
 ];
 
 let state = null;
@@ -2132,6 +2142,7 @@ function continueToEditing(){
   rennenPhase = 'editing';
   saveDraft();
   renderRennen();
+  showJokeModal('start', { names: order });
 }
 
 function renderEditingPhase(area){
@@ -2284,7 +2295,7 @@ function renderEditingPhase(area){
     const count = state.sessions.length;
     const isMilestone = wasNewRace && count >= 60 && count % 10 === 0;
     showToast('Rennen abgeschlossen ✓');
-    showFinishOverlay(res.session, isMilestone, count);
+    showJokeModal('end', { session: res.session }, ()=> showFinishOverlay(res.session, isMilestone, count));
     switchView('live'); // frees the Rennen tab for the next person
   };
 
@@ -2810,6 +2821,148 @@ function showMilestoneModal(count, isBig, extraHtml){
   const close = ()=> overlay.remove();
   overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
   document.getElementById('milestoneCloseBtn').onclick = close;
+}
+
+const JOKES = {
+  start: [
+  "Warum kann {A} nie Verstecken spielen? Weil er nach jedem Crash sofort wieder auftaucht.",
+  "Was haben {A} und der Respawn-Knopf gemeinsam? Beide werden heute Abend ständig gedrückt.",
+  "{A} fährt wie ein Fahrlehrer: ständig am Bremsen, und trotzdem will keiner mitfahren.",
+  "Der Countdown läuft, {A} schwitzt, {B} grinst. Grinsen hilft aber nicht gegen Leitplanken, {B}.",
+  "Was ist der Unterschied zwischen {A} und einer Schildkröte? Die Schildkröte kommt irgendwann an.",
+  "{B} fährt, wie {A} flirtet: viel Anlauf, wenig Treffer.",
+  "Heute gilt: Wer zuerst die Wand küsst, zahlt die nächste Runde Bier. {A}, du hast schon mal Vorsprung.",
+  "{A} fährt so langsam, dass {B} in der Zeit noch zweimal aufs Klo gehen kann.",
+  "{A} hat Respekt vor der ersten Kurve. Die Kurve vor {A} leider nicht.",
+  "Was ist peinlicher als ein Crash auf der Geraden? Ein Crash auf der Geraden, bei dem {B} zuschaut.",
+  "{A} hat die Daumen aufgewärmt, {B} nur das Bier. Rate, wer besser fährt. Falsch, keiner.",
+  "Wenn {A} und {B} gegeneinander fahren, gewinnt am Ende immer die Leitplanke.",
+  "{A} bringt heute Bier mit, {B} bringt Ausreden mit. Beides wird heute leer.",
+  "{A} fährt heute so schnell, wie sein Internet lädt. Also gar nicht.",
+  "Was ist {B}s Lieblingsstrecke? Die, auf der {A} rausfliegt.",
+  "{A} meint, er sei heute in Form. Stimmt, {A}: kugelrund.",
+  "{A} hat versprochen, heute nicht zu fluchen. Das war nach vier Sekunden Countdown vorbei.",
+  "{A} nach dem Start: „Ich habe alles unter Kontrolle.“ Die Wand: „Nein.“",
+  "Sagt {A} an der Startlinie: „Ich bin schneller als du.“ Sagt {B}: „Das hast du neulich auch bei deiner Freundin gesagt. Und das war dann auch schnell vorbei.“",
+  "{A} fährt so präzise, dass man mit ihm Linien ziehen könnte. Leider quer über die ganze Strecke.",
+  "Wer ist heute der Favorit? {B}! Und wer ist der Außenseiter? {A}! Und wer der Rest? Ebenfalls Außenseiter.",
+  "{A}s Reaktionszeit ist legendär: Wenn der Countdown auf Grün springt, hat {B} schon den ersten Schluck Bier genommen.",
+  "Alle fragen sich: Wer fährt heute am schlechtesten? Keine Sorge, {A} nimmt die Verantwortung gern auf sich.",
+  "{B} hat sich heute extra gut vorbereitet: früh ins Bett, nüchtern, ausgeschlafen. Nur ein Scherz, {B} hat natürlich schon ein Bier offen.",
+  "Was macht {A} mit dem Lenkrad? Er hält sich daran fest und hofft.",
+  "{A} sagt, er braucht heute nur ein bisschen Glück. {B} sagt: „Und ein Lenkrad. Und Fahren.“",
+  "Vor dem Rennen ist nach dem Pipi. {A}, geh jetzt, nicht erst wenn die Strecke dir davonläuft.",
+  "{A} und {B} an der Startlinie: zwei Männer, ein Ziel, null Plan.",
+  "Heute wird Geschichte geschrieben. Leider wieder die von {A}s Totalschäden.",
+  "Wenn Fahrfehler eine Währung wären, wäre {A} heute Abend Millionär.",
+  "Wer hat die beste Fahrlinie? {B}! Wer hat die längste? {A}! Wer hat eine Navigationshilfe nötig? Auch {A}!",
+  "Zur Info: Die Leitplanken sind versichert. {A}s Selbstvertrauen leider nicht.",
+  "{B} schwört, heute besser zu fahren als {A}. Die Messlatte liegt allerdings auf dem Boden.",
+  "Rennstart! Zeit für {A}s Lieblingsmanöver: das Dreh-dich-im-Kreis-und-wundere-dich.",
+  "Man sagt, auf der Rennstrecke zeigt sich der wahre Charakter. Bei {A}: nervös, planlos, unfallanfällig.",
+  "{A} hat gerade den Controller gewaschen. Hilft nicht, das Problem sind die Daumen.",
+  "{B} hat sich gestern ein neues Lenkrad gekauft, {A} hat sich ein neues Hobby gesucht. Für beide wird es heute eng.",
+  "Neues Rennen, neues Glück: {A} fährt auf Sieg, {B} fährt auf Rache, der Rest fährt einfach nur.",
+  "Wer als Erster ins Ziel kommt, ist Held des Abends. Wer als Letzter kommt, ist {A}. Wahrscheinlich."
+],
+  end: [
+  "{W} hat gewonnen, nicht weil er so gut war, sondern weil {L} so schlecht war.",
+  "Herzlichen Glückwunsch, {W}! Dein Sieg ist so verdient wie {L}s Ausrede gleich.",
+  "{L} hat heute nicht verloren. Er hat die Strecken nur besonders ausführlich besichtigt.",
+  "{L} ist nicht Letzter. {L} ist Gründer des Hinterfeld-Fanclubs.",
+  "{W} kann sich jetzt was auf seinen Sieg einbilden. Ist ja auch das Einzige, was bei ihm wächst.",
+  "{L} fährt wie ein Navi: ständig „Bitte wenden“.",
+  "Sieger {W}: schnell auf der Strecke, langsam im Bett. Man kann eben nicht alles haben.",
+  "Keine Sorge, {L}: Es geht nicht ums Gewinnen, sondern ums Dabeisein. Und das war bei dir wenigstens schnell vorbei.",
+  "{W} träumt heute Nacht von Pokalen. {L} von Leitplanken.",
+  "{L} bekommt heute den goldenen Kackhaufen. Sitzt ja eh schon drauf.",
+  "Was ist der Unterschied zwischen {L} und einem Stein? Der Stein rollt wenigstens.",
+  "{W}s Ego braucht jetzt eine eigene Postleitzahl.",
+  "{L} wollte heute nur Spaß haben. Mission geglückt, zumindest für alle anderen.",
+  "Nach dem Rennen ist vor dem Bier. {L}, du zahlst die erste Runde.",
+  "{W} hat gewonnen, und {L} hat das Ganze moralisch unterstützt, vom letzten Platz aus.",
+  "Die Strecken waren fair. Nur {L} hat sie anders gesehen: als Hindernisparcours.",
+  "{W} fährt wie ein Profi, {L} wie ein Praktikant: unbezahlt und planlos.",
+  "{L}s Siegquote ist inzwischen eher ein Gerücht.",
+  "{L}, nicht traurig sein: Andere haben im Leben auch nichts drauf und sind trotzdem glücklich verheiratet.",
+  "{W} gewinnt, {L} verliert, und das Bier gewinnt am Ende immer.",
+  "{L}s Fahrstil in einem Satz: Kurve? Welche Kurve?",
+  "{W} hat die Strecke gefressen. {L} hat die Bande gefressen.",
+  "Heute gelernt: {W} kann fahren, {L} kann Ausreden, und der Rest kann zuschauen.",
+  "Wäre {L} ein Auto, dann ein Anhänger: wird gezogen, hält alle auf und macht Lärm.",
+  "{W} lässt sich jetzt feiern. {L} lässt sich jetzt entschuldigen.",
+  "Selbst {L}s Mama hat auf {W} gesetzt.",
+  "Mathe-Aufgabe: {W} hat weniger Punkte als {L}. Wie lange redet sich {L} jetzt raus? Antwort: bis zum nächsten Rennen.",
+  "{L} hat heute Geschichte geschrieben: die kürzeste Karriere zwischen Start und erster Wand.",
+  "{W}, du warst heute schneller als {L} beim Wegschauen, wenn die Rechnung kommt.",
+  "{L} will die Platzierung anfechten. Leider ist der Schiedsrichter die Stoppuhr, und die hat ein gutes Gedächtnis.",
+  "Der Sieg von {W} war nie in Gefahr. Der Verstand von {L} schon.",
+  "{L} fährt so sicher, dass die Strecke ihn bald als Dauerparker eintragen lässt.",
+  "Wenn {L} Sport machen würde wie er fährt, wäre sein Lieblingsfach Sitzen.",
+  "{W} hatte heute Rückenwind. {L} hatte heute Rückwärtsgang.",
+  "Was hat {L} mit einer Straßenlaterne gemeinsam? Beide stehen die ganze Zeit rum und leuchten nur selten.",
+  "{W} kassiert die Krone, {L} kassiert die Sprüche. So ist die Welt gerecht.",
+  "Nicht jeder kann gewinnen. {L} zum Beispiel konnte heute nicht mal verlieren, ohne es zu übertreiben.",
+  "{W}, du hast gewonnen. Jetzt geh duschen. {L}, du auch, du hast mindestens genauso geschwitzt.",
+  "{L} schiebt es auf den Controller, die Strecke und das Wetter. Zeit, mal über den Fahrer zu reden.",
+  "Heute Nacht schläft {W} wie ein Sieger und {L} wie ein Stein, der von der Kante gekullert ist."
+]
+};
+
+/* ---------- Witze beim Eröffnen / Beenden eines Rennens ----------
+   Erscheint nur auf dem Gerät, auf dem die Punkte eingetragen werden. {A}/{B} = zwei
+   Teilnehmer des Rennens, {W} = Sieger, {L} = Letzter. Pro Gerät wird gemerkt, welche
+   Witze schon kamen, damit sich möglichst lange nichts wiederholt. */
+function pickJokeIndex(kind){
+  const list = JOKES[kind];
+  const key = 'tm_jokes_seen_' + kind;
+  let seen = [];
+  try{ seen = JSON.parse(localStorage.getItem(key) || '[]'); }catch(e){ seen = []; }
+  if(!Array.isArray(seen)) seen = [];
+  let pool = list.map((_,i)=>i).filter(i=> !seen.includes(i));
+  if(!pool.length){ const last = seen[seen.length-1]; seen = []; pool = list.map((_,i)=>i).filter(i=> i !== last); }
+  const idx = pool[Math.floor(Math.random() * pool.length)];
+  seen.push(idx);
+  try{ localStorage.setItem(key, JSON.stringify(seen)); }catch(e){ /* ohne Speicher: dann eben ohne Wiederholungsschutz */ }
+  return idx;
+}
+function jokeHtml(template, map){
+  return escapeHtml(template).replace(/\{([A-Z])\}/g, (m, k)=> map[k] ? driverInline(map[k]) : '');
+}
+function shuffled(arr){ const a = arr.slice(); for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+function showJokeModal(kind, info, onClose){
+  if(window.TM_NO_JOKES){ if(onClose) onClose(); return; }
+  let map = {};
+  try{
+    if(kind === 'start'){
+      const names = shuffled(normalizeArrayish(info.names));
+      map = { A: names[0], B: names[1] || names[0] };
+    } else {
+      const totals = sessionTotals(info.session) || {};
+      const entries = Object.entries(totals);
+      const lo = Math.min(...entries.map(e=>e[1])), hi = Math.max(...entries.map(e=>e[1]));
+      let w = entries.filter(e=>e[1] === lo).map(e=>e[0]);
+      let l = entries.filter(e=>e[1] === hi).map(e=>e[0]);
+      if(lo === hi){ const sh = shuffled(entries.map(e=>e[0])); w = [sh[0]]; l = [sh[1] || sh[0]]; }
+      map = { W: shuffled(w)[0], L: shuffled(l.filter(n=>n !== undefined))[0] };
+      if(map.W === map.L && entries.length > 1) map.L = entries.map(e=>e[0]).find(n=>n !== map.W);
+    }
+  }catch(e){ console.error('joke names', e); if(onClose) onClose(); return; }
+  const idx = pickJokeIndex(kind);
+  const overlay = document.createElement('div');
+  overlay.className = 'joke-overlay';
+  const emoji = kind === 'start' ? ['🏎️','🚦','😈','🤪','🍺'][idx % 5] : ['🏆','💩','🍻','🤡','🥳'][idx % 5];
+  overlay.innerHTML = `<div class="joke-box" role="dialog" aria-modal="true">
+    <div class="joke-emoji">${emoji}</div>
+    <div class="joke-kicker">${kind === 'start' ? 'Gleich geht’s los' : 'Rennen im Kasten'}</div>
+    <p class="joke-text">${jokeHtml(JOKES[kind][idx], map)}</p>
+    <div class="joke-actions"><button class="primary" id="jokeOkBtn">${kind === 'start' ? 'Los geht’s 🏁' : 'Weiter'}</button></div>
+  </div>`;
+  document.body.appendChild(overlay);
+  let closed = false;
+  const close = ()=>{ if(closed) return; closed = true; overlay.remove(); if(onClose) onClose(); };
+  overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
+  overlay.querySelector('#jokeOkBtn').onclick = close;
 }
 
 function showFinishOverlay(session, isMilestone, sessionCount){
